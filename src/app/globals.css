@@ -1,0 +1,408 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("/fonts/BebasNeue-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oxanium";
+  src: url("/fonts/Oxanium-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================================
+   COST2COST DESIGN SYSTEM
+   ========================================================= */
+@theme {
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-oxanium: "Oxanium", sans-serif;
+}
+@theme inline {
+  /* Core */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+
+  /* Surfaces */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Borders */
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  /* Inputs */
+  --color-input: var(--input);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+
+  /* Existing shadcn */
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  /* Typography */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+}
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+:root {
+  /* Main */
+  --background: #ffffff;
+  --foreground: #111111;
+
+  /* Brand */
+  --primary: #e52323;
+  --primary-foreground: #ffffff;
+  --primary-hover: #ff2b2b;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-foreground: #111111;
+
+  --surface: #f7f7f7;
+  --surface-muted: #fafafa;
+
+  /* Text */
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #777777;
+
+  /* Borders */
+  --border: #e5e5e5;
+  --border-strong: #d5d5d5;
+
+  /* Inputs */
+  --input: #e5e5e5;
+
+  /* Existing shadcn */
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+
+  --secondary: #f3f3f3;
+  --secondary-foreground: #111111;
+
+  --muted: #f7f7f7;
+  --muted-foreground: #777777;
+
+  --accent: #f7f7f7;
+  --accent-foreground: #111111;
+
+  --ring: #e52323;
+
+  /* Status */
+  --success: #16a34a;
+  --warning: #f7b84b;
+  --destructive: #dc2626;
+
+  /* Charts */
+  --chart-1: #e52323;
+  --chart-2: #111111;
+  --chart-3: #555555;
+  --chart-4: #777777;
+  --chart-5: #aaaaaa;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #e52323;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f7f7f7;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #e52323;
+
+  --radius: 0.625rem;
+}
+
+/* =========================================================
+   OPTIONAL DARK THEME
+   Keep this for future use.
+   ========================================================= */
+
+.dark {
+  --background: #090909;
+  --foreground: #ffffff;
+
+  --primary: #e52323;
+  --primary-foreground: #ffffff;
+  --primary-hover: #ff2b2b;
+
+  --card: #111111;
+  --card-foreground: #ffffff;
+
+  --surface: #111111;
+  --surface-muted: #0d0d0d;
+
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-muted: #777777;
+
+  --border: #252525;
+  --border-strong: #333333;
+
+  --input: #252525;
+
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+
+  --muted: #1a1a1a;
+  --muted-foreground: #777777;
+
+  --accent: #1a1a1a;
+  --accent-foreground: #ffffff;
+
+  --ring: #e52323;
+
+  --success: #22c55e;
+  --warning: #f7b84b;
+  --destructive: #ef4444;
+
+  --chart-1: #e52323;
+  --chart-2: #ffffff;
+  --chart-3: #aaaaaa;
+  --chart-4: #777777;
+  --chart-5: #444444;
+
+  --sidebar: #111111;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #e52323;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #252525;
+  --sidebar-ring: #e52323;
+}
+
+/* =========================================================
+   GLOBAL BASE
+   ========================================================= */
+/* Hide horizontal scrollbars used by marquees */
+
+
+
+@keyframes why-c2c-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.why-c2c-marquee {
+  animation: why-c2c-marquee 22s linear infinite;
+}
+
+.why-c2c-marquee:hover {
+  animation-play-state: paused;
+}
+
+
+
+.c2c-marquee::-webkit-scrollbar {
+  display: none;
+}
+
+.c2c-marquee {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+
+/* animation of navbar  */
+
+
+@keyframes menuFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes menuScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menuItem {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-menu-fade {
+  animation: menuFade 250ms ease-out both;
+}
+
+.animate-menu-scale {
+  animation: menuScale 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-menu-item {
+  animation: menuItem 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+
+
+/* TOAST ANIMATION  */
+
+
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+
+/* =========================================================
+   REUSABLE COST2COST COMPONENT STYLES
+   ========================================================= */
+
+@layer components {
+  .c2c-card {
+    @apply rounded-xl border border-border bg-card;
+  }
+
+  .c2c-surface {
+    @apply bg-surface;
+  }
+
+  .c2c-input {
+    @apply rounded-lg border border-border bg-white text-text-primary outline-none transition;
+  }
+
+  .c2c-input:focus {
+    @apply border-primary;
+  }
+
+  .c2c-btn-primary {
+    @apply rounded-lg bg-primary text-sm font-bold text-white transition;
+  }
+
+  .c2c-btn-primary:hover {
+    @apply bg-primary-hover;
+  }
+
+  .c2c-btn-secondary {
+    @apply rounded-lg border border-foreground bg-foreground text-sm font-bold text-white transition;
+  }
+
+  .c2c-btn-secondary:hover {
+    @apply bg-transparent text-foreground;
+  }
+
+  .c2c-container {
+    @apply mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-10;
+  }
+}
