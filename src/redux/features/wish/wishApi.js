@@ -73,8 +73,6 @@ const toggleItemApi = async (
       getAuthConfig()
     );
 
-
-    console.log(response.data)
     return response;
   } catch (err) {
     handleApiError(err, "Toggle wishlist");
@@ -112,7 +110,6 @@ const clearWishListApi = async () => {
 
 const moveToCartApi = async (productId) => {
   try {
-    console.log("test",productId)
     const response = await axios.post(
       `${API_BASE_URL}/wishlist/move-to-cart/${productId.productId}`,
       {
@@ -122,7 +119,6 @@ const moveToCartApi = async (productId) => {
       getAuthConfig()
     );
 
-    console.log(response.data)
 
     return response;
   } catch (err) {

@@ -14,7 +14,6 @@ export const getBrandBySlug = async (slug, page=1, limit=20) => {
             }
         );
 
-        console.log(response.data);
         
         return response.data
     }
@@ -64,7 +63,6 @@ export const getProductSearchApi = async (query) => {
     try{
         const response = await axios.get(`${API_BASE_URL}/products/search?q=${query}`);
 
-        console.log(response.data);
 
         return response.data
     }

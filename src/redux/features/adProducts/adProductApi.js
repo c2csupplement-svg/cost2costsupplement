@@ -134,7 +134,6 @@ export const getProductCategoryApi = async () => {
       `${API_BASE_URL}/category`
     );
 
-    console.log(response.data)
 
     return response.data;
   } catch (error) {

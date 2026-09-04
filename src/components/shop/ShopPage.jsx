@@ -29,7 +29,8 @@ export default function ShopPage() {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
-  const urlSearchQuery = searchParams.get("search") || "";
+  const urlSearchQuery =
+    searchParams?.get("search") || "";
 
   const [selectedCategory, setSelectedCategory] = useState({
     id: null,
@@ -1136,7 +1137,7 @@ export default function ShopPage() {
       page < 1 ||
       page > totalPages ||
       page === currentPage ||
-      productLoading
+      isProductsFetching
     ) {
       return;
     }
@@ -1145,11 +1146,12 @@ export default function ShopPage() {
       page
     );
 
-    window.scrollTo({
-      top: 0,
-      behavior:
-        "smooth",
-    });
+    if (typeof window !== "undefined") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
   };
 
   useEffect(() => {
