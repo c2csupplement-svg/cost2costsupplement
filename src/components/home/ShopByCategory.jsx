@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ArrowUpRight } from "lucide-react";
 
-import { useGetCategoriesQuery } from "@/services/productsApi";
+import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
 
 function CategoryCard({ category }) {
   return (
@@ -35,7 +36,6 @@ function CategoryCard({ category }) {
         sm:p-7
       "
     >
-      {/* Background Image */}
       {category.image && (
         <div
           className="
@@ -53,7 +53,6 @@ function CategoryCard({ category }) {
         />
       )}
 
-      {/* Overlay */}
       <div
         className="
           absolute
@@ -70,7 +69,6 @@ function CategoryCard({ category }) {
         "
       />
 
-      {/* Red hover glow */}
       <div
         className="
           pointer-events-none
@@ -91,7 +89,6 @@ function CategoryCard({ category }) {
         "
       />
 
-      {/* Content */}
       <div className="relative mt-auto">
         <div className="flex items-end justify-between gap-2 sm:gap-4">
           <div className="min-w-0">
@@ -133,7 +130,6 @@ function CategoryCard({ category }) {
             )}
           </div>
 
-          {/* Arrow */}
           <div
             className="
               flex
@@ -172,7 +168,6 @@ function CategoryCard({ category }) {
         </div>
       </div>
 
-      {/* Bottom red accent */}
       <div
         className="
           absolute
@@ -191,37 +186,83 @@ function CategoryCard({ category }) {
 }
 
 export default function ShopByCategory() {
+  const dispatch = useDispatch();
+
   const sliderRef = useRef(null);
   const animationRef = useRef(null);
   const pausedRef = useRef(false);
   const lastTimeRef = useRef(0);
 
   const {
-    data: categoriesData,
-    isLoading,
-    isError,
-  } = useGetCategoriesQuery();
+    productCateogry,
+    loading,
+    loaded,
+    error,
+  } = useSelector(
+    (state) => state.productAd || {}
+  );
+
+  useEffect(() => {
+    if (!loaded && !loading) {
+      dispatch(getAllProductAds());
+    }
+  }, [dispatch, loaded, loading]);
 
   const categories = useMemo(() => {
-    const apiCategories = categoriesData?.categories || [];
+    const apiCategories = Array.isArray(
+      productCateogry
+    )
+      ? productCateogry
+      : Array.isArray(productCateogry?.categories)
+      ? productCateogry.categories
+      : Array.isArray(productCateogry?.data)
+      ? productCateogry.data
+      : Array.isArray(productCateogry?.data?.categories)
+      ? productCateogory.data.categories
+      : [];
 
-    return apiCategories.map((category) => ({
-      id: category.id,
-      title: category.name || "Unnamed Category",
-      description: category.description || "",
-      slug: category.slug || "",
-      href: `/shop?category=${category.slug}`,
-      image: category.image || null,
+    return apiCategories
+      .filter(Boolean)
+      .map((category) => {
+        const slug =
+          category?.slug ||
+          category?.name
+            ?.toLowerCase()
+            ?.trim()
+            ?.replace(/[^a-z0-9]+/g, "-")
+            ?.replace(/^-+|-+$/g, "");
 
-      // Keeping children available for future use
-      children: category.children || [],
-    }));
-  }, [categoriesData]);
+        return {
+          id: category?.id || slug,
+          title:
+            category?.name ||
+            category?.title ||
+            "Unnamed Category",
+          description:
+            category?.description || "",
+          slug: slug || "",
+          href: `/product-categories/${slug}`,
+          image:
+            category?.image ||
+            category?.featuredimg ||
+            category?.featuredImage ||
+            category?.thumbnail ||
+            null,
+          children:
+            category?.children || [],
+        };
+      });
+  }, [productCateogry]);
 
   useEffect(() => {
     const slider = sliderRef.current;
 
-    if (!slider || categories.length === 0) return;
+    if (
+      !slider ||
+      categories.length === 0
+    ) {
+      return;
+    }
 
     const speed = 35;
 
@@ -230,41 +271,49 @@ export default function ShopByCategory() {
         lastTimeRef.current = time;
       }
 
-      const delta = time - lastTimeRef.current;
+      const delta =
+        time - lastTimeRef.current;
+
       lastTimeRef.current = time;
 
       if (!pausedRef.current) {
-        slider.scrollLeft += (delta / 1000) * speed;
+        slider.scrollLeft +=
+          (delta / 1000) * speed;
 
-        const halfWidth = slider.scrollWidth / 2;
+        const halfWidth =
+          slider.scrollWidth / 2;
 
-        if (slider.scrollLeft >= halfWidth) {
+        if (
+          halfWidth > 0 &&
+          slider.scrollLeft >= halfWidth
+        ) {
           slider.scrollLeft -= halfWidth;
         }
       }
 
-      animationRef.current = requestAnimationFrame(animate);
+      animationRef.current =
+        requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    animationRef.current =
+      requestAnimationFrame(animate);
 
     return () => {
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        cancelAnimationFrame(
+          animationRef.current
+        );
       }
+
+      lastTimeRef.current = 0;
     };
   }, [categories.length]);
 
   return (
     <section className="relative overflow-hidden bg-surface-muted py-14 sm:py-20 lg:py-18">
-      {/* Background accent */}
       <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-primary/5 blur-[100px]" />
 
       <div className="relative mx-auto max-w-[1440px]">
-        {/* =====================================================
-            HEADING
-        ===================================================== */}
-
         <div className="mb-10 flex items-end justify-between gap-6 px-5 sm:px-8 lg:px-10">
           <div>
             <div className="mb-3 flex items-center gap-3">
@@ -280,13 +329,15 @@ export default function ShopByCategory() {
             </h2>
 
             <p className="mt-4 max-w-xl text-sm leading-6 text-text-secondary">
-              Explore our complete range of sports nutrition and wellness
-              products designed to support every stage of your fitness journey.
+              Explore our complete range of sports
+              nutrition and wellness products designed
+              to support every stage of your fitness
+              journey.
             </p>
           </div>
 
           <Link
-            href="/shop"
+            href="/products"
             className="
               group
               hidden
@@ -316,19 +367,12 @@ export default function ShopByCategory() {
           </Link>
         </div>
 
-        {/* =====================================================
-            CATEGORY MARQUEE
-        ===================================================== */}
-
         <div className="relative">
-          {/* LEFT FADE */}
           <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-8 bg-gradient-to-r from-surface-muted to-transparent sm:w-12 lg:w-20" />
 
-          {/* RIGHT FADE */}
           <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-surface-muted to-transparent sm:w-12 lg:w-20" />
 
-          {/* Loading */}
-          {isLoading && (
+          {loading && (
             <div
               className="
                 flex
@@ -344,7 +388,9 @@ export default function ShopByCategory() {
                 lg:px-10
               "
             >
-              {Array.from({ length: 4 }).map((_, index) => (
+              {Array.from({
+                length: 4,
+              }).map((_, index) => (
                 <div
                   key={index}
                   className="
@@ -371,25 +417,22 @@ export default function ShopByCategory() {
             </div>
           )}
 
-          {/* Error */}
-          {!isLoading && isError && (
+          {!loading && error && (
             <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
               Unable to load categories right now.
             </div>
           )}
 
-          {/* Empty State */}
-          {!isLoading &&
-            !isError &&
+          {!loading &&
+            !error &&
             categories.length === 0 && (
               <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
                 No categories available right now.
               </div>
             )}
 
-          {/* Categories */}
-          {!isLoading &&
-            !isError &&
+          {!loading &&
+            !error &&
             categories.length > 0 && (
               <div
                 ref={sliderRef}
@@ -426,32 +469,10 @@ export default function ShopByCategory() {
                   msOverflowStyle: "none",
                 }}
               >
-                {/* FIRST SET */}
-                {categories.map((category) => (
-                  <div
-                    key={`first-${category.id}`}
-                    className="
-                      w-[calc((100vw-60px)/2)]
-                      min-w-[calc((100vw-60px)/2)]
-                      shrink-0
-                      [&>*]:w-full
-
-                      sm:w-[280px]
-                      sm:min-w-[280px]
-
-                      lg:w-[300px]
-                      lg:min-w-[300px]
-                    "
-                  >
-                    <CategoryCard category={category} />
-                  </div>
-                ))}
-
-                {/* DUPLICATE SET FOR INFINITE SCROLL */}
-                {categories.length > 1 &&
-                  categories.map((category) => (
+                {categories.map(
+                  (category) => (
                     <div
-                      key={`duplicate-${category.id}`}
+                      key={`first-${category.id}`}
                       className="
                         w-[calc((100vw-60px)/2)]
                         min-w-[calc((100vw-60px)/2)]
@@ -465,20 +486,44 @@ export default function ShopByCategory() {
                         lg:min-w-[300px]
                       "
                     >
-                      <CategoryCard category={category} />
+                      <CategoryCard
+                        category={category}
+                      />
                     </div>
-                  ))}
+                  )
+                )}
+
+                {categories.length > 1 &&
+                  categories.map(
+                    (category) => (
+                      <div
+                        key={`duplicate-${category.id}`}
+                        className="
+                          w-[calc((100vw-60px)/2)]
+                          min-w-[calc((100vw-60px)/2)]
+                          shrink-0
+                          [&>*]:w-full
+
+                          sm:w-[280px]
+                          sm:min-w-[280px]
+
+                          lg:w-[300px]
+                          lg:min-w-[300px]
+                        "
+                      >
+                        <CategoryCard
+                          category={category}
+                        />
+                      </div>
+                    )
+                  )}
               </div>
             )}
         </div>
 
-        {/* =====================================================
-            MOBILE VIEW ALL
-        ===================================================== */}
-
         <div className="mt-7 px-5 sm:hidden">
           <Link
-            href="/shop"
+            href="/products"
             className="group inline-flex items-center gap-2 text-sm font-black uppercase tracking-wide text-black"
           >
             <span className="border-b-2 border-primary pb-1">

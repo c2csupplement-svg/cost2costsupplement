@@ -3,7 +3,10 @@ import "./globals.css";
 
 import { ShopProvider } from "@/context/ShopContext";
 import { ToastProvider } from "@/context/ToastContext";
-import StoreProvider from "@/store/StoreProvider";
+import StoreProvider from "@/redux/provider";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +32,18 @@ export default function RootLayout({ children }) {
       <body className="font-oxanium min-h-full flex flex-col">
         <StoreProvider>
           <ToastProvider>
-            <ShopProvider>{children}</ShopProvider>
+            <ShopProvider>
+              <Header />
+
+              {children}
+
+              <Toaster
+                position="top-right"
+                richColors
+              />
+
+              <Footer />
+            </ShopProvider>
           </ToastProvider>
         </StoreProvider>
       </body>

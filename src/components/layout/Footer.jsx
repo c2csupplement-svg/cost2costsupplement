@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 const shopLinks = [
-  { label: "All Products", href: "/shop" },
+  { label: "All Products", href: "/products" },
   { label: "Protein", href: "/shop?category=protein" },
   { label: "Creatine", href: "/shop?category=creatine" },
   { label: "Pre-Workout", href: "/shop?category=pre-workout" },

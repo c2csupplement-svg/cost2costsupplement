@@ -1,23 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ArrowRight } from "lucide-react";
 
-import { useGetBrandsQuery } from "@/services/productsApi";
+import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
 
 export default function BrandsSection() {
-  const {
-    data: brandsData,
-    isLoading,
-    isError,
-  } = useGetBrandsQuery();
+  const dispatch = useDispatch();
 
-  const brands = useMemo(() => {
-    return (brandsData?.brands || [])
-      .filter((brand) => brand.isActive)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
-  }, [brandsData]);
+  const {
+    brands,
+    loading,
+    loaded,
+    error,
+  } = useSelector((state) => state.productAd || {});
 
   const sliderRef = useRef(null);
   const animationRef = useRef(null);
@@ -25,9 +23,23 @@ export default function BrandsSection() {
   const lastTimeRef = useRef(0);
 
   useEffect(() => {
+    if (!loaded && !loading) {
+      dispatch(getAllProductAds());
+    }
+  }, [dispatch, loaded, loading]);
+
+  const normalizedBrands = Array.isArray(brands)
+    ? brands
+    : Array.isArray(brands?.brands)
+      ? brands.brands
+      : [];
+
+  useEffect(() => {
     const slider = sliderRef.current;
 
-    if (!slider || brands.length === 0) return;
+    if (!slider || normalizedBrands.length === 0) {
+      return;
+    }
 
     const speed = 28;
 
@@ -44,23 +56,31 @@ export default function BrandsSection() {
 
         const halfWidth = slider.scrollWidth / 2;
 
-        if (slider.scrollLeft >= halfWidth) {
+        if (
+          halfWidth > 0 &&
+          slider.scrollLeft >= halfWidth
+        ) {
           slider.scrollLeft -= halfWidth;
         }
       }
 
-      animationRef.current = requestAnimationFrame(animate);
+      animationRef.current =
+        requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    animationRef.current =
+      requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(animationRef.current);
-    };
-  }, [brands.length]);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
 
-  // Don't show the section until brands are loaded
-  if (isLoading) {
+      lastTimeRef.current = 0;
+    };
+  }, [normalizedBrands.length]);
+
+  if (loading && normalizedBrands.length === 0) {
     return (
       <section className="relative overflow-hidden bg-surface-muted py-10">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-10">
@@ -85,18 +105,15 @@ export default function BrandsSection() {
     );
   }
 
-  // Hide section if API fails or there are no brands
-  if (isError || brands.length === 0) {
+  if (error || normalizedBrands.length === 0) {
     return null;
   }
 
   return (
     <section className="relative overflow-hidden bg-surface-muted py-10 sm:py-10 lg:py-10">
-      {/* Background glow */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-[1440px]">
-        {/* HEADING */}
         <div className="mx-auto max-w-2xl px-5 text-center sm:px-8">
           <div className="mb-3 flex items-center justify-center gap-3">
             <span className="h-[2px] w-8 bg-primary" />
@@ -118,12 +135,9 @@ export default function BrandsSection() {
           </p>
         </div>
 
-        {/* BRAND MARQUEE */}
         <div className="relative mt-10">
-          {/* Left fade */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-surface-muted to-transparent sm:w-16 lg:w-24" />
 
-          {/* Right fade */}
           <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-surface-muted to-transparent sm:w-16 lg:w-24" />
 
           <div
@@ -142,27 +156,22 @@ export default function BrandsSection() {
             }}
             className="c2c-marquee flex cursor-grab gap-4 overflow-x-auto px-5 pb-4 active:cursor-grabbing sm:gap-5 sm:px-8 lg:gap-6 lg:px-10"
           >
-            {/* First set */}
-            {brands.map((brand) => (
+            {normalizedBrands.map((brand) => (
               <BrandCard
                 key={`first-${brand.id}`}
                 brand={brand}
-                
               />
             ))}
 
-            {/* Duplicate set for infinite marquee */}
-            {brands.map((brand) => (
+            {normalizedBrands.map((brand) => (
               <BrandCard
                 key={`duplicate-${brand.id}`}
                 brand={brand}
-                
               />
             ))}
           </div>
         </div>
 
-        {/* BOTTOM CTA */}
         <div className="mt-8 flex justify-center">
           <Link
             href="/brands"
@@ -182,51 +191,18 @@ function BrandCard({ brand }) {
   return (
     <Link
       href={`/brands/${brand.slug}`}
-      style={{ backgroundColor: brand.bgColor || '#ffffff' }}
-      
-      className="
-        group
-        relative
-        flex
-        h-[100px]
-        w-[180px]
-        min-w-[180px]
-        shrink-0
-        items-center
-        justify-center
-        overflow-hidden
-        rounded-2xl
-        border
-        border-border
-        px-8
-        shadow-[0_6px_25px_rgba(0,0,0,0.04)]
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:border-primary
-        hover:shadow-[0_16px_35px_rgba(229,35,35,0.10)]
-        sm:h-[105px]
-        sm:w-[180px]
-        sm:min-w-[180px]
-      "
+      style={{
+        backgroundColor: brand.bgColor || "#ffffff",
+      }}
+      className="group relative flex h-[100px] w-[180px] min-w-[180px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border px-8 shadow-[0_6px_25px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-[0_16px_35px_rgba(229,35,35,0.10)] sm:h-[105px] sm:w-[180px] sm:min-w-[180px]"
     >
-      {/* Red corner accent */}
       <div className="absolute right-0 top-0 h-12 w-12 translate-x-6 -translate-y-6 rotate-45 bg-primary/0 transition-all duration-300 group-hover:bg-primary" />
 
       {brand.logo ? (
         <img
           src={brand.logo}
           alt={brand.name}
-          className="
-            max-h-14
-            max-w-[165px]
-            object-contain
-            transition-all
-            duration-500
-            group-hover:scale-105
-            sm:max-h-16
-            sm:max-w-[180px]
-          "
+          className="max-h-14 max-w-[165px] object-contain transition-all duration-500 group-hover:scale-105 sm:max-h-16 sm:max-w-[180px]"
         />
       ) : (
         <span className="text-center text-sm font-black uppercase text-text-primary transition-colors group-hover:text-primary">
@@ -234,7 +210,6 @@ function BrandCard({ brand }) {
         </span>
       )}
 
-      {/* Bottom hover line */}
       <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary transition-all duration-500 group-hover:w-full" />
     </Link>
   );

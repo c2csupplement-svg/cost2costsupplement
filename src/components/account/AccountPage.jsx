@@ -171,7 +171,7 @@ export default function AccountPage() {
             </div>
 
             <Link
-              href="/shop"
+              href="/products"
               className="mt-6 inline-block text-sm text-[#777] underline underline-offset-2 transition hover:text-[#E52323]"
             >
               Continue Shopping

@@ -83,7 +83,7 @@ export default function ProductSlider({
           </div>
 
           <Link
-            href="/shop"
+            href="/products"
             className="group hidden shrink-0 items-center gap-2 rounded-lg border-2 border-text-primary px-5 py-3 text-xs font-black uppercase tracking-wide text-text-primary transition-all duration-300 hover:bg-text-primary hover:text-white sm:flex"
           >
             View All Products
@@ -194,7 +194,7 @@ export default function ProductSlider({
         {/* MOBILE VIEW ALL */}
         <div className="mt-7 px-5 sm:hidden">
           <Link
-            href="/shop"
+            href="/products"
             className="group inline-flex items-center gap-2 text-sm font-black uppercase tracking-wide text-text-primary"
           >
             <span className="border-b-2 border-primary pb-1">

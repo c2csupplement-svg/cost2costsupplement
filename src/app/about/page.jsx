@@ -1,12 +1,10 @@
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
-      <Header />
+
 
       {/* =====================================================
           BREADCRUMB
@@ -385,7 +383,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
+
     </main>
   );
 }

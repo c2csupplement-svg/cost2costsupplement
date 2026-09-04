@@ -72,7 +72,7 @@ export default function OverviewSection({
 
           <div className="relative shrink-0">
             <Link
-              href="/shop"
+              href="/products"
               className="oxanium inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-[#111] transition hover:bg-[#E52323] hover:text-white"
             >
               Shop Now
@@ -224,7 +224,7 @@ export default function OverviewSection({
           </div>
 
           <Link
-            href="/shop"
+            href="/products"
             className="oxanium flex shrink-0 items-center gap-2 rounded-lg bg-[#111] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white hover:text-[#111]"
           >
             Browse Products

@@ -127,7 +127,7 @@
                 </p>
 
                 <Link
-                href="/shop"
+                href="/products"
                 className="font-oxanium font-bold mt-8 inline-flex items-center gap-2 rounded-lg bg-[#E52323] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#ff2b2b]"
                 >
                 <ArrowLeft className="h-4 w-4" />
@@ -221,7 +221,7 @@
                 <span>/</span>
 
                 <Link
-                    href="/shop"
+                    href="/products"
                     className="transition hover:text-[#E52323]"
                 >
                     Products
@@ -920,7 +920,7 @@
     //         </div>
 
     //         <Link
-    //         href="/shop"
+    //         href="/products"
     //         className="hidden items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#737373] transition hover:text-[#E52323] sm:flex"
     //         >
     //         View All

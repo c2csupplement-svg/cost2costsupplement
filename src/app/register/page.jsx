@@ -1,9 +1,10 @@
 "use client";
 
+import axios from "axios";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useRegisterMutation } from "@/services/productsApi";
+
 import {
   UserRoundPlus,
   User,
@@ -14,16 +15,24 @@ import {
   EyeOff,
   ArrowRight,
 } from "lucide-react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const router = useRouter();
 
-  const [register, { isLoading }] = useRegisterMutation();
+import { useAuth } from "@/context/AuthContext";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const { loginUser } = useAuth();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -42,66 +51,149 @@ export default function RegisterPage() {
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  setError("");
+    setError("");
+    setSuccess("");
 
-  if (form.password !== form.confirmPassword) {
-    setError("Passwords do not match.");
-    return;
-  }
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
 
-  if (!form.terms) {
-    setError("Please agree to the Terms and Privacy Policy.");
-    return;
-  }
-
-  try {
-    const response = await register({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-    }).unwrap();
-
-    if (!response?.success || !response?.token) {
-      setError("Registration failed. Please try again.");
+    if (!name) {
+      setError("Please enter your full name.");
       return;
     }
 
-    localStorage.setItem("token", response.token);
-
-    if (response.user) {
-      localStorage.setItem(
-        "authUser",
-        JSON.stringify(response.user)
-      );
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
     }
 
-    router.push("/account");
-  } catch (err) {
-    console.error("Registration error:", err);
+    if (!phone) {
+      setError("Please enter your phone number.");
+      return;
+    }
 
-    const message =
-      err?.data?.message ||
-      err?.data?.error ||
-      "Unable to create your account.";
+    if (!form.password) {
+      setError("Please enter a password.");
+      return;
+    }
 
-    setError(message);
-  }
-};
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!form.terms) {
+      setError("Please agree to the Terms and Privacy Policy.");
+      return;
+    }
+
+    if (!API_BASE_URL) {
+      setError("API URL is not configured.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/register`,
+        {
+          name,
+          email,
+          phone,
+          password: form.password,
+          password_confirmation: form.confirmPassword,
+        }
+      );
+
+      const data = response?.data;
+
+      if (!data?.success) {
+        setError(
+          data?.message ||
+            data?.error ||
+            "Registration failed. Please try again."
+        );
+        return;
+      }
+
+      if (data?.token) {
+        loginUser({
+          token: data.token,
+          user: data.user ?? null,
+        });
+
+        router.push("/account");
+        return;
+      }
+
+      setSuccess(
+        data?.message ||
+          "Account created successfully. Please login."
+      );
+
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        terms: false,
+      });
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+    } catch (err) {
+      console.error("Registration error:", err);
+
+      const responseData = err?.response?.data;
+
+      let message =
+        responseData?.message ||
+        responseData?.error ||
+        err?.message ||
+        "Unable to create your account.";
+
+      if (responseData?.errors) {
+        const validationErrors = responseData.errors;
+
+        if (
+          typeof validationErrors === "object" &&
+          validationErrors !== null
+        ) {
+          const firstError = Object.values(
+            validationErrors
+          )?.[0];
+
+          if (Array.isArray(firstError)) {
+            message = firstError[0];
+          } else if (typeof firstError === "string") {
+            message = firstError;
+          }
+        }
+      }
+
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white px-0 py-0">
-      <Header />
+
       <div className="mx-auto grid min-h-screen max-w-[1450px] grid-cols-1 lg:grid-cols-2">
-
-        {/* =====================================
-            LEFT IMAGE
-        ===================================== */}
         <div className="relative hidden min-h-screen overflow-hidden lg:block">
-
           <img
             src="https://www.cost2costsupplement.com/storage/other-banners/login-img-1.png"
             alt="Cost2Cost Supplement"
@@ -109,21 +201,11 @@ const handleSubmit = async (e) => {
           />
 
           <div className="absolute inset-0 bg-black/5" />
-
         </div>
 
-        {/* =====================================
-            RIGHT REGISTER PANEL
-        ===================================== */}
         <div className="flex min-h-screen items-start justify-center bg-[#f8f9fa] px-6 py-10 sm:px-10 lg:px-16 xl:px-20">
-
           <div className="w-full max-w-[590px]">
-
-            {/* =================================
-                TITLE
-            ================================= */}
             <div className="mb-10 flex items-start gap-4">
-
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-white">
                 <UserRoundPlus
                   size={29}
@@ -138,61 +220,41 @@ const handleSubmit = async (e) => {
                 </h1>
 
                 <p className="mt-4 max-w-[500px] text-base leading-7 text-[#666]">
-                  Your personal data will be used to support your experience
-                  throughout this website, to manage access to your account.
+                  Your personal data will be used to support your
+                  experience throughout this website, to manage access
+                  to your account.
                 </p>
               </div>
-
             </div>
 
-            {/* =================================
-                GOOGLE
-            ================================= */}
-            {/* <div className="mb-8">
-
-              <p className="mb-7 text-center text-sm text-[#555]">
-                Login with social networks
-              </p>
-
-              <button
-                type="button"
-                className="flex h-16 w-full items-center gap-5 rounded-xl border border-[#e7e7e7] bg-white px-7 text-left transition hover:border-[#ccc] hover:shadow-sm"
-              >
-                <span className="text-3xl font-bold text-[#4285F4]">
-                  G
-                </span>
-
-                <span className="text-base font-medium text-[#333]">
-                  Sign in with Google
-                </span>
-              </button>
-
-            </div> */}
-
-            {/* =================================
-                DIVIDER
-            ================================= */}
             <div className="mb-10 flex items-center gap-4">
               <div className="h-px flex-1 bg-[#ddd]" />
             </div>
 
             <p className="mb-8 text-center text-sm text-[#555]">
-              Login with Account Credentials
+              Register with Account Credentials
             </p>
-          {error && (
-            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[#E52323]">
-              {error}
-            </div>
-          )}
-            {/* =================================
-                FORM
-            ================================= */}
-            <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* FULL NAME */}
+            {error && (
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[#E52323]">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                {success}
+              </div>
+            )}
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
               <div>
                 <label className="mb-2 block text-base text-[#444]">
-                  Full name <span className="text-[#E52323]">*</span>
+                  Full name{" "}
+                  <span className="text-[#E52323]">*</span>
                 </label>
 
                 <div className="relative">
@@ -209,16 +271,16 @@ const handleSubmit = async (e) => {
                     onChange={handleChange}
                     placeholder="Your full name"
                     required
+                    autoComplete="name"
                     className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
                   />
                 </div>
               </div>
 
-              {/* EMAIL */}
-
               <div>
                 <label className="mb-2 block text-base text-[#444]">
-                  Email <span className="text-[#E52323]">*</span>
+                  Email{" "}
+                  <span className="text-[#E52323]">*</span>
                 </label>
 
                 <div className="relative">
@@ -235,17 +297,16 @@ const handleSubmit = async (e) => {
                     onChange={handleChange}
                     placeholder="Your email address"
                     required
+                    autoComplete="email"
                     className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
                   />
                 </div>
-
-
               </div>
 
-              {/* PHONE */}
               <div>
                 <label className="mb-2 block text-base text-[#444]">
-                  Phone <span className="text-[#E52323]">*</span>
+                  Phone{" "}
+                  <span className="text-[#E52323]">*</span>
                 </label>
 
                 <div className="relative">
@@ -257,24 +318,25 @@ const handleSubmit = async (e) => {
 
                   <input
                     name="phone"
-                    type="number"
+                    type="tel"
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Phone number"
                     required
+                    autoComplete="tel"
+                    inputMode="tel"
                     className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
                   />
                 </div>
               </div>
 
-              {/* PASSWORD */}
               <div>
                 <label className="mb-2 block text-base text-[#444]">
-                  Password <span className="text-[#E52323]">*</span>
+                  Password{" "}
+                  <span className="text-[#E52323]">*</span>
                 </label>
 
                 <div className="relative">
-
                   <Lock
                     size={21}
                     strokeWidth={1.7}
@@ -283,18 +345,29 @@ const handleSubmit = async (e) => {
 
                   <input
                     name="password"
-                    type={showPassword ? "text" : "password"}
+                    type={
+                      showPassword ? "text" : "password"
+                    }
                     value={form.password}
                     onChange={handleChange}
                     placeholder="Password"
                     required
+                    minLength={6}
+                    autoComplete="new-password"
                     className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-14 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
                   />
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      setShowPassword((current) => !current)
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#555] hover:text-black"
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <EyeOff size={21} />
@@ -302,11 +375,9 @@ const handleSubmit = async (e) => {
                       <Eye size={21} />
                     )}
                   </button>
-
                 </div>
               </div>
 
-              {/* CONFIRM PASSWORD */}
               <div>
                 <label className="mb-2 block text-base text-[#444]">
                   Password confirmation{" "}
@@ -314,7 +385,6 @@ const handleSubmit = async (e) => {
                 </label>
 
                 <div className="relative">
-
                   <Lock
                     size={21}
                     strokeWidth={1.7}
@@ -323,20 +393,33 @@ const handleSubmit = async (e) => {
 
                   <input
                     name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={
+                      showConfirmPassword
+                        ? "text"
+                        : "password"
+                    }
                     value={form.confirmPassword}
                     onChange={handleChange}
                     placeholder="Password confirmation"
                     required
+                    minLength={6}
+                    autoComplete="new-password"
                     className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-14 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
                   />
 
                   <button
                     type="button"
                     onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
+                      setShowConfirmPassword(
+                        (current) => !current
+                      )
                     }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#555] hover:text-black"
+                    aria-label={
+                      showConfirmPassword
+                        ? "Hide password confirmation"
+                        : "Show password confirmation"
+                    }
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={21} />
@@ -344,13 +427,10 @@ const handleSubmit = async (e) => {
                       <Eye size={21} />
                     )}
                   </button>
-
                 </div>
               </div>
 
-              {/* TERMS */}
               <label className="flex cursor-pointer items-start gap-2 pt-1 text-sm text-[#444]">
-
                 <input
                   name="terms"
                   type="checkbox"
@@ -375,28 +455,27 @@ const handleSubmit = async (e) => {
                     Privacy Policy
                   </Link>
                 </span>
-
               </label>
 
-              {/* REGISTER */}
               <button
                 type="submit"
                 disabled={isLoading}
                 className="group mt-1 flex h-[62px] w-full items-center justify-center gap-2 rounded-xl border border-[#E52323] bg-[#292929] text-base font-medium text-white transition hover:bg-[#E52323] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? "Registering..." : "Register"}
-
-                {!isLoading && (
-                  <ArrowRight
-                    size={20}
-                    className="transition-transform group-hover:translate-x-1"
-                  />
+                {isLoading ? (
+                  "Registering..."
+                ) : (
+                  <>
+                    Register
+                    <ArrowRight
+                      size={20}
+                      className="transition-transform group-hover:translate-x-1"
+                    />
+                  </>
                 )}
               </button>
-
             </form>
 
-            {/* LOGIN */}
             <p className="mt-6 text-center text-base text-[#555]">
               Already have an account?{" "}
               <Link
@@ -406,13 +485,9 @@ const handleSubmit = async (e) => {
                 Login now
               </Link>
             </p>
-
           </div>
-
         </div>
-
       </div>
-      <Footer/>
     </main>
   );
 }

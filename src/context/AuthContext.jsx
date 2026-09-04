@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,18 +14,24 @@ export function AuthProvider({ children }) {
       const storedToken = localStorage.getItem("token");
       const storedUser = localStorage.getItem("authUser");
 
-      if (storedToken) {
-        setToken(storedToken);
-      }
+      setToken(storedToken || null);
 
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem("authUser");
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error("Failed to restore authentication:", error);
 
       localStorage.removeItem("token");
       localStorage.removeItem("authUser");
+      localStorage.removeItem("rememberMe");
 
       setToken(null);
       setUser(null);
@@ -36,14 +42,14 @@ export function AuthProvider({ children }) {
 
   const loginUser = (authData) => {
     const newToken = authData?.token;
-    const newUser = authData?.user;
+    const newUser = authData?.user ?? null;
 
     if (!newToken) {
       throw new Error("Authentication token is missing.");
     }
 
     setToken(newToken);
-    setUser(newUser || null);
+    setUser(newUser);
 
     localStorage.setItem("token", newToken);
 
@@ -63,17 +69,17 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("rememberMe");
   };
 
+  const value = {
+    user,
+    token,
+    loading,
+    isAuthenticated: Boolean(token),
+    loginUser,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        isAuthenticated: Boolean(token),
-        loginUser,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -82,7 +88,7 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
 
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useAuth must be used inside AuthProvider");
   }
 

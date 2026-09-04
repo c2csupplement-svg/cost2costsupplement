@@ -46,7 +46,7 @@ export default function Hero() {
           <div className="mt-9 flex flex-wrap gap-3">
 
             <Link
-              href="/shop"
+              href="/products"
               className="group inline-flex h-14 items-center gap-3 rounded-lg bg-primary px-7 text-sm font-black uppercase tracking-wide text-white shadow-[0_12px_30px_rgba(229,35,35,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_16px_35px_rgba(229,35,35,0.28)]"
             >
               Shop Now
@@ -55,7 +55,7 @@ export default function Hero() {
             </Link>
 
             <Link
-              href="/shop"
+              href="/products"
               className="group inline-flex h-14 items-center gap-3 rounded-lg border-2 border-text-primary px-7 text-sm font-black uppercase tracking-wide text-text-primary transition-all duration-300 hover:bg-text-primary hover:text-white"
             >
               Explore Products  

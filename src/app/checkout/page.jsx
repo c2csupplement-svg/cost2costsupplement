@@ -10,8 +10,6 @@ import {
   ShoppingBag,
 } from "lucide-react";
 
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { useShop } from "@/context/ShopContext";
 
 export default function CheckoutPage() {
@@ -23,7 +21,6 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <>
-        <Header />
 
         <main className="min-h-screen bg-background text-text-primary">
           <div className="mx-auto flex min-h-[650px] max-w-[1440px] flex-col items-center justify-center px-5 text-center sm:px-8">
@@ -40,7 +37,7 @@ export default function CheckoutPage() {
             </p>
 
             <Link
-              href="/shop"
+              href="/products"
               className="oxanium mt-7 flex items-center gap-2 bg-primary px-7 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90"
             >
               Continue Shopping
@@ -48,7 +45,6 @@ export default function CheckoutPage() {
           </div>
         </main>
 
-        <Footer />
       </>
     );
   }
@@ -241,8 +237,7 @@ export default function CheckoutPage() {
                         <Image
                           src={
                             item.images?.[0] ||
-                            item.image ||
-                            "/placeholder-product.png"
+                            item.image
                           }
                           alt={item.name}
                           fill

@@ -1,7 +1,8 @@
 "use client";
 
-import Header from "@/components/layout/Header";
-import {useGetBestSellingProductsQuery, useGetFeaturedProductsQuery , useGetRecentProductsQuery ,useGetTrendingProductsQuery,useGetTopRatedProductsQuery , useGetPopularProductsQuery  } from "@/services/productsApi";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import Hero from "@/components/home/New-Hero";
 import ShopByGoal from "@/components/home/ShopByGoal";
 import ProductSlider from "@/components/home/ProductSlider";
@@ -11,60 +12,78 @@ import BrandsSection from "@/components/home/BrandsSection";
 import PromoBanner from "@/components/home/PromoBanner";
 import BlogSection from "@/components/home/BlogSection";
 import WhyC2C from "@/components/home/WhyC2C";
-import Footer from "@/components/layout/Footer";
+
+import { getAllProductAds } from "../redux/features/adProducts/adProductAction";
 
 export default function Home() {
+  const dispatch = useDispatch();
 
   const {
-    data: bestSellingData,
-    isLoading: isBestSellingLoading,
-  } = useGetBestSellingProductsQuery();
-  
-  const bestSellingProducts = bestSellingData?.products || [];
-  const {
-    data: featuredData,
-    isLoading: isFeaturedLoading,
-  } = useGetFeaturedProductsQuery();
+    loading,
+    loaded,
+    error,
+    trendProduct,
+    featuredProduct,
+    topRelateProduct,
+    popularProduct,
+    topSellingProduct,
+  } = useSelector((state) => state.productAd);
 
-  const featuredProducts = featuredData?.products || [];
+  useEffect(() => {
+    if (!loaded && !loading) {
+      dispatch(getAllProductAds());
+    }
+  }, [dispatch, loaded, loading]);
 
-  const {
-    data: popularData,
-    isLoading: isPopularLoading,
-  } = useGetPopularProductsQuery();
+  const getProducts = (data) => {
+    if (Array.isArray(data)) {
+      return data;
+    }
 
-  const popularProducts = popularData?.products || [];
+    if (Array.isArray(data?.products)) {
+      return data.products;
+    }
 
-  const {
-    data: topRatedData,
-    isLoading: isTopRatedLoading,
-  } = useGetTopRatedProductsQuery();
+    return [];
+  };
 
-  const topRatedProducts = topRatedData?.products || [];
+  const bestSellingProducts = getProducts(topSellingProduct);
+  const featuredProducts = getProducts(featuredProduct);
+  const popularProducts = getProducts(popularProduct);
+  const topRatedProducts = getProducts(topRelateProduct);
+  const trendingProducts = getProducts(trendProduct);
 
-  const {
-    data: trendingData,
-    isLoading: isTrendingLoading,
-  } = useGetTrendingProductsQuery();
-
-  const trendingProducts = trendingData?.products || [];
-
-  const {
-    data: recentData,
-    isLoading: isRecentLoading,
-  } = useGetRecentProductsQuery();
-
-  const recentProducts = recentData?.products || [];
+  const isLoading = loading && !loaded;
 
   return (
     <main className="min-h-screen bg-[#0B0B0B]">
-      <Header />
 
       <Hero />
 
       <ShopByGoal />
 
-      {!isBestSellingLoading && bestSellingProducts.length > 0 && (
+      {error && (
+        <div className="mx-auto w-full max-w-7xl px-4 py-4">
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="mx-auto w-full max-w-7xl px-4 py-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-72 animate-pulse rounded-xl bg-white/5"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isLoading && bestSellingProducts.length > 0 && (
         <ProductSlider
           eyebrow="Best Sellers"
           title="Best Selling Products"
@@ -73,7 +92,7 @@ export default function Home() {
         />
       )}
 
-      {!isFeaturedLoading && featuredProducts.length > 0 && (
+      {!isLoading && featuredProducts.length > 0 && (
         <ProductSlider
           eyebrow="Featured"
           title="Featured Products"
@@ -82,7 +101,7 @@ export default function Home() {
         />
       )}
 
-      {!isPopularLoading && popularProducts.length > 0 && (
+      {!isLoading && popularProducts.length > 0 && (
         <ProductSlider
           eyebrow={productSections.popularProducts.eyebrow}
           title={productSections.popularProducts.title}
@@ -93,7 +112,7 @@ export default function Home() {
 
       <ShopByCategory />
 
-      {!isTopRatedLoading && topRatedProducts.length > 0 && (
+      {!isLoading && topRatedProducts.length > 0 && (
         <ProductSlider
           eyebrow={productSections.topRated.eyebrow}
           title={productSections.topRated.title}
@@ -102,21 +121,12 @@ export default function Home() {
         />
       )}
 
-      {!isTrendingLoading && trendingProducts.length > 0 && (
+      {!isLoading && trendingProducts.length > 0 && (
         <ProductSlider
           eyebrow={productSections.trendingProducts.eyebrow}
           title={productSections.trendingProducts.title}
           description={productSections.trendingProducts.description}
           products={trendingProducts}
-        />
-      )}
-
-      {!isRecentLoading && recentProducts.length > 0 && (
-        <ProductSlider
-          eyebrow={productSections.recentlyAdded.eyebrow}
-          title={productSections.recentlyAdded.title}
-          description={productSections.recentlyAdded.description}
-          products={recentProducts}
         />
       )}
 
@@ -128,7 +138,6 @@ export default function Home() {
 
       <WhyC2C />
 
-      <Footer />
     </main>
   );
 }

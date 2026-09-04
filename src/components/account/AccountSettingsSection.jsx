@@ -59,8 +59,7 @@ export default function AccountSettingsSection({ user }) {
   const handleProfileSubmit = (e) => {
     e.preventDefault();
 
-    // API will be connected here later
-    console.log("Profile update:", profile);
+
 
     setSaved(true);
 
@@ -82,8 +81,6 @@ export default function AccountSettingsSection({ user }) {
       return;
     }
 
-    // API will be connected here later
-    console.log("Password update:", passwords);
 
     setPasswords({
       current: "",
