@@ -61,6 +61,8 @@ export const getCategoryBySlug = async (slug, page=1, limit=20) => {
 
 export const getProductSearchApi = async (query) => {
     try{
+        
+
         const response = await axios.get(`${API_BASE_URL}/products/search?q=${query}`);
 
         return response.data
@@ -185,7 +187,6 @@ export const couponApi = async () => {
             }
         );
 
-        console.log(response.data)
 
         return response
 

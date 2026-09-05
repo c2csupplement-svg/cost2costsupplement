@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -22,15 +22,10 @@ import {
 } from "@/redux/features/product/productAction";
 
 import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
-import { getProductSearchApi } from "@/apiService/api"
 
 export default function ShopPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const dispatch = useDispatch();
-
-  const urlSearchQuery =
-    searchParams?.get("search") || "";
 
   const [selectedCategory, setSelectedCategory] = useState({
     id: null,
@@ -44,25 +39,10 @@ export default function ShopPage() {
 
   const [sortBy, setSortBy] = useState("Featured");
 
-  const [searchQuery, setSearchQuery] =
-    useState(urlSearchQuery);
-
-  const [debouncedSearchQuery, setDebouncedSearchQuery] =
-    useState(urlSearchQuery);
-
   const [mobileFiltersOpen, setMobileFiltersOpen] =
     useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-
-  const [searchProducts, setSearchProducts] = useState([]);
-  const [searchMeta, setSearchMeta] = useState({
-    total: 0,
-    count: 0,
-    totalPages: 1,
-  });
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState(null);
 
   const pageSize = 20;
 
@@ -108,10 +88,6 @@ export default function ShopPage() {
     productAdState.brands ?? null;
 
   const allProducts = useMemo(() => {
-    if (urlSearchQuery.trim()) {
-      return searchProducts;
-    }
-
     if (Array.isArray(productData)) {
       return productData;
     }
@@ -124,61 +100,14 @@ export default function ShopPage() {
       return productData.data;
     }
 
-    if (
-      Array.isArray(
-        productData?.data?.products
-      )
-    ) {
+    if (Array.isArray(productData?.data?.products)) {
       return productData.data.products;
     }
 
     return [];
-  }, [
-    productData,
-    searchProducts,
-    urlSearchQuery,
-  ]);
+  }, [productData]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery.trim());
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const currentQuery = urlSearchQuery.trim();
-    const nextQuery = debouncedSearchQuery.trim();
-
-    if (currentQuery === nextQuery) {
-      return;
-    }
-
-    setCurrentPage(1);
-
-    if (nextQuery) {
-      router.push(
-        `/products?search=${encodeURIComponent(nextQuery)}`
-      );
-    } else {
-      router.push("/products");
-    }
-  }, [
-    debouncedSearchQuery,
-    urlSearchQuery,
-    router,
-  ]);
-
-  useEffect(() => {
-    const query = urlSearchQuery.trim();
-
-    if (query) {
-      return;
-    }
-
     const filters = {};
 
     if (selectedCategory.id !== null) {
@@ -212,124 +141,6 @@ export default function ShopPage() {
     currentPage,
     selectedCategory.id,
     selectedBrand.id,
-    urlSearchQuery,
-  ]);
-
-  useEffect(() => {
-    const query = urlSearchQuery.trim();
-
-    if (!query) {
-      setSearchProducts([]);
-      setSearchMeta({
-        total: 0,
-        count: 0,
-        totalPages: 1,
-      });
-      setSearchError(null);
-      setSearchLoading(false);
-      return;
-    }
-
-    let active = true;
-
-    const fetchSearchProducts = async () => {
-      try {
-        setSearchLoading(true);
-        setSearchError(null);
-
-        const response = await getProductSearchApi(
-          query,
-          currentPage,
-          pageSize
-        );
-
-        const data =
-          response?.data ?? response;
-
-        if (!data?.success) {
-          throw new Error(
-            data?.message ||
-              "Failed to search products"
-          );
-        }
-
-        const results = Array.isArray(
-          data?.products
-        )
-          ? data.products
-          : Array.isArray(
-              data?.data?.products
-            )
-          ? data.data.products
-          : Array.isArray(
-              data?.data
-            )
-          ? data.data
-          : [];
-
-        if (!active) {
-          return;
-        }
-
-        setSearchProducts(results);
-
-        setSearchMeta({
-          total:
-            Number(
-              data?.total ??
-                data?.data?.total
-            ) || results.length,
-          count:
-            Number(
-              data?.count ??
-                data?.data?.count
-            ) || results.length,
-          totalPages:
-            Math.max(
-              Number(
-                data?.totalPages ??
-                  data?.data?.totalPages
-              ) || 1,
-              1
-            ),
-        });
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-
-        console.error(
-          "Product search API:",
-          error
-        );
-
-        setSearchProducts([]);
-        setSearchMeta({
-          total: 0,
-          count: 0,
-          totalPages: 1,
-        });
-
-        setSearchError(
-          error?.response?.data?.message ||
-            error?.message ||
-            "Failed to search products"
-        );
-      } finally {
-        if (active) {
-          setSearchLoading(false);
-        }
-      }
-    };
-
-    fetchSearchProducts();
-
-    return () => {
-      active = false;
-    };
-  }, [
-    urlSearchQuery,
-    currentPage,
   ]);
 
   useEffect(() => {
@@ -346,14 +157,6 @@ export default function ShopPage() {
     adsLoaded,
     adsLoading,
   ]);
-
-  useEffect(() => {
-    setSearchQuery(
-      urlSearchQuery
-    );
-
-    setCurrentPage(1);
-  }, [urlSearchQuery]);
 
   const categories = useMemo(() => {
     const apiCategories = Array.isArray(
@@ -820,12 +623,8 @@ export default function ShopPage() {
       sortBy,
     ]);
 
-  const isSearchMode =
-    Boolean(urlSearchQuery.trim());
-
-  const totalProducts = isSearchMode
-    ? searchMeta.total
-    : Number(
+  const totalProducts =
+    Number(
         productData?.total
       ) ||
       Number(
@@ -834,9 +633,7 @@ export default function ShopPage() {
       filteredProducts.length ||
       0;
 
-  const totalPages = isSearchMode
-    ? searchMeta.totalPages
-    : Number(
+  const totalPages = Number(
         productData?.totalPages
       ) ||
       Number(
@@ -929,20 +726,11 @@ export default function ShopPage() {
       totalPages,
     ]);
 
-  const isProductsLoading =
-    isSearchMode
-      ? searchLoading
-      : productLoading;
+  const isProductsLoading = productLoading;
 
-  const isProductsFetching =
-    isSearchMode
-      ? searchLoading
-      : productLoading;
+  const isProductsFetching = productLoading;
 
-  const isProductsError =
-    isSearchMode
-      ? Boolean(searchError)
-      : Boolean(productError);
+  const isProductsError = Boolean(productError);
 
   const isBrandsLoading =
     adsLoading &&
@@ -961,114 +749,20 @@ export default function ShopPage() {
     isProductsError ||
     isBrandsError;
 
-  const error =
-    isSearchMode
-      ? searchError || adsError
-      : productError || adsError;
+  const error = productError || adsError;
 
   const refetch = () => {
-    if (isSearchMode) {
-      const query = urlSearchQuery.trim();
-
-      if (!query) {
-        return;
-      }
-
-      setSearchError(null);
-      setSearchLoading(true);
-
-      getProductSearchApi(
-        query,
-        currentPage,
-        pageSize
-      )
-        .then((response) => {
-          const data =
-            response?.data ??
-            response;
-
-          if (!data?.success) {
-            throw new Error(
-              data?.message ||
-                "Failed to search products"
-            );
-          }
-
-          const results =
-            Array.isArray(
-              data?.products
-            )
-              ? data.products
-              : Array.isArray(
-                  data?.data?.products
-                )
-              ? data.data.products
-              : Array.isArray(
-                  data?.data
-                )
-              ? data.data
-              : [];
-
-          setSearchProducts(
-            results
-          );
-
-          setSearchMeta({
-            total:
-              Number(
-                data?.total ??
-                  data?.data?.total
-              ) || results.length,
-            count:
-              Number(
-                data?.count ??
-                  data?.data?.count
-              ) || results.length,
-            totalPages:
-              Math.max(
-                Number(
-                  data?.totalPages ??
-                    data?.data?.totalPages
-                ) || 1,
-                1
-              ),
-          });
-        })
-        .catch((error) => {
-          console.error(
-            "Product search API:",
-            error
-          );
-
-          setSearchError(
-            error?.response?.data?.message ||
-              error?.message ||
-              "Failed to search products"
-          );
-        })
-        .finally(() => {
-          setSearchLoading(false);
-        });
-
-      return;
-    }
-
     const filters = {};
 
     if (selectedCategory.id !== null) {
-      filters.categoryId =
-        selectedCategory.id;
+      filters.categoryId = selectedCategory.id;
     }
 
     if (selectedBrand.id !== null) {
-      filters.brandId =
-        selectedBrand.id;
+      filters.brandId = selectedBrand.id;
     }
 
-    if (
-      Object.keys(filters).length >
-      0
-    ) {
+    if (Object.keys(filters).length > 0) {
       dispatch(
         getProductFilter(
           filters,
@@ -1085,33 +779,7 @@ export default function ShopPage() {
       );
     }
 
-    dispatch(
-      getAllProductAds()
-    );
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-
-    const query = searchQuery.trim();
-
-    setDebouncedSearchQuery(query);
-    setCurrentPage(1);
-
-    if (query) {
-      router.push(
-        `/products?search=${encodeURIComponent(query)}`
-      );
-    } else {
-      router.push("/products");
-    }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery("");
-    setDebouncedSearchQuery("");
-    setCurrentPage(1);
-    router.push("/products");
+    dispatch(getAllProductAds());
   };
 
   const clearAllFilters =
@@ -1130,20 +798,14 @@ export default function ShopPage() {
         "Featured"
       );
 
-      setSearchQuery("");
-      setDebouncedSearchQuery("");
       setCurrentPage(1);
-      router.push("/products");
     };
 
   const hasActiveFilters =
     selectedCategory.id !==
       null ||
     selectedBrand.id !==
-      null ||
-    Boolean(
-      urlSearchQuery.trim()
-    );
+      null;
 
   const goToPage = (
     page
@@ -1335,57 +997,10 @@ export default function ShopPage() {
                     </button>
                   )}
 
-                  {urlSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={
-                        clearSearch
-                      }
-                      className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-primary"
-                    >
-                      "{urlSearchQuery}"
-
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
                 </div>
               )}
             </div>
 
-            <form
-              onSubmit={
-                handleSearch
-              }
-              className="relative w-full lg:max-w-xs"
-            >
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A3A3A3]" />
-
-              <input
-                type="text"
-                value={
-                  searchQuery
-                }
-                onChange={(e) =>
-                  setSearchQuery(
-                    e.target.value
-                  )
-                }
-                placeholder="Search products, brands..."
-                className="h-11 w-full rounded-md border border-[#D4D4D4] bg-white pl-10 pr-9 text-sm text-[#111111] placeholder:text-[#737373] outline-none focus:border-[#E52323]"
-              />
-
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={
-                    clearSearch
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </form>
           </div>
 
           <div className="flex items-center gap-3 overflow-x-auto lg:justify-end">
@@ -1551,12 +1166,6 @@ export default function ShopPage() {
                   No products found
                 </h3>
 
-                {urlSearchQuery && (
-                  <p className="mt-2 text-sm text-[#737373]">
-                    No products found
-                    for "{urlSearchQuery}".
-                  </p>
-                )}
 
                 <button
                   type="button"

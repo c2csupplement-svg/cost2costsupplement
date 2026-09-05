@@ -409,8 +409,6 @@ export default function ProductPage() {
         const response =
           await getProductBySlug(slug);
 
-        console.log(response)
-
         if (!active) {
           return;
         }
@@ -421,7 +419,7 @@ export default function ProductPage() {
           );
 
         setApiProduct(data);
-        console.log(response)
+
       } catch (error) {
         if (!active) {
           return;

@@ -243,20 +243,9 @@ export default function ProductReviews({ product }) {
         }
       }
 
-      console.log("Calling addReviewApi", {
-        productId,
-        rating,
-        description: reviewText.trim(),
-        imageCount: reviewImages.length,
-      });
-
       const response =
         await addReviewApi(formdata);
 
-      console.log(
-        "addReviewApi response:",
-        response
-      );
 
       const responseData =
         response?.data ?? response;

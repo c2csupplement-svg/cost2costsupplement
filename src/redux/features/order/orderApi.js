@@ -46,7 +46,7 @@ const getOrderApi = async () => {
            getAuthConfig()
     );
 
-    console.log(response.data)
+
 
       return response;  
     }
