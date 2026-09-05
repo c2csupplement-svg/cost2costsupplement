@@ -478,21 +478,83 @@ export default function ProductPage() {
     productAdState?.loading,
   ]);
 
-  const variants = (() => {
-    return Array.isArray(
-      apiProduct?.variants
-    )
-      ? apiProduct.variants
-      : [];
-  })();
+  const variants = Array.isArray(apiProduct?.variants)
+    ? apiProduct.variants
+    : [];
 
   const getVariantFlavour = (variant) => {
-    const value =
+    const directFlavour =
       variant?.flavour ??
       variant?.flavor ??
       "";
 
-    return String(value).trim();
+    if (String(directFlavour).trim()) {
+      return String(directFlavour).trim();
+    }
+
+    const attributes = Array.isArray(variant?.attributes)
+      ? variant.attributes
+      : [];
+
+    const flavourAttribute = attributes.find((item) => {
+      const name = String(
+        item?.attribute?.name ??
+        item?.attribute?.slug ??
+        item?.attributeName ??
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+      return name === "flavour" || name === "flavor";
+    });
+
+    return String(flavourAttribute?.value ?? "").trim();
+  };
+
+  const getVariantAttributes = (variant) => {
+    const attributes = Array.isArray(variant?.attributes)
+      ? variant.attributes
+      : [];
+
+    return attributes
+      .map((item) => {
+        const name = String(
+          item?.attribute?.name ??
+          item?.attribute?.label ??
+          item?.attribute?.slug ??
+          item?.attributeName ??
+          ""
+        ).trim();
+
+        const slug = String(
+          item?.attribute?.slug ??
+          item?.attributeName ??
+          name
+        )
+          .trim()
+          .toLowerCase();
+
+        const value = String(
+          item?.value ??
+          item?.attributeValue ??
+          item?.label ??
+          ""
+        ).trim();
+
+        if (!name || !value) {
+          return null;
+        }
+
+        return {
+          id: item?.id,
+          attributeId: item?.attributeId,
+          name,
+          slug,
+          value,
+        };
+      })
+      .filter(Boolean);
   };
 
   const getVariantSize = (variant) => {
@@ -506,32 +568,30 @@ export default function ProductPage() {
   };
 
   const getVariantAttributeValues = (variant) => {
-    if (
-      !Array.isArray(
-        variant?.attributes
-      )
-    ) {
-      return [];
-    }
-
-    return variant.attributes
-      .map((attribute) => {
-        if (
-          typeof attribute ===
-          "string"
-        ) {
-          return attribute.trim();
-        }
-
-        return String(
-          attribute?.value ??
-          attribute?.label ??
-          attribute?.name ??
-          ""
-        ).trim();
-      })
-      .filter(Boolean);
+    return getVariantAttributes(variant).map(
+      (attribute) => attribute.value
+    );
   };
+
+  const selectedVariant =
+    variants.find((variant) => {
+      const variantFlavour =
+        getVariantFlavour(variant);
+
+      const variantSize =
+        getVariantSize(variant);
+
+      return (
+        (!selectedFlavour ||
+          variantFlavour.toLowerCase() ===
+          String(selectedFlavour).toLowerCase()) &&
+        (!selectedSize ||
+          variantSize.toLowerCase() ===
+          String(selectedSize).toLowerCase())
+      );
+    }) ||
+    variants[0] ||
+    null;
 
   const flavours = (() => {
     return [
@@ -542,6 +602,15 @@ export default function ProductPage() {
       ),
     ];
   })();
+
+  useEffect(() => {
+    if (
+      flavours.length > 0 &&
+      !selectedFlavour
+    ) {
+      setSelectedFlavour(flavours[0]);
+    }
+  }, [flavours, selectedFlavour]);
 
   const sizes = (() => {
     return [
@@ -566,152 +635,38 @@ export default function ProductPage() {
     ];
   })();
 
-  const variantAttributeGroups =
-    (() => {
-      const groups = {};
+  const variantAttributeGroups = (() => {
+    const groups = {};
 
-      variants.forEach(
-        (variant) => {
-          if (
-            !Array.isArray(
-              variant?.attributes
-            )
-          ) {
-            return;
+    variants.forEach((variant) => {
+      getVariantAttributes(variant).forEach(
+        (attribute) => {
+          const key = attribute.slug || attribute.name.toLowerCase();
+
+          if (!groups[key]) {
+            groups[key] = {
+              name: attribute.name,
+              slug: attribute.slug,
+              values: [],
+            };
           }
 
-          variant.attributes.forEach(
-            (attribute) => {
-              const value =
-                typeof attribute ===
-                  "string"
-                  ? attribute.trim()
-                  : String(
-                    attribute?.value ??
-                    ""
-                  ).trim();
-
-              if (!value) {
-                return;
-              }
-
-              const attributeName =
-                String(
-                  attribute?.attribute
-                    ?.name ??
-                  attribute?.attribute
-                    ?.label ??
-                  attribute?.name ??
-                  attribute
-                    ?.attributeName ??
-                  "Option"
-                ).trim();
-
-              if (
-                !groups[
-                attributeName
-                ]
-              ) {
-                groups[
-                  attributeName
-                ] = [];
-              }
-
-              if (
-                !groups[
-                  attributeName
-                ].includes(value)
-              ) {
-                groups[
-                  attributeName
-                ].push(value);
-              }
-            }
-          );
+          if (
+            !groups[key].values.some(
+              (value) =>
+                value.toLowerCase() ===
+                attribute.value.toLowerCase()
+            )
+          ) {
+            groups[key].values.push(
+              attribute.value
+            );
+          }
         }
       );
+    });
 
-      return Object.entries(groups);
-    })();
-
-  useEffect(() => {
-    if (
-      flavours.length > 0 &&
-      !flavours.includes(
-        selectedFlavour
-      )
-    ) {
-      setSelectedFlavour(
-        flavours[0]
-      );
-    }
-
-    if (flavours.length === 0) {
-      setSelectedFlavour("");
-    }
-  }, [
-    flavours,
-    selectedFlavour,
-  ]);
-
-  useEffect(() => {
-    if (
-      sizes.length > 0 &&
-      !sizes.includes(selectedSize)
-    ) {
-      setSelectedSize(
-        sizes[0]
-      );
-    }
-
-    if (sizes.length === 0) {
-      setSelectedSize("");
-    }
-  }, [
-    sizes,
-    selectedSize,
-  ]);
-
-  const selectedVariant = (() => {
-    if (!variants.length) {
-      return null;
-    }
-
-    const exactMatch =
-      variants.find(
-        (variant) => {
-          const flavour =
-            getVariantFlavour(
-              variant
-            );
-
-          const size =
-            getVariantSize(
-              variant
-            );
-
-          const flavourMatches =
-            !selectedFlavour ||
-            !flavour ||
-            flavour ===
-            selectedFlavour;
-
-          const sizeMatches =
-            !selectedSize ||
-            size === selectedSize;
-
-          return (
-            flavourMatches &&
-            sizeMatches
-          );
-        }
-      );
-
-    return (
-      exactMatch ||
-      variants[0] ||
-      null
-    );
+    return Object.values(groups);
   })();
 
   const product = (() => {
@@ -1072,10 +1027,6 @@ export default function ProductPage() {
     };
   }, [isZoomOpen]);
 
-  const displayImages = [
-    ...(product?.images || []),
-  ].reverse();
-
   const discount = (() => {
     if (
       product?.originalPrice >
@@ -1141,6 +1092,20 @@ export default function ProductPage() {
       }
     };
 
+  const getVariantImageIndex = (variant) => {
+    const image = normalizeImageUrl(
+      variant?.image
+    );
+
+    if (!image) {
+      return -1;
+    }
+
+    return productImages.findIndex(
+      (item) => item === image
+    );
+  };
+
   const handleBuyNow =
     async () => {
       if (
@@ -1183,7 +1148,7 @@ export default function ProductPage() {
         price:
           Number(product.price) || 0,
         image:
-          displayImages?.[0] ||
+          product.images?.[0] ||
           PLACEHOLDER_IMAGE,
         variant:
           selectedVariant
@@ -1316,16 +1281,23 @@ export default function ProductPage() {
       return;
     }
 
-    if (displayImages.length > 1) {
-      mainSwiper.slideToLoop(index);
+    if (
+      product?.images?.length >
+      1
+    ) {
+      mainSwiper.slideToLoop(
+        index
+      );
     } else {
       mainSwiper.slideTo(index);
     }
   };
 
   const selectedZoomImage =
-    displayImages?.[selectedImage] ||
-    displayImages?.[0] ||
+    product?.images?.[
+    selectedImage
+    ] ||
+    product?.images?.[0] ||
     PLACEHOLDER_IMAGE;
 
   if (isProductLoading) {
@@ -1445,33 +1417,33 @@ export default function ProductPage() {
     md:pr-2
   "
                   >
-                    {displayImages.map((image, index) => (
+                    {[...product.images].reverse().map((image, index) => (
                       <button
                         key={`${image}-${index}`}
                         type="button"
                         onClick={() => goToImage(index)}
                         className={`
-        relative
-        h-20
-        w-20
-        min-w-20
-        shrink-0
-        overflow-hidden
-        rounded-xl
-        border
-        bg-white
-        transition-all
-        sm:h-24
-        sm:w-24
-        sm:min-w-24
-        md:h-24
-        md:w-24
-        md:min-w-24
-        ${selectedImage === index
+      relative
+      h-20
+      w-20
+      min-w-20
+      shrink-0
+      overflow-hidden
+      rounded-xl
+      border
+      bg-white
+      transition-all
+      sm:h-24
+      sm:w-24
+      sm:min-w-24
+      md:h-24
+      md:w-24
+      md:min-w-24
+      ${selectedImage === index
                             ? "border-[#E52323] ring-2 ring-[#E52323]/20"
                             : "border-[#E5E5E5] hover:border-[#111111]"
                           }
-      `}
+    `}
                       >
                         <Image
                           src={image || PLACEHOLDER_IMAGE}
@@ -1518,7 +1490,8 @@ export default function ProductPage() {
 
                       <Swiper
                         loop={
-                          displayImages.length >
+                          product.images
+                            .length >
                           1
                         }
                         onSwiper={
@@ -1533,7 +1506,8 @@ export default function ProductPage() {
                         }
                         className="h-full w-full"
                       >
-                        {displayImages.map((image, index) => (
+                        {[...(product?.images || [])].reverse().map(
+                          (image, index) => (
                             <SwiperSlide
                               key={`${image}-${index}`}
                             >
@@ -1549,16 +1523,16 @@ export default function ProductPage() {
                                     image ||
                                     PLACEHOLDER_IMAGE
                                   }
-                                  alt={product.name}
+                                  alt={
+                                    product?.name ||
+                                    "Product"
+                                  }
                                   fill
-                                  priority={index === 0}
+                                  priority={
+                                    index === 0
+                                  }
                                   sizes="(max-width: 740px) 100vw, 55vw"
-                                  className="
-            object-contain
-            p-5
-            sm:p-8
-            lg:p-12
-          "
+                                  className="object-contain p-5 sm:p-8 lg:p-12"
                                   onError={(event) => {
                                     if (
                                       !event.currentTarget.src.includes(
@@ -1572,10 +1546,13 @@ export default function ProductPage() {
                                 />
                               </button>
                             </SwiperSlide>
-                          ))}
+                          )
+                        )}
                       </Swiper>
 
-                      {displayImages.length > 1 && (
+                      {product.images
+                        .length >
+                        1 && (
                           <>
                             <button
                               type="button"
@@ -1611,38 +1588,22 @@ export default function ProductPage() {
                     {product.brand}
                   </span>
 
-                  {(() => {
-                    const productStock = Number(
-                      product?.stock ??
-                      product?.stockQuantity ??
+                  <span className={`rounded-full px-3 py-1 ${Number(
+                    selectedVariant?.stockQuantity ??
+                    selectedVariant?.stock ??
+                    0
+                  ) > 0
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-600"
+                    }`}
+                  >
+                    {Number(
+                      selectedVariant?.stockQuantity ??
+                      selectedVariant?.stock ??
                       0
-                    );
-
-                    const hasVariantStock =
-                      Array.isArray(product?.variants) &&
-                      product.variants.some((variant) =>
-                        Number(
-                          variant?.stockQuantity ??
-                          variant?.stock ??
-                          0
-                        ) > 0
-                      );
-
-                    const isInStock =
-                      productStock > 0 || hasVariantStock;
-
-                    return (
-                      <span
-                        className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                          isInStock
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {isInStock ? "In Stock" : "Out of Stock"}
-                      </span>
-                    );
-                  })()}
+                    ) > 0
+                      ? `In stock`
+                      : "Out of stock"}</span>
                 </div>
 
                 <h1 className="mt-4 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
@@ -1719,12 +1680,6 @@ export default function ProductPage() {
                   )}
                 </div>
 
-                {product.description && (
-                  <p className="mt-5 text-sm leading-7 text-[#737373]">
-                    {product.description}
-                  </p>
-                )}
-
                 {flavours.length >
                   0 && (
                     <div className="mt-7">
@@ -1733,9 +1688,6 @@ export default function ProductPage() {
                           Flavour
                         </span>
 
-                        <span className="text-sm text-[#737373]">
-                          {selectedFlavour}
-                        </span>
                       </div>
 
                       <div className="flex flex-wrap gap-2">
@@ -1864,152 +1816,6 @@ export default function ProductPage() {
                     </div>
                   )}
 
-                {selectedVariant &&
-                  Array.isArray(
-                    selectedVariant.attributes
-                  ) &&
-                  selectedVariant.attributes.length >
-                  0 && (
-                    <div className="mt-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="text-sm font-black uppercase tracking-wide">
-                          Attributes
-                        </span>
-
-                        <span className="text-xs text-[#737373]">
-                          {selectedVariant.attributes.length}{" "}
-                          {selectedVariant.attributes.length ===
-                            1
-                            ? "option"
-                            : "options"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {selectedVariant.attributes.map(
-                          (attribute, index) => {
-                            const value =
-                              typeof attribute ===
-                                "string"
-                                ? attribute
-                                : attribute?.value ??
-                                attribute?.label ??
-                                attribute?.name ??
-                                "";
-
-                            if (
-                              !String(
-                                value
-                              ).trim()
-                            ) {
-                              return null;
-                            }
-
-                            return (
-                              <div
-                                key={
-                                  attribute?.id ??
-                                  `${value}-${index}`
-                                }
-                                className="
-                                  inline-flex
-                                  items-center
-                                  rounded-lg
-                                  border
-                                  border-[#E52323]
-                                  bg-[#FFF5F5]
-                                  px-4
-                                  py-2.5
-                                  text-sm
-                                  font-bold
-                                  capitalize
-                                  text-[#E52323]
-                                "
-                              >
-                                {String(
-                                  value
-                                ).trim()}
-                              </div>
-                            );
-                          }
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                {selectedVariant && (
-                  <div className="mt-6 rounded-xl border border-[#E5E5E5] bg-white p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#E52323]">
-                          Selected Variant
-                        </p>
-
-                        <p className="mt-1 text-sm font-bold text-[#111111]">
-                          {getVariantSize(
-                            selectedVariant
-                          ) ||
-                            getVariantFlavour(
-                              selectedVariant
-                            ) ||
-                            `Variant ${selectedVariant.id}`}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-lg font-black text-[#111111]">
-                          ₹
-                          {formatPrice(
-                            selectedVariant?.discountedPrice ??
-                            selectedVariant?.price ??
-                            0
-                          )}
-                        </p>
-
-                        {Number(
-                          selectedVariant?.price
-                        ) >
-                          Number(
-                            selectedVariant?.discountedPrice
-                          ) && (
-                            <p className="text-xs text-[#999999] line-through">
-                              ₹
-                              {formatPrice(
-                                selectedVariant.price
-                              )}
-                            </p>
-                          )}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#737373]">
-                      {/* <span className="rounded-full bg-[#F5F5F5] px-3 py-1">
-                        Variant ID:{" "}
-                        {selectedVariant.id}
-                      </span> */}
-
-                      {/* <span
-                        className={`rounded-full px-3 py-1 ${Number(
-                          selectedVariant?.stockQuantity ??
-                          selectedVariant?.stock ??
-                          0
-                        ) > 0
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-600"
-                          }`}
-                      >
-                        {Number(
-                          selectedVariant?.stockQuantity ??
-                          selectedVariant?.stock ??
-                          0
-                        ) > 0
-                          ? `${selectedVariant.stockQuantity} in stock`
-                          : "Out of stock"}
-                      </span> */}
-                    </div>
-                  </div>
-                )}
-
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <div className="flex h-14 items-center justify-between rounded-lg border border-[#D4D4D4] bg-white sm:w-[150px]">
                     <button
@@ -2108,44 +1914,43 @@ export default function ProductPage() {
                       : "Buy Now"}
                   </button>
                 </div>
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+    <Truck className="h-5 w-5 text-[#E52323]" />
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-4">
-                    <Truck className="h-5 w-5 text-[#E52323]" />
+    <p className="mt-2 text-xs font-bold sm:text-sm">
+      Fast Delivery
+    </p>
 
-                    <p className="mt-2 text-xs font-bold">
-                      Fast Delivery
-                    </p>
+    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+      Reliable shipping
+    </p>
+  </div>
 
-                    <p className="mt-1 text-[11px] text-[#737373]">
-                      Reliable shipping
-                    </p>
-                  </div>
+  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+    <ShieldCheck className="h-5 w-5 text-[#E52323]" />
 
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-4">
-                    <ShieldCheck className="h-5 w-5 text-[#E52323]" />
+    <p className="mt-2 text-xs font-bold sm:text-sm">
+      Secure Payment
+    </p>
 
-                    <p className="mt-2 text-xs font-bold">
-                      Secure Payment
-                    </p>
+    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+      Safe checkout
+    </p>
+  </div>
 
-                    <p className="mt-1 text-[11px] text-[#737373]">
-                      Safe checkout
-                    </p>
-                  </div>
+  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+    <ShieldCheck className="h-5 w-5 text-[#E52323]" />
 
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-4">
-                    <ShieldCheck className="h-5 w-5 text-[#E52323]" />
+    <p className="mt-2 text-xs font-bold sm:text-sm">
+      Genuine Product
+    </p>
 
-                    <p className="mt-2 text-xs font-bold">
-                      Genuine Product
-                    </p>
-
-                    <p className="mt-1 text-[11px] text-[#737373]">
-                      100% authentic
-                    </p>
-                  </div>
-                </div>
+    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+      100% authentic
+    </p>
+  </div>
+</div>
 
                 <div className="mt-7 rounded-xl border border-[#E5E5E5] bg-white p-5">
                   <div className="space-y-3 text-sm">
@@ -2298,7 +2103,7 @@ export default function ProductPage() {
             <X className="h-5 w-5" />
           </button>
 
-          {displayImages.length >
+          {product.images.length >
             1 && (
               <button
                 type="button"
@@ -2342,7 +2147,7 @@ export default function ProductPage() {
             />
           </div>
 
-          {displayImages.length >
+          {product.images.length >
             1 && (
               <button
                 type="button"
