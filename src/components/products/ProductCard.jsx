@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,126 +13,63 @@ export default function ProductCard({ product }) {
     isInWishlist,
   } = useShop();
 
-  const wishlistActive = isInWishlist(product?.id);
+  const wishlistActive = isInWishlist(
+    product?.id
+  );
 
-  const imageSrc = useMemo(() => {
-    const images = product?.images;
+  const imageSrc = (() => {
+    const featuredImage =
+      product?.featuredImage ||
+      product?.featuredimg;
 
-    if (Array.isArray(images)) {
-      for (const image of images) {
-        if (
-          typeof image === "string" &&
-          image.trim()
-        ) {
-          return image.trim();
-        }
-
-        if (
-          image &&
-          typeof image === "object"
-        ) {
-          if (
-            typeof image.url === "string" &&
-            image.url.trim()
-          ) {
-            return image.url.trim();
-          }
-
-          if (
-            typeof image.src === "string" &&
-            image.src.trim()
-          ) {
-            return image.src.trim();
-          }
-
-          if (
-            typeof image.image === "string" &&
-            image.image.trim()
-          ) {
-            return image.image.trim();
-          }
-
-          if (
-            typeof image.imageUrl === "string" &&
-            image.imageUrl.trim()
-          ) {
-            return image.imageUrl.trim();
-          }
-        }
-      }
+    if (
+      typeof featuredImage === "string" &&
+      featuredImage.trim()
+    ) {
+      return featuredImage.trim();
     }
 
     if (
-      typeof images === "string" &&
-      images.trim()
-    ) {
-      return images.trim();
-    }
-
-    if (
-      images &&
-      typeof images === "object"
+      featuredImage &&
+      typeof featuredImage === "object"
     ) {
       if (
-        typeof images.url === "string" &&
-        images.url.trim()
+        typeof featuredImage.url === "string" &&
+        featuredImage.url.trim()
       ) {
-        return images.url.trim();
+        return featuredImage.url.trim();
       }
 
       if (
-        typeof images.src === "string" &&
-        images.src.trim()
+        typeof featuredImage.src === "string" &&
+        featuredImage.src.trim()
       ) {
-        return images.src.trim();
+        return featuredImage.src.trim();
       }
 
       if (
-        typeof images.image === "string" &&
-        images.image.trim()
+        typeof featuredImage.image === "string" &&
+        featuredImage.image.trim()
       ) {
-        return images.image.trim();
+        return featuredImage.image.trim();
       }
 
       if (
-        typeof images.imageUrl === "string" &&
-        images.imageUrl.trim()
+        typeof featuredImage.imageUrl === "string" &&
+        featuredImage.imageUrl.trim()
       ) {
-        return images.imageUrl.trim();
+        return featuredImage.imageUrl.trim();
       }
-    }
-
-    if (
-      typeof product?.featuredimg === "string" &&
-      product.featuredimg.trim()
-    ) {
-      return product.featuredimg.trim();
-    }
-
-    if (
-      typeof product?.featuredImage === "string" &&
-      product.featuredImage.trim()
-    ) {
-      return product.featuredImage.trim();
     }
 
     return PLACEHOLDER_IMAGE;
-  }, [
-    product?.images,
-    product?.featuredimg,
-    product?.featuredImage,
-  ]);
+  })();
 
   const {
     price,
     originalPrice,
     discount,
-  } = useMemo(() => {
-    const topLevelPrice =
-      Number(product?.salePrice) ||
-      Number(product?.price) ||
-      0;
-
+  } = (() => {
     const productPrice =
       Number(product?.price) || 0;
 
@@ -148,36 +84,35 @@ export default function ProductCard({ product }) {
         price: productSalePrice,
         originalPrice: productPrice,
         discount: Math.round(
-          ((productPrice - productSalePrice) /
+          ((productPrice -
+            productSalePrice) /
             productPrice) *
             100
         ),
       };
     }
 
-    if (topLevelPrice > 0) {
-      const topLevelOriginalPrice =
+    if (productPrice > 0) {
+      const original =
         Number(product?.originalPrice) || 0;
 
-      const topLevelDiscount =
+      const productDiscount =
         Number(product?.discount) || 0;
 
       const calculatedDiscount =
-        topLevelDiscount > 0
-          ? topLevelDiscount
-          : topLevelOriginalPrice >
-            topLevelPrice
+        productDiscount > 0
+          ? productDiscount
+          : original > productPrice
           ? Math.round(
-              ((topLevelOriginalPrice -
-                topLevelPrice) /
-                topLevelOriginalPrice) *
+              ((original - productPrice) /
+                original) *
                 100
             )
           : 0;
 
       return {
-        price: topLevelPrice,
-        originalPrice: topLevelOriginalPrice,
+        price: productPrice,
+        originalPrice: original,
         discount: calculatedDiscount,
       };
     }
@@ -208,9 +143,15 @@ export default function ProductCard({ product }) {
       Number(variant?.price) || 0;
 
     const discountedPrice =
-      Number(variant?.discountedPrice) > 0
-        ? Number(variant.discountedPrice)
-        : Number(variant?.salePrice) > 0
+      Number(
+        variant?.discountedPrice
+      ) > 0
+        ? Number(
+            variant.discountedPrice
+          )
+        : Number(
+            variant?.salePrice
+          ) > 0
         ? Number(variant.salePrice)
         : null;
 
@@ -234,14 +175,17 @@ export default function ProductCard({ product }) {
               variantOriginalPrice) *
               100
           )
-        : Number(variant?.discount) || 0;
+        : Number(
+            variant?.discount
+          ) || 0;
 
     return {
       price: displayPrice,
-      originalPrice: variantOriginalPrice,
+      originalPrice:
+        variantOriginalPrice,
       discount: variantDiscount,
     };
-  }, [product]);
+  })();
 
   const productSlug =
     typeof product?.slug === "string" &&
@@ -278,7 +222,9 @@ export default function ProductCard({ product }) {
 
   const formattedPrice =
     Number(price) > 0
-      ? Number(price).toLocaleString("en-IN")
+      ? Number(price).toLocaleString(
+          "en-IN"
+        )
       : "0";
 
   const formattedOriginalPrice =
@@ -303,24 +249,26 @@ export default function ProductCard({ product }) {
 
   return (
     <article
-  className="
-    group
-    relative
-    flex
-    min-w-0
-    flex-col
-    overflow-hidden
-    rounded-2xl
-    border
-    border-border
-    bg-card
-    transition-all
-    duration-300
-    hover:-translate-y-1
-    hover:border-primary/30
-    hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
-  "
->
+      className="
+        group
+        relative
+        flex
+        h-full
+        min-w-0
+        flex-1
+        flex-col
+        overflow-hidden
+        rounded-2xl
+        border
+        border-border
+        bg-card
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-primary/30
+        hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
+      "
+    >
       {discount > 0 && (
         <div
           className="
@@ -438,18 +386,19 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-     <div
-  className="
-    flex
-    flex-col
-    px-3
-    pb-3
-    pt-3
-    sm:px-5
-    sm:pb-5
-    sm:pt-4
-  "
->
+      <div
+        className="
+          flex
+          flex-1
+          flex-col
+          px-3
+          pb-3
+          pt-3
+          sm:px-5
+          sm:pb-5
+          sm:pt-4
+        "
+      >
         <div className="flex items-center justify-between gap-2">
           <p
             className="
@@ -494,6 +443,7 @@ export default function ProductCard({ product }) {
           <h3
             className="
               line-clamp-2
+              min-h-[30px]
               text-[11px]
               font-black
               leading-[14px]
@@ -502,6 +452,7 @@ export default function ProductCard({ product }) {
               transition-colors
               duration-200
               group-hover:text-primary
+              sm:min-h-[40px]
               sm:text-[15px]
               sm:leading-5
             "

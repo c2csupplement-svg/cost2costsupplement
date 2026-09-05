@@ -1423,8 +1423,8 @@ export default function ProductPage() {
 
         <section>
           <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-14">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12">
-              <div className="min-w-0">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-12">
+              <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
                 <div className="grid gap-4 md:grid-cols-[90px_minmax(0,1fr)]">
                   <div
                     className="
