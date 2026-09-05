@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowUpRight } from "lucide-react";
 
@@ -17,181 +17,112 @@ function CategoryCard({ category }) {
         flex
         h-[165px]
         flex-col
-        justify-between
+        justify-end
         overflow-hidden
         rounded-xl
         border
         border-border
-        bg-black
+        bg-card
         p-4
-        shadow-[0_6px_25px_rgba(0,0,0,0.04)]
-        transition-all
-        duration-300
-        hover:-translate-y-1.5
-        hover:border-primary
-        hover:shadow-[0_18px_40px_rgba(229,35,35,0.10)]
 
-        sm:h-[210px]
+        sm:h-[190px]
         sm:rounded-2xl
-        sm:p-7
+        sm:p-5
+
+        lg:h-[210px]
+        lg:p-6
       "
     >
-      {category.image && (
+      {category.image ? (
         <div
           className="
             absolute
             inset-0
             bg-cover
             bg-center
-            transition-transform
-            duration-700
-            group-hover:scale-110
           "
           style={{
             backgroundImage: `url(${category.image})`,
           }}
         />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary to-card" />
       )}
 
-      <div
-        className="
-          absolute
-          inset-0
-          bg-gradient-to-t
-          from-black/90
-          via-black/40
-          to-black/10
-          transition-all
-          duration-500
-          group-hover:from-black/80
-          group-hover:via-primary/30
-          group-hover:to-black/20
-        "
-      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
 
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -right-16
-          -top-16
-          h-32
-          w-32
-          rounded-full
-          bg-primary/0
-          blur-3xl
-          transition-all
-          duration-500
-          group-hover:bg-primary/10
+      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5" />
 
-          sm:h-40
-          sm:w-40
-        "
-      />
-
-      <div className="relative mt-auto">
-        <div className="flex items-end justify-between gap-2 sm:gap-4">
+      <div className="relative z-10">
+        <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h3
               className="
+                line-clamp-2
                 text-sm
                 font-black
                 uppercase
                 leading-tight
                 tracking-tight
                 text-white
-                transition-colors
-                duration-300
-                group-hover:text-primary
 
-                sm:text-lg
+                sm:text-base
+
+                lg:text-lg
               "
             >
               {category.title}
             </h3>
 
-            {category.description && (
+            {/* {category.description && (
               <p
                 className="
                   mt-1
                   line-clamp-2
                   text-[10px]
                   leading-4
-                  text-white/75
+                  text-white/70
 
                   sm:mt-2
-                  sm:max-w-[210px]
                   sm:text-xs
                   sm:leading-5
                 "
               >
                 {category.description}
               </p>
-            )}
+            )} */}
           </div>
 
           <div
             className="
               flex
-              h-7
-              w-7
+              h-8
+              w-8
               shrink-0
               items-center
               justify-center
               rounded-full
               border
-              border-border
-              text-white/75
-              transition-all
-              duration-300
-              group-hover:border-primary
-              group-hover:bg-primary
-              group-hover:text-white
+              border-white/30
+              bg-black/20
+              text-white
 
               sm:h-9
               sm:w-9
             "
           >
-            <ArrowUpRight
-              className="
-                h-3
-                w-3
-                transition-transform
-                duration-300
-                group-hover:rotate-12
-
-                sm:h-4
-                sm:w-4
-              "
-            />
+            <ArrowUpRight className="h-4 w-4" />
           </div>
         </div>
       </div>
 
-      <div
-        className="
-          absolute
-          bottom-0
-          left-0
-          h-[3px]
-          w-0
-          bg-primary
-          transition-all
-          duration-500
-          group-hover:w-full
-        "
-      />
+      <div className="absolute bottom-0 left-0 h-[3px] w-full bg-primary" />
     </Link>
   );
 }
 
 export default function ShopByCategory() {
   const dispatch = useDispatch();
-
-  const sliderRef = useRef(null);
-  const animationRef = useRef(null);
-  const pausedRef = useRef(false);
-  const lastTimeRef = useRef(0);
 
   const {
     productCateogry,
@@ -209,16 +140,14 @@ export default function ShopByCategory() {
   }, [dispatch, loaded, loading]);
 
   const categories = useMemo(() => {
-    const apiCategories = Array.isArray(
-      productCateogry
-    )
+    const apiCategories = Array.isArray(productCateogry)
       ? productCateogry
       : Array.isArray(productCateogry?.categories)
       ? productCateogry.categories
       : Array.isArray(productCateogry?.data)
       ? productCateogry.data
       : Array.isArray(productCateogry?.data?.categories)
-      ? productCateogory.data.categories
+      ? productCateogry.data.categories
       : [];
 
     return apiCategories
@@ -233,7 +162,10 @@ export default function ShopByCategory() {
             ?.replace(/^-+|-+$/g, "");
 
         return {
-          id: category?.id || slug,
+          id:
+            category?.id ||
+            slug ||
+            Math.random(),
           title:
             category?.name ||
             category?.title ||
@@ -254,86 +186,37 @@ export default function ShopByCategory() {
       });
   }, [productCateogry]);
 
-  useEffect(() => {
-    const slider = sliderRef.current;
-
-    if (
-      !slider ||
-      categories.length === 0
-    ) {
-      return;
-    }
-
-    const speed = 35;
-
-    const animate = (time) => {
-      if (!lastTimeRef.current) {
-        lastTimeRef.current = time;
-      }
-
-      const delta =
-        time - lastTimeRef.current;
-
-      lastTimeRef.current = time;
-
-      if (!pausedRef.current) {
-        slider.scrollLeft +=
-          (delta / 1000) * speed;
-
-        const halfWidth =
-          slider.scrollWidth / 2;
-
-        if (
-          halfWidth > 0 &&
-          slider.scrollLeft >= halfWidth
-        ) {
-          slider.scrollLeft -= halfWidth;
-        }
-      }
-
-      animationRef.current =
-        requestAnimationFrame(animate);
-    };
-
-    animationRef.current =
-      requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(
-          animationRef.current
-        );
-      }
-
-      lastTimeRef.current = 0;
-    };
-  }, [categories.length]);
-
   return (
-    <section className="relative overflow-hidden bg-surface-muted py-14 sm:py-20 lg:py-18">
-      <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-primary/5 blur-[100px]" />
+    <section className="relative overflow-hidden bg-surface-muted py-8 sm:py-12 lg:py-14">
+      <div className="pointer-events-none absolute -left-40 top-10 h-80 w-80 rounded-full bg-primary/5 blur-[100px]" />
 
-      <div className="relative mx-auto max-w-[1440px]">
-        <div className="mb-10 flex items-end justify-between gap-6 px-5 sm:px-8 lg:px-10">
-          <div>
-            <div className="mb-3 flex items-center gap-3">
+      <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-10">
+        <div className="mb-7 flex items-end justify-between gap-5 sm:mb-9">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center gap-3">
               <span className="h-[2px] w-8 bg-primary" />
 
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary sm:text-xs">
                 Find what you need
               </p>
             </div>
 
-            <h2 className="text-3xl font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-4xl lg:text-5xl">
-              Shop By Category
-            </h2>
+            <h2
+              className="
+                text-3xl
+                font-black
+                uppercase
+                leading-none
+                tracking-[-0.03em]
+                text-text-primary
 
-            <p className="mt-4 max-w-xl text-sm leading-6 text-text-secondary">
-              Explore our complete range of sports
-              nutrition and wellness products designed
-              to support every stage of your fitness
-              journey.
-            </p>
+                sm:text-4xl
+
+                lg:text-5xl
+              "
+            >
+              Category
+            </h2>
           </div>
 
           <Link
@@ -345,192 +228,152 @@ export default function ShopByCategory() {
               items-center
               gap-2
               rounded-lg
-              border-2
+              border
               border-text-primary
-              px-5
-              py-3
+              px-4
+              py-2.5
+              text-[10px]
+              font-black
+              uppercase
+              tracking-wide
+              text-text-primary
+
+              sm:inline-flex
+            "
+          >
+            View All
+
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {loading && (
+          <div
+            className="
+              grid
+              grid-cols-2
+              gap-3
+
+              sm:grid-cols-3
+              sm:gap-4
+
+              lg:grid-cols-4
+              lg:gap-5
+            "
+          >
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className={`
+                  h-[165px]
+                  animate-pulse
+                  rounded-xl
+                  border
+                  border-border
+                  bg-card
+
+                  sm:h-[190px]
+                  sm:rounded-2xl
+
+                  lg:h-[210px]
+
+                  ${index >= 4 ? "hidden sm:block" : ""}
+                  ${index >= 6 ? "sm:hidden lg:block" : ""}
+                `}
+              />
+            ))}
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="rounded-xl border border-border bg-card px-5 py-6 text-center">
+            <p className="text-sm text-text-secondary">
+              Unable to load categories right now.
+            </p>
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          categories.length === 0 && (
+            <div className="rounded-xl border border-border bg-card px-5 py-6 text-center">
+              <p className="text-sm text-text-secondary">
+                No categories available right now.
+              </p>
+            </div>
+          )}
+
+        {!loading &&
+          !error &&
+          categories.length > 0 && (
+            <div
+              className="
+                grid
+                grid-cols-2
+                gap-3
+
+                sm:grid-cols-3
+                sm:gap-4
+
+                lg:grid-cols-4
+                lg:gap-5
+              "
+            >
+              {categories.map((category, index) => {
+                const hiddenOnMobile =
+                  index >= 4;
+
+                const hiddenOnTablet =
+                  index >= 6;
+
+                const hiddenOnDesktop =
+                  index >= 8;
+
+                return (
+                  <div
+                    key={category.id}
+                    className={`
+                      ${hiddenOnMobile ? "hidden sm:block" : ""}
+                      ${
+                        hiddenOnTablet
+                          ? "sm:hidden lg:block"
+                          : ""
+                      }
+                      ${
+                        hiddenOnDesktop
+                          ? "lg:hidden"
+                          : ""
+                      }
+                    `}
+                  >
+                    <CategoryCard
+                      category={category}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        <div className="mt-6 sm:hidden">
+          <Link
+            href="/product-categories"
+            className="
+              inline-flex
+              items-center
+              gap-2
               text-xs
               font-black
               uppercase
               tracking-wide
               text-text-primary
-              transition-all
-              duration-300
-              hover:bg-text-primary
-              hover:text-white
-              sm:flex
             "
-          >
-            View All
-
-            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-        </div>
-
-        <div className="relative">
-          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-8 bg-gradient-to-r from-surface-muted to-transparent sm:w-12 lg:w-20" />
-
-          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-surface-muted to-transparent sm:w-12 lg:w-20" />
-
-          {loading && (
-            <div
-              className="
-                flex
-                gap-3
-                overflow-hidden
-                px-5
-                pb-5
-
-                sm:gap-5
-                sm:px-8
-
-                lg:gap-6
-                lg:px-10
-              "
-            >
-              {Array.from({
-                length: 4,
-              }).map((_, index) => (
-                <div
-                  key={index}
-                  className="
-                    h-[165px]
-                    w-[calc((100vw-60px)/2)]
-                    min-w-[calc((100vw-60px)/2)]
-                    shrink-0
-                    animate-pulse
-                    rounded-xl
-                    border
-                    border-border
-                    bg-card
-
-                    sm:h-[210px]
-                    sm:w-[280px]
-                    sm:min-w-[280px]
-                    sm:rounded-2xl
-
-                    lg:w-[300px]
-                    lg:min-w-[300px]
-                  "
-                />
-              ))}
-            </div>
-          )}
-
-          {!loading && error && (
-            <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
-              Unable to load categories right now.
-            </div>
-          )}
-
-          {!loading &&
-            !error &&
-            categories.length === 0 && (
-              <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
-                No categories available right now.
-              </div>
-            )}
-
-          {!loading &&
-            !error &&
-            categories.length > 0 && (
-              <div
-                ref={sliderRef}
-                onMouseEnter={() => {
-                  pausedRef.current = true;
-                }}
-                onMouseLeave={() => {
-                  pausedRef.current = false;
-                }}
-                onTouchStart={() => {
-                  pausedRef.current = true;
-                }}
-                onTouchEnd={() => {
-                  pausedRef.current = false;
-                }}
-                className="
-                  relative
-                  flex
-                  gap-3
-                  overflow-x-auto
-                  px-5
-                  pb-5
-                  cursor-grab
-                  active:cursor-grabbing
-
-                  sm:gap-5
-                  sm:px-8
-
-                  lg:gap-6
-                  lg:px-10
-                "
-                style={{
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                }}
-              >
-                {categories.map(
-                  (category) => (
-                    <div
-                      key={`first-${category.id}`}
-                      className="
-                        w-[calc((100vw-60px)/2)]
-                        min-w-[calc((100vw-60px)/2)]
-                        shrink-0
-                        [&>*]:w-full
-
-                        sm:w-[280px]
-                        sm:min-w-[280px]
-
-                        lg:w-[300px]
-                        lg:min-w-[300px]
-                      "
-                    >
-                      <CategoryCard
-                        category={category}
-                      />
-                    </div>
-                  )
-                )}
-
-                {categories.length > 1 &&
-                  categories.map(
-                    (category) => (
-                      <div
-                        key={`duplicate-${category.id}`}
-                        className="
-                          w-[calc((100vw-60px)/2)]
-                          min-w-[calc((100vw-60px)/2)]
-                          shrink-0
-                          [&>*]:w-full
-
-                          sm:w-[280px]
-                          sm:min-w-[280px]
-
-                          lg:w-[300px]
-                          lg:min-w-[300px]
-                        "
-                      >
-                        <CategoryCard
-                          category={category}
-                        />
-                      </div>
-                    )
-                  )}
-              </div>
-            )}
-        </div>
-
-        <div className="mt-7 px-5 sm:hidden">
-          <Link
-            href="/products"
-            className="group inline-flex items-center gap-2 text-sm font-black uppercase tracking-wide text-black"
           >
             <span className="border-b-2 border-primary pb-1">
               View All Categories
             </span>
 
-            <ArrowUpRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-4 w-4 text-primary" />
           </Link>
         </div>
       </div>

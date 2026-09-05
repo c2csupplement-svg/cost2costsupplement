@@ -22,8 +22,6 @@
     ZoomIn,
     } from "lucide-react";
 
-    import Header from "@/components/layout/Header";
-    import Footer from "@/components/layout/Footer";
     import ProductSlider from "@/components/home/ProductSlider";
     import { useShop } from "@/context/ShopContext";
     import { products } from "@/data/products";
@@ -109,7 +107,6 @@
     if (!product) {
         return (
         <>
-            <Header />
 
             <main className="min-h-[70vh] bg-[#FAFAFA] px-5 py-24 text-white">
             <div className="mx-auto max-w-3xl text-center">
@@ -135,8 +132,6 @@
                 </Link>
             </div>
             </main>
-
-            <Footer />
         </>
         );
     }
@@ -204,7 +199,7 @@
 
     return (
         <>
-        <Header />
+
 
         <main className="font-oxanium font-semibold min-h-screen bg-[#FAFAFA] text-[#111111]">
             {/* Breadcrumb */}
@@ -788,8 +783,6 @@
         <ProductSlider {...{eyebrow:"Related Products",title:"Related Products",description:"products you may also like",products:relatedProducts}}/>
 
         </main>
-
-        <Footer />
 
         {/* ================= IMAGE ZOOM ================= */}
         {isZoomOpen && (

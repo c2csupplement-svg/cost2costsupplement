@@ -148,7 +148,7 @@ export default function ProductSlider({
             )} */}
           </div>
 
-          <Link
+          {/* <Link
             href="/products"
             className="group hidden shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white transition-colors duration-300 sm:flex"
             style={{ backgroundColor: theme.accent }}
@@ -162,7 +162,7 @@ export default function ProductSlider({
             View All Products
 
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
+          </Link> */}
         </div>
 
         <div className="relative">

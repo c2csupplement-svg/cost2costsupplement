@@ -46,12 +46,11 @@ const getImage = (item) => {
       image?.url ||
       image?.src ||
       image?.image ||
-      image?.imageUrl ||
-      "/placeholder-product.svg"
+      image?.imageUrl 
     );
   }
 
-  return "/placeholder-product.svg";
+  return ;
 };
 
 const normalizeCategoryResponse = (response) => {

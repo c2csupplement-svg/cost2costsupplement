@@ -9,6 +9,8 @@ const initialState = {
   popularProduct: null,
   topSellingProduct: null,
   productCateogry: null,
+  recentProduct:null,
+  comboProduct: null,
   goal: null,
   brands: null,
   error: null,
@@ -50,12 +52,20 @@ const productAdReducer = createSlice({
       state.productCateogry = action.payload;
     },
 
+    setRecentProduct: (state, action) => {
+      state.recentProduct = action.payload
+    },
+
     setGoal: (state, action) => {
       state.goal = action.payload;
     },
 
     setBrands: (state, action) => {
       state.brands = action.payload;
+    },
+
+    setComboProduct: (state, action ) => {
+      state.comboProduct = action.payload
     },
 
     setError: (state, action) => {
@@ -70,6 +80,7 @@ const productAdReducer = createSlice({
       state.topRelateProduct = null;
       state.popularProduct = null;
       state.topSellingProduct = null;
+      state.recentProduct = null;
       state.goal = null;
       state.productCateogry = null;
       state.brands = null;
@@ -86,11 +97,13 @@ export const {
   setTopRelateProduct,
   setPopularProduct,
   setTopSellingProduct,
+  setRecentProduct,
   setError,
   clearProductAd,
   setGoal,
   setProductCategory,
   setBrands,
+  setComboProduct
 } = productAdReducer.actions;
 
 export default productAdReducer.reducer;

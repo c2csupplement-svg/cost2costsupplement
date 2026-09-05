@@ -65,6 +65,27 @@ export const getTopRelatedProductsApi = async () => {
   }
 };
 
+export const getRecentProductsApi = async () => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/products/recent`
+    );
+
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error("Server Error:", error.response.status);
+      console.error("Response:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received from server.");
+    } else {
+      console.error("Request Error:", error.message);
+    }
+
+    throw error;
+  }
+};
+
 export const getPopularProductsApi = async () => {
   try {
     const response = await axios.get(
@@ -154,6 +175,28 @@ export const getBrandsApi = async () => {
   try {
     const response = await axios.get(
       `${API_BASE_URL}/brands`
+    );
+
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error("Server Error:", error.response.status);
+      console.error("Response:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received from server.");
+    } else {
+      console.error("Request Error:", error.message);
+    }
+
+    throw error;
+  }
+};
+
+
+export const getComboProductsApi = async () => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/products/combo`
     );
 
     return response.data;

@@ -42,9 +42,11 @@ const handleApiError = (err, operation) => {
 const getOrderApi = async () => {
     try{
         const response = await axios.get(
-            `${API_BASE_URL}/api/orders`,
+            `${API_BASE_URL}/orders`,
            getAuthConfig()
     );
+
+    console.log(response.data)
 
       return response;  
     }
@@ -56,7 +58,7 @@ const getOrderApi = async () => {
 const orderCancelApi = async (id) => {
     try{
         const response = await axios.put(
-            `${API_BASE_URL}/api/orders/${id}/cancel`,
+            `${API_BASE_URL}/orders/${id}/cancel`,
             {},
             getAuthConfig(),
         );

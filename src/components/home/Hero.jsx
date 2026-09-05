@@ -4,9 +4,7 @@ import { ArrowRight, Zap, ShieldCheck } from "lucide-react";
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-background">
-      {/* =========================================================
-          BACKGROUND ACCENTS
-      ========================================================= */}
+
 
       <div className="pointer-events-none absolute -left-40 top-20 h-[420px] w-[420px] rounded-full bg-primary/5 blur-[100px]" />
 
@@ -14,9 +12,6 @@ export default function Hero() {
 
       <div className="mx-auto grid min-h-[620px] max-w-[1440px] items-center lg:grid-cols-2">
 
-        {/* =====================================================
-            LEFT CONTENT
-        ===================================================== */}
 
         <div className="relative z-10 px-5 py-16 sm:px-8 sm:py-20 lg:px-10 lg:py-24 xl:px-16">
 

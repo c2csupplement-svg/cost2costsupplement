@@ -42,7 +42,7 @@ const handleApiError = (err, operation) => {
 const getProfileApi = async () => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/auth/profile`,
+      `${API_BASE_URL}/auth/profile`,
       getAuthConfig()
     );
     
@@ -56,7 +56,7 @@ const getProfileApi = async () => {
 const updateProfileApi = async (profile) => {
   try {
     const response = await axios.put(
-      `${API_BASE_URL}/api/auth/profile`,
+      `${API_BASE_URL}/auth/profile`,
       profile,
       getAuthConfig()
     );

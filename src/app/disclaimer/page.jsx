@@ -1,12 +1,10 @@
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 export default function Disclaimer() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
-      <Header />
 
       {/* Breadcrumb */}
       <div className="border-b border-border">
@@ -244,7 +242,6 @@ export default function Disclaimer() {
         </article>
       </section>
 
-      <Footer />
     </main>
   );
 }

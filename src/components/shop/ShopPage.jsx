@@ -47,6 +47,9 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] =
     useState(urlSearchQuery);
 
+  const [debouncedSearchQuery, setDebouncedSearchQuery] =
+    useState(urlSearchQuery);
+
   const [mobileFiltersOpen, setMobileFiltersOpen] =
     useState(false);
 
@@ -134,6 +137,39 @@ export default function ShopPage() {
     productData,
     searchProducts,
     urlSearchQuery,
+  ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const currentQuery = urlSearchQuery.trim();
+    const nextQuery = debouncedSearchQuery.trim();
+
+    if (currentQuery === nextQuery) {
+      return;
+    }
+
+    setCurrentPage(1);
+
+    if (nextQuery) {
+      router.push(
+        `/products?search=${encodeURIComponent(nextQuery)}`
+      );
+    } else {
+      router.push("/products");
+    }
+  }, [
+    debouncedSearchQuery,
+    urlSearchQuery,
+    router,
   ]);
 
   useEffect(() => {
@@ -1054,43 +1090,29 @@ export default function ShopPage() {
     );
   };
 
-  const handleSearch = (
-    e
-  ) => {
+  const handleSearch = (e) => {
     e.preventDefault();
 
-    const query =
-      searchQuery.trim();
+    const query = searchQuery.trim();
 
+    setDebouncedSearchQuery(query);
     setCurrentPage(1);
 
     if (query) {
       router.push(
-        `/products?search=${encodeURIComponent(
-          query
-        )}`
+        `/products?search=${encodeURIComponent(query)}`
       );
     } else {
-      router.push(
-        "/products"
-      );
+      router.push("/products");
     }
   };
 
-  const clearSearch =
-    () => {
-      setSearchQuery(
-        ""
-      );
-
-      setCurrentPage(
-        1
-      );
-
-      router.push(
-        "/products"
-      );
-    };
+  const clearSearch = () => {
+    setSearchQuery("");
+    setDebouncedSearchQuery("");
+    setCurrentPage(1);
+    router.push("/products");
+  };
 
   const clearAllFilters =
     () => {
@@ -1108,17 +1130,10 @@ export default function ShopPage() {
         "Featured"
       );
 
-      setSearchQuery(
-        ""
-      );
-
-      setCurrentPage(
-        1
-      );
-
-      router.push(
-        "/products"
-      );
+      setSearchQuery("");
+      setDebouncedSearchQuery("");
+      setCurrentPage(1);
+      router.push("/products");
     };
 
   const hasActiveFilters =
@@ -1842,15 +1857,6 @@ function FilterSidebar({
                       }
                     </span>
                   </div>
-
-                  {brand.productCount >
-                    0 && (
-                    <span className="text-xs text-[#A3A3A3]">
-                      {
-                        brand.productCount
-                      }
-                    </span>
-                  )}
                 </button>
               );
             }

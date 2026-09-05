@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowRight } from "lucide-react";
 
@@ -28,7 +28,7 @@ export default function ShopByGoal() {
     }
   }, [dispatch, loaded, loading]);
 
-  const goals = useMemo(() => {
+  const getGoals = () => {
     let apiGoals = [];
 
     if (Array.isArray(goalsData)) {
@@ -43,7 +43,8 @@ export default function ShopByGoal() {
       .filter((goal) => goal?.isActive !== false)
       .sort(
         (a, b) =>
-          (a?.displayOrder || 0) - (b?.displayOrder || 0)
+          (a?.displayOrder || 0) -
+          (b?.displayOrder || 0)
       )
       .map((goal) => ({
         id: goal.id,
@@ -53,12 +54,14 @@ export default function ShopByGoal() {
         href: `/shop?goal=${goal.slug || ""}`,
         image: goal.image || null,
       }));
-  }, [goalsData]);
+  };
+
+  const goals = getGoals();
 
   useEffect(() => {
     const slider = sliderRef.current;
 
-    if (!slider || goals.length === 0) {
+    if (!slider || goals.length <= 1) {
       return;
     }
 
@@ -69,60 +72,105 @@ export default function ShopByGoal() {
         lastTimeRef.current = time;
       }
 
-      const delta = time - lastTimeRef.current;
+      const delta =
+        time - lastTimeRef.current;
+
       lastTimeRef.current = time;
 
       if (!pausedRef.current) {
-        slider.scrollLeft += (delta / 1000) * speed;
+        slider.scrollLeft +=
+          (delta / 1000) * speed;
 
-        const halfWidth = slider.scrollWidth / 2;
+        const halfWidth =
+          slider.scrollWidth / 2;
 
-        if (slider.scrollLeft >= halfWidth) {
+        if (
+          halfWidth > 0 &&
+          slider.scrollLeft >= halfWidth
+        ) {
           slider.scrollLeft -= halfWidth;
         }
       }
 
-      animationRef.current = requestAnimationFrame(animate);
+      animationRef.current =
+        requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    animationRef.current =
+      requestAnimationFrame(animate);
 
     return () => {
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        cancelAnimationFrame(
+          animationRef.current
+        );
       }
+
+      lastTimeRef.current = 0;
     };
   }, [goals.length]);
 
+  if (!loading && !error && goals.length === 0) {
+    return null;
+  }
+
+  if (loading && !loaded) {
+    return (
+      <section className="bg-background py-4 sm:py-8">
+        <div className="flex gap-3 overflow-hidden px-4 sm:gap-4 sm:px-8 lg:px-10">
+          {[1, 2].map((item) => (
+            <div
+              key={item}
+              className="
+                h-[170px]
+                w-[calc((100vw-44px)/2)]
+                min-w-[calc((100vw-44px)/2)]
+                animate-pulse
+                rounded-xl
+                bg-black/5
+                sm:h-[250px]
+                sm:w-[280px]
+                sm:min-w-[280px]
+              "
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return null;
+  }
+
   return (
-    <section className="relative overflow-hidden bg-background py-16 sm:py-20 lg:py-12">
-      <div className="pointer-events-none absolute -right-40 top-1/2 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-primary/5 blur-[110px]" />
+    <section className="relative overflow-hidden bg-background py-4 sm:py-8 lg:py-8">
+      <div className="pointer-events-none absolute -right-40 top-1/2 h-[300px] w-[300px] -translate-y-1/2 rounded-full bg-primary/5 blur-[90px]" />
 
       <div className="mx-auto max-w-[1440px]">
-        <div className="relative z-10 px-5 sm:px-8 lg:px-10">
-          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div className="relative z-10 px-4 sm:px-8 lg:px-10">
+          <div className="flex items-end justify-between gap-4">
             <div>
-              <div className="mb-3 flex items-center gap-3">
+              <div className="mb-2 flex items-center gap-3">
                 <span className="h-[2px] w-8 bg-primary" />
 
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary sm:text-xs">
                   Train with purpose
                 </p>
               </div>
 
-              <h2 className="text-4xl font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-5xl lg:text-6xl">
+              <h2 className="text-3xl font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-4xl lg:text-5xl">
                 Shop By Goal
               </h2>
 
-              <p className="mt-4 max-w-xl text-sm leading-6 text-text-secondary">
-                Whatever you're working towards, find the right nutrition to
-                help you get there.
+              <p className="mt-2 max-w-xl text-xs leading-5 text-text-secondary sm:mt-3 sm:text-sm">
+                Whatever you're working towards, find the right nutrition to help you get there.
               </p>
             </div>
 
             <Link
               href="/products"
-              className="group hidden items-center gap-2 text-xs font-black uppercase tracking-wide text-text-primary sm:flex"
+              className="group hidden shrink-0 items-center gap-2 text-xs font-black uppercase tracking-wide text-text-primary sm:flex"
             >
               <span className="border-b-2 border-primary pb-1">
                 Explore All Goals
@@ -133,78 +181,62 @@ export default function ShopByGoal() {
           </div>
         </div>
 
-        <div className="relative mt-10">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 bg-gradient-to-r from-background to-transparent sm:w-12 lg:w-20" />
+        <div className="relative mt-4 sm:mt-6">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-5 bg-gradient-to-r from-background to-transparent sm:w-10 lg:w-16" />
 
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-gradient-to-l from-background to-transparent sm:w-12 lg:w-20" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-5 bg-gradient-to-l from-background to-transparent sm:w-10 lg:w-16" />
 
-          {loading && !loaded && (
-            <div className="flex gap-4 overflow-hidden px-5 pb-5 sm:gap-5 sm:px-8 lg:px-10">
-              {[1, 2, 3, 4].map((item) => (
-                <div
-                  key={item}
-                  className="h-[210px] w-[calc((100vw-60px)/2)] min-w-[calc((100vw-60px)/2)] animate-pulse rounded-2xl border border-border bg-card sm:h-[290px] sm:w-[310px] sm:min-w-[310px]"
-                />
-              ))}
-            </div>
-          )}
+          <div
+            ref={sliderRef}
+            onMouseEnter={() => {
+              pausedRef.current = true;
+            }}
+            onMouseLeave={() => {
+              pausedRef.current = false;
+            }}
+            onTouchStart={() => {
+              pausedRef.current = true;
+            }}
+            onTouchEnd={() => {
+              pausedRef.current = false;
+            }}
+            className="
+              flex
+              cursor-grab
+              gap-3
+              overflow-x-auto
+              px-4
+              pb-1
+              active:cursor-grabbing
+              sm:gap-4
+              sm:px-8
+              lg:px-10
+              [scrollbar-width:none]
+              [-ms-overflow-style:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {goals.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+              />
+            ))}
 
-          {!loading && error && (
-            <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
-              Unable to load goals right now.
-            </div>
-          )}
-
-          {!loading && !error && goals.length === 0 && (
-            <div className="px-5 pb-5 text-sm text-text-secondary sm:px-8 lg:px-10">
-              No goals available right now.
-            </div>
-          )}
-
-          {!loading && !error && goals.length > 0 && (
-            <div
-              ref={sliderRef}
-              onMouseEnter={() => {
-                pausedRef.current = true;
-              }}
-              onMouseLeave={() => {
-                pausedRef.current = false;
-              }}
-              onTouchStart={() => {
-                pausedRef.current = true;
-              }}
-              onTouchEnd={() => {
-                pausedRef.current = false;
-              }}
-              className="c2c-marquee flex cursor-grab gap-4 overflow-x-auto px-5 pb-5 active:cursor-grabbing sm:gap-5 sm:px-8 lg:px-10"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {goals.map((goal) => (
+            {goals.length > 1 &&
+              goals.map((goal) => (
                 <GoalCard
-                  key={goal.id}
+                  key={`duplicate-${goal.id}`}
                   goal={goal}
                 />
               ))}
-
-              {goals.length > 1 &&
-                goals.map((goal) => (
-                  <GoalCard
-                    key={`duplicate-${goal.id}`}
-                    goal={goal}
-                  />
-                ))}
-            </div>
-          )}
+          </div>
         </div>
 
-        <div className="mt-3 px-5 sm:hidden">
+        <div className="mt-3 px-4 sm:hidden">
           <Link
             href="/products"
-            className="group inline-flex items-center gap-2 text-sm font-black uppercase tracking-wide text-text-primary"
+            className="group inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-text-primary"
           >
             <span className="border-b-2 border-primary pb-1">
               Explore All Goals
@@ -222,38 +254,68 @@ function GoalCard({ goal }) {
   return (
     <Link
       href={goal.href}
-      className="group relative flex h-[210px] w-[calc((100vw-60px)/2)] min-w-[calc((100vw-60px)/2)] flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-[0_6px_25px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-[0_18px_40px_rgba(229,35,35,0.12)] sm:h-[290px] sm:w-[310px] sm:min-w-[310px] sm:p-7"
+      className="
+        group
+        relative
+        flex
+        h-[170px]
+        w-[calc((100vw-44px)/2)]
+        min-w-[calc((100vw-44px)/2)]
+        shrink-0
+        flex-col
+        justify-end
+        overflow-hidden
+        rounded-xl
+        border
+        border-border
+        bg-card
+        p-4
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-primary
+        sm:h-[250px]
+        sm:w-[280px]
+        sm:min-w-[280px]
+        sm:p-6
+      "
     >
       {goal.image && (
         <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+          className="
+            absolute
+            inset-0
+            bg-cover
+            bg-center
+            transition-transform
+            duration-700
+            group-hover:scale-105
+          "
           style={{
             backgroundImage: `url(${goal.image})`,
           }}
         />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10 transition-all duration-500 group-hover:from-black/80 group-hover:via-primary/30" />
-
-      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/0 blur-3xl transition-all duration-500 group-hover:bg-primary/10" />
-
-      <div className="relative flex items-center justify-between" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
 
       <div className="relative">
-        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-primary sm:mb-2 sm:text-[10px] sm:tracking-[0.25em]">
+        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-primary sm:text-[10px]">
           Goal
         </p>
 
-        <h3 className="text-base font-black uppercase leading-tight tracking-tight text-white transition-colors duration-300 group-hover:text-primary sm:text-xl">
+        <h3 className="text-base font-black uppercase leading-tight tracking-tight text-white sm:text-xl">
           {goal.title}
         </h3>
 
-        <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-text-muted sm:mt-2 sm:max-w-[245px] sm:text-xs sm:leading-5">
-          {goal.description}
-        </p>
+        {/* {goal.description && (
+          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-white/70 sm:mt-2 sm:text-xs sm:leading-5">
+            {goal.description}
+          </p>
+        )} */}
       </div>
 
-      <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary transition-all duration-500 group-hover:w-full" />
+      <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-500 group-hover:w-full" />
     </Link>
   );
 }

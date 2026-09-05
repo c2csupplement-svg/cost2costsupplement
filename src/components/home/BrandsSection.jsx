@@ -110,7 +110,7 @@ export default function BrandsSection() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-surface-muted py-10 sm:py-10 lg:py-10">
+    <section className="relative overflow-hidden bg-surface-muted py-5 sm:py-10 lg:py-10">
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-[1440px]">

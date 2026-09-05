@@ -69,7 +69,7 @@ function getProductImage(product) {
     product?.imageUrl,
   ];
 
-  return sources.map(getImageUrl).find(Boolean) || "/placeholder-product.svg";
+  return sources.map(getImageUrl).find(Boolean) || "/";
 }
 
 function normalizeWishlistItems(wishState) {

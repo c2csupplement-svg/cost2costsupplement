@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, EffectFade } from "swiper/modules";
+import {getBanner} from "@/redux/features/banner/bannerAction"
 
 import "swiper/css";
 import "swiper/css/effect-fade";
@@ -83,16 +84,17 @@ export default function Hero() {
             <div className="relative w-full">
               <picture className="block w-full">
                 {/* Mobile */}
-                <source
-                  media="(max-width: 639px)"
-                  srcSet={slide.mobileImage}
+               <img
+                  src={slide.mobileImage}
+                  alt={slide.title || `Cost2Cost banner ${slide.id}`}
+                  className="block h-110 w-full block sm:hidden"
                 />
 
                 {/* Desktop + Tablet */}
                 <img
                   src={slide.desktopImage}
                   alt={slide.title || `Cost2Cost banner ${slide.id}`}
-                  className="block h-auto w-full"
+                  className="block h-auto w-full hidden sm:block"
                 />
               </picture>
             </div>

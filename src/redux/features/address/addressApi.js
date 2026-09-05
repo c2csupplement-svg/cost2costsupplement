@@ -44,7 +44,7 @@ const handleApiError = (err, operation) => {
 const addressApi = async (address) => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/address`,
+      `${API_BASE_URL}/address`,
       address,
       getAuthConfig()
     );
@@ -59,9 +59,11 @@ const addressApi = async (address) => {
 const getAddressApi = async () => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/address`,
+      `${API_BASE_URL}/address`,
       getAuthConfig()
     );
+
+
     return response;
   } catch (err) {
     handleApiError(err, "Get addresses");
@@ -72,7 +74,7 @@ const getAddressApi = async () => {
 const updateAddressApi = async (id, address) => {
   try {
     const response = await axios.put(
-      `${API_BASE_URL}/api/address/${id}`,
+      `${API_BASE_URL}/address/${id}`,
       address,
       getAuthConfig()
     );
@@ -87,7 +89,7 @@ const updateAddressApi = async (id, address) => {
 const deleteAddressApi = async (id) => {
   try {
     const response = await axios.delete(
-      `${API_BASE_URL}/api/address/${id}`,
+      `${API_BASE_URL}/address/${id}`,
       getAuthConfig()
     );
 

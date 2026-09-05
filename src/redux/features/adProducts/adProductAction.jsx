@@ -10,6 +10,8 @@ import {
   setGoal,
   setProductCategory,
   setBrands,
+  setRecentProduct,
+  setComboProduct
 } from "./adProductSlice";
 
 import {
@@ -21,6 +23,8 @@ import {
   getGoalApi,
   getProductCategoryApi,
   getBrandsApi,
+  getRecentProductsApi,
+  getComboProductsApi
 } from "./adProductApi";
 
 let fetchProductPromise = null;
@@ -59,6 +63,8 @@ export const getAllProductAds = () => async (dispatch, getState) => {
         goalResponse,
         productCategoryResponse,
         brandsResponse,
+        recentProductResponse,
+        comboProductResponse
       ] = await Promise.all([
         getFeaturedProductsApi(),
         getPopularProductsApi(),
@@ -68,6 +74,8 @@ export const getAllProductAds = () => async (dispatch, getState) => {
         getGoalApi(),
         getProductCategoryApi(),
         getBrandsApi(),
+        getRecentProductsApi(),
+        getComboProductsApi()
       ]);
 
       dispatch(setFeaturedProduct(featuredResponse));
@@ -78,6 +86,8 @@ export const getAllProductAds = () => async (dispatch, getState) => {
       dispatch(setGoal(goalResponse));
       dispatch(setProductCategory(productCategoryResponse));
       dispatch(setBrands(brandsResponse));
+      dispatch(setRecentProduct(recentProductResponse));
+      dispatch(setComboProduct(comboProductResponse))
       dispatch(setLoaded(true));
 
       return true;

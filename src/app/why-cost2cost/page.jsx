@@ -1,13 +1,11 @@
-import Header from "@/components/layout/Header";
 import FAQPage from "@/components/faq/FAQPage";
-import Footer from "@/components/layout/Footer";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 export default function WhyCost2CostPage() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
-      <Header />
+
 
       {/* =====================================================
           BREADCRUMB
@@ -166,7 +164,7 @@ export default function WhyCost2CostPage() {
         </div>
       </section>
       <FAQPage/>
-      <Footer />
+
     </main>
   );
 }

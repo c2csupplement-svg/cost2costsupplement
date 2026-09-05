@@ -4,22 +4,15 @@ import { useMemo } from "react";
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ShoppingCart,
-  Heart,
-  ArrowUpRight,
-  Star,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Heart, Star } from "lucide-react";
+
+const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
 
 export default function ProductCard({ product }) {
   const {
-    addToCart,
     toggleWishlist,
     isInWishlist,
   } = useShop();
-
-  const router = useRouter();
 
   const wishlistActive = isInWishlist(product?.id);
 
@@ -124,7 +117,7 @@ export default function ProductCard({ product }) {
       return product.featuredImage.trim();
     }
 
-    return "/placeholder-product.svg";
+    return PLACEHOLDER_IMAGE;
   }, [
     product?.images,
     product?.featuredimg,
@@ -149,20 +142,18 @@ export default function ProductCard({ product }) {
       const calculatedDiscount =
         topLevelDiscount > 0
           ? topLevelDiscount
-          : topLevelOriginalPrice >
-            topLevelPrice
-            ? Math.round(
+          : topLevelOriginalPrice > topLevelPrice
+          ? Math.round(
               ((topLevelOriginalPrice -
                 topLevelPrice) /
                 topLevelOriginalPrice) *
-              100
+                100
             )
-            : 0;
+          : 0;
 
       return {
         price: topLevelPrice,
-        originalPrice:
-          topLevelOriginalPrice,
+        originalPrice: topLevelOriginalPrice,
         discount: calculatedDiscount,
       };
     }
@@ -193,54 +184,48 @@ export default function ProductCard({ product }) {
 
     const discountedPrice =
       variant?.discountedPrice !== null &&
-        variant?.discountedPrice !==
-        undefined &&
-        Number(variant?.discountedPrice) > 0
-        ? Number(
-          variant.discountedPrice
-        )
+      variant?.discountedPrice !== undefined &&
+      Number(variant?.discountedPrice) > 0
+        ? Number(variant.discountedPrice)
         : null;
 
     const displayPrice =
       discountedPrice !== null &&
-        discountedPrice > 0
+      discountedPrice > 0
         ? discountedPrice
         : basePrice;
 
     const variantOriginalPrice =
       discountedPrice !== null &&
-        discountedPrice < basePrice
+      discountedPrice < basePrice
         ? basePrice
         : 0;
 
     const variantDiscount =
       variantOriginalPrice > 0 &&
-        discountedPrice !== null
+      discountedPrice !== null
         ? Math.round(
-          ((variantOriginalPrice -
-            discountedPrice) /
-            variantOriginalPrice) *
-          100
-        )
-        : Number(
-          variant?.discount
-        ) || 0;
+            ((variantOriginalPrice -
+              discountedPrice) /
+              variantOriginalPrice) *
+              100
+          )
+        : Number(variant?.discount) || 0;
 
     return {
       price: displayPrice,
-      originalPrice:
-        variantOriginalPrice,
+      originalPrice: variantOriginalPrice,
       discount: variantDiscount,
     };
   }, [product]);
 
   const productSlug =
     typeof product?.slug === "string" &&
-      product.slug.trim()
+    product.slug.trim()
       ? product.slug.trim()
       : product?.id
-        ? String(product.id)
-        : "";
+      ? String(product.id)
+      : "";
 
   const productName =
     product?.name || "Product";
@@ -261,29 +246,27 @@ export default function ProductCard({ product }) {
     0;
 
   const reviewCount =
-    Number(
-      product?.reviewCount
-    ) ||
-    Number(
-      product?._count?.reviews
-    ) ||
+    Number(product?.reviewCount) ||
+    Number(product?._count?.reviews) ||
     (Array.isArray(product?.reviews)
       ? product.reviews.length
       : 0);
 
   const formattedPrice =
     Number(price) > 0
-      ? Number(price).toLocaleString(
-        "en-IN"
-      )
+      ? Number(price).toLocaleString("en-IN")
       : "0";
 
   const formattedOriginalPrice =
     Number(originalPrice) > 0
-      ? Number(
-        originalPrice
-      ).toLocaleString("en-IN")
+      ? Number(originalPrice).toLocaleString(
+          "en-IN"
+        )
       : "0";
+
+  const productHref = productSlug
+    ? `/product/${productSlug}`
+    : "/products";
 
   return (
     <article
@@ -295,16 +278,15 @@ export default function ProductCard({ product }) {
         min-w-0
         flex-col
         overflow-hidden
-        rounded-xl
+        rounded-2xl
         border
         border-border
         bg-card
         transition-all
         duration-300
-        sm:rounded-2xl
         hover:-translate-y-1
-        hover:border-border-strong
-        hover:shadow-[0_18px_45px_rgba(0,0,0,0.10)]
+        hover:border-primary/30
+        hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
       "
     >
       {discount > 0 && (
@@ -314,207 +296,167 @@ export default function ProductCard({ product }) {
             left-0
             top-0
             z-20
-            rounded-br-xl
+            rounded-br-2xl
             bg-primary
-            px-2
+            px-2.5
             py-1.5
             text-[8px]
             font-black
             uppercase
             tracking-wide
             text-white
-            shadow-sm
-            sm:rounded-br-2xl
             sm:px-4
             sm:py-2.5
-            sm:text-[11px]
+            sm:text-[10px]
           "
         >
           -{discount}%
         </div>
       )}
 
-      {/* <button
-        type="button"
-        onClick={() =>
-          toggleWishlist(product)
-        }
-        className={`
-          absolute
-          right-2
-          top-2
-          z-30
-          flex
-          h-7
-          w-7
-          items-center
-          justify-center
-          rounded-full
-          border
-          shadow-md
-          backdrop-blur-sm
-          transition-all
-          duration-300
-          sm:right-4
-          sm:top-4
-          sm:h-10
-          sm:w-10
-          ${wishlistActive
-            ? "border-[#E52323] bg-[#E52323] text-white shadow-[0_6px_18px_rgba(229,35,35,0.25)]"
-            : "border-[#E5E5E5] bg-white text-[#333333] hover:border-[#E52323] hover:text-[#E52323]"
-          }
-        `}
-        aria-label={
-          wishlistActive
-            ? "Remove from wishlist"
-            : "Add to wishlist"
-        }
-      >
-        <Heart
-          className="h-3.5 w-3.5 transition-transform duration-300 sm:h-[18px] sm:w-[18px]"
-          fill={
-            wishlistActive
-              ? "#FFFFFF"
-              : "none"
-          }
-          strokeWidth={
-            wishlistActive ? 2.5 : 2
-          }
-        />
-      </button> */}
-
       <Link
-        href={
-          productSlug
-            ? `/product/${productSlug}`
-            : "/products"
-        }
-        className="
-          relative
-          block
-          aspect-square
-          overflow-hidden
-          bg-surface
-        "
+        href={productHref}
+        className="block"
       >
-        <div className="pointer-events-none absolute inset-0 z-10 bg-primary/0 transition-all duration-500 group-hover:bg-primary/[0.025]" />
-
-        <Image
-          src={imageSrc}
-          alt={productName}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-          className="
-            object-cover
-            transition-transform
-            duration-500
-            ease-out
-            group-hover:scale-[1.07]
-          "
-          onError={(event) => {
-            if (
-              event.currentTarget.src.includes(
-                "/placeholder-product.svg"
-              )
-            ) {
-              return;
-            }
-
-            event.currentTarget.src =
-              "/placeholder-product.svg";
-          }}
-        />
-
         <div
           className="
-            absolute
-            bottom-2
-            right-2
-            z-20
-            hidden
-            h-7
-            w-7
-            translate-y-2
-            items-center
-            justify-center
-            rounded-full
-            bg-text-primary
-            text-white
-            opacity-0
-            shadow-lg
-            transition-all
-            duration-300
-            sm:flex
-            sm:bottom-4
-            sm:right-4
-            sm:h-9
-            sm:w-9
-            group-hover:translate-y-0
-            group-hover:opacity-100
+            relative
+            aspect-square
+            overflow-hidden
+            bg-surface
           "
         >
-          <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
+          <Image
+            src={imageSrc}
+            alt={productName}
+            fill
+            sizes="
+              (max-width: 640px) 50vw,
+              (max-width: 1024px) 33vw,
+              310px
+            "
+            className="
+              object-cover
+              transition-transform
+              duration-500
+              ease-out
+              group-hover:scale-[1.06]
+            "
+            onError={(event) => {
+              if (
+                !event.currentTarget.src.includes(
+                  PLACEHOLDER_IMAGE
+                )
+              ) {
+                event.currentTarget.src =
+                  PLACEHOLDER_IMAGE;
+              }
+            }}
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/20
+              via-transparent
+              to-transparent
+              opacity-0
+              transition-opacity
+              duration-300
+              group-hover:opacity-100
+            "
+          />
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-2.5 sm:p-5">
-        <div className="flex items-center justify-between gap-1">
+      <div
+        className="
+          flex
+          flex-1
+          flex-col
+          p-3
+
+          sm:p-5
+        "
+      >
+        <div className="flex items-center justify-between gap-2">
           <p
             className="
               truncate
-              text-[7px]
+              text-[8px]
               font-black
               uppercase
-              tracking-[0.12em]
+              tracking-[0.18em]
               text-primary
+
               sm:text-[10px]
               sm:tracking-[0.2em]
             "
           >
             {brandName ||
               categoryName ||
-              "Uncategorized"}
+              "Supplement"}
           </p>
 
-          {brandName &&
-            categoryName && (
-              <span className="hidden truncate text-[10px] font-semibold uppercase tracking-wide text-text-muted sm:block">
+          {categoryName &&
+            brandName && (
+              <span
+                className="
+                  hidden
+                  truncate
+                  text-[9px]
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  text-text-muted
+
+                  sm:block
+                "
+              >
                 {categoryName}
               </span>
             )}
         </div>
 
         <Link
-          href={
-            productSlug
-              ? `/product/${productSlug}`
-              : "/products"
-          }
-          className="mt-1"
+          href={productHref}
+          className="mt-1.5 block"
         >
           <h3
             className="
               line-clamp-2
-              min-h-[20px]
-              text-[11px]
+              text-[12px]
               font-black
-              leading-4
+              leading-[1.3]
               tracking-tight
               text-text-primary
               transition-colors
               duration-200
-              sm:min-h-[25px]
-              sm:text-[15px]
-              sm:leading-6
               group-hover:text-primary
+
+              sm:text-[15px]
+              sm:leading-5
             "
           >
             {productName}
           </h3>
         </Link>
 
-        <div className="mt-1.5 flex items-center gap-1 sm:mt-3 sm:gap-2">
-          <div className="flex items-center gap-px sm:gap-0.5">
+        <div
+          className="
+            mt-2
+            flex
+            items-center
+            gap-1.5
+
+            sm:mt-3
+            sm:gap-2
+          "
+        >
+          <div className="flex items-center gap-px">
             {Array.from({
               length: 5,
             }).map((_, index) => (
@@ -523,95 +465,113 @@ export default function ProductCard({ product }) {
                 className={`
                   h-2.5
                   w-2.5
+
                   sm:h-3.5
                   sm:w-3.5
-                  ${index <
-                    Math.round(
-                      rating
-                    )
-                    ? "fill-[#F7B84B] text-[#F7B84B]"
-                    : "text-[#D9D9D9]"
+
+                  ${
+                    index <
+                    Math.round(rating)
+                      ? "fill-[#F7B84B] text-[#F7B84B]"
+                      : "text-border"
                   }
                 `}
               />
             ))}
           </div>
 
-          <span className="text-[8px] font-semibold text-text-muted sm:text-[11px]">
+          <span
+            className="
+              text-[8px]
+              font-semibold
+              text-text-muted
+
+              sm:text-[11px]
+            "
+          >
             {rating > 0
               ? rating.toFixed(1)
               : "0.0"}
           </span>
 
-          <span className="hidden text-[11px] text-text-muted sm:inline">
-            ({reviewCount})
-          </span>
+          {reviewCount > 0 && (
+            <span
+              className="
+                hidden
+                text-[10px]
+                text-text-muted
+
+                sm:inline
+              "
+            >
+              ({reviewCount})
+            </span>
+          )}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-1.5 pt-3 sm:gap-3 sm:pt-5">
+        <div
+          className="
+            mt-auto
+            flex
+            items-end
+            justify-between
+            gap-2
+            pt-3
+
+            sm:pt-5
+          "
+        >
           <div className="min-w-0">
-            <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
-              <span className="whitespace-nowrap text-[14px] font-black tracking-tight text-text-primary sm:text-xl">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span
+                className="
+                  whitespace-nowrap
+                  text-[15px]
+                  font-black
+                  tracking-tight
+                  text-text-primary
+
+                  sm:text-xl
+                "
+              >
                 ₹{formattedPrice}
               </span>
 
-              {originalPrice >
-                price && (
-                  <span className="hidden text-xs font-medium text-text-muted line-through sm:inline">
-                    ₹
-                    {
-                      formattedOriginalPrice
-                    }
-                  </span>
-                )}
+              {originalPrice > price && (
+                <span
+                  className="
+                    hidden
+                    text-xs
+                    font-medium
+                    text-text-muted
+                    line-through
+
+                    sm:inline
+                  "
+                >
+                  ₹{formattedOriginalPrice}
+                </span>
+              )}
             </div>
 
             {discount > 0 && (
-              <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-primary sm:mt-1 sm:text-[9px]">
-                You save {discount}%
+              <p
+                className="
+                  mt-0.5
+                  text-[7px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-primary
+
+                  sm:mt-1
+                  sm:text-[9px]
+                "
+              >
+                Save {discount}%
               </p>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              router.push(`/product/${productSlug}`);
-            }}
-            disabled={!productSlug}
-            className="
-              flex
-              h-8
-              shrink-0
-              items-center
-              justify-center
-              rounded-md
-              bg-primary
-              px-2
-              text-[8px]
-              font-black
-              uppercase
-              tracking-wide
-              text-white
-              shadow-[0_6px_18px_rgba(229,35,35,0.18)]
-              transition-all
-              duration-300
-              sm:h-10
-              sm:gap-2
-              sm:rounded-lg
-              sm:px-4
-              sm:text-xs
-              hover:-translate-y-0.5
-              hover:bg-primary-hover
-              hover:shadow-[0_8px_22px_rgba(229,35,35,0.25)]
-              active:translate-y-0
-            "
-          >
-
-            <span className="ml-1 sm:ml-0">
-              View
-            </span>
-          </button>
         </div>
       </div>
     </article>

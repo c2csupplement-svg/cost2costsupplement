@@ -15,7 +15,9 @@ export default function PromoBanner() {
     loading,
     loaded,
     error,
-  } = useSelector((state) => state.banners || {});
+  } = useSelector(
+    (state) => state.banners || {}
+  );
 
   useEffect(() => {
     if (!loaded && !loading) {
@@ -24,7 +26,8 @@ export default function PromoBanner() {
   }, [dispatch, loaded, loading]);
 
   const featuredData =
-    featuredBannerList?.data ?? featuredBannerList;
+    featuredBannerList?.data ??
+    featuredBannerList;
 
   const banner = Array.isArray(featuredData)
     ? featuredData[0]
@@ -59,9 +62,9 @@ export default function PromoBanner() {
     "Special Offers";
 
   return (
-    <section className="bg-background py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-10">
-        <div className="group relative overflow-hidden rounded-[20px] sm:rounded-[28px]">
+    <section className="bg-background py-5 sm:py-8 lg:py-10">
+      <div className="mx-auto w-full max-w-[1440px] px-3 sm:px-6 lg:px-10">
+        <div className="group relative overflow-hidden rounded-2xl sm:rounded-[24px]">
           <div className="relative w-full">
             <Image
               src={desktopSrc}
@@ -70,29 +73,73 @@ export default function PromoBanner() {
               height={500}
               priority
               sizes="(max-width: 639px) 0vw, 100vw"
-              className="hidden h-auto w-full rounded-[20px] object-contain sm:block sm:rounded-[28px]"
+              className="
+                hidden
+                h-auto
+                w-full
+                object-contain
+                sm:block
+                sm:rounded-[24px]
+              "
             />
 
-            <Image
+            <img
               src={mobileSrc}
               alt={altText}
-              width={750}
-              height={1000}
-              priority
-              sizes="100vw"
-              className="block h-auto w-full rounded-[20px] object-contain sm:hidden"
+              className="
+                block
+                w-full
+               
+                sm:hidden
+                h-110
+              "
             />
 
-            <div className="absolute inset-0 bg-black/10" />
+            <div className="pointer-events-none absolute inset-0 bg-black/5" />
           </div>
 
           <Link
             href="/products"
-            className="group/cta absolute bottom-4 left-4 z-10 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-[11px] font-black uppercase tracking-wide text-white shadow-[0_8px_25px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:bg-primary-hover sm:bottom-6 sm:left-6 sm:h-12 sm:gap-3 sm:px-6 sm:text-xs lg:bottom-8 lg:left-8"
+            className="
+              group/cta
+              absolute
+              bottom-3
+              left-3
+              z-10
+              inline-flex
+              h-9
+              items-center
+              gap-1.5
+              rounded-lg
+              bg-primary
+              px-3
+              text-[9px]
+              font-black
+              uppercase
+              tracking-wide
+              text-white
+              shadow-[0_6px_18px_rgba(0,0,0,0.25)]
+              transition-all
+              duration-300
+              hover:bg-primary-hover
+
+              sm:bottom-5
+              sm:left-5
+              sm:h-11
+              sm:gap-2
+              sm:px-5
+              sm:text-[11px]
+
+              lg:bottom-7
+              lg:left-7
+              lg:h-12
+              lg:px-6
+              lg:text-xs
+            "
           >
             Shop Offers
 
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" />
+            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1 sm:h-4 sm:w-4" />
           </Link>
         </div>
       </div>
