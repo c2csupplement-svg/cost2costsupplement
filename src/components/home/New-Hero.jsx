@@ -1,54 +1,99 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, EffectFade } from "swiper/modules";
-import {getBanner} from "@/redux/features/banner/bannerAction"
+import {
+  Swiper,
+  SwiperSlide,
+} from "swiper/react";
+import {
+  Autoplay,
+  Navigation,
+  EffectFade,
+} from "swiper/modules";
+
+import { getBanner } from "@/redux/features/banner/bannerAction";
 
 import "swiper/css";
 import "swiper/css/effect-fade";
 
-const BANNERS_API =
-  "https://cost2costsupplement-backend-2.onrender.com/api/banners/";
-
 export default function Hero() {
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [slides, setSlides] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useDispatch();
+
+  const {
+    bannerList,
+    loading,
+    loaded,
+    error,
+  } = useSelector(
+    (state) => state.banners || {}
+  );
+
+  const [activeSlide, setActiveSlide] =
+    useState(0);
 
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const response = await fetch(BANNERS_API);
+    if (!loaded && !loading) {
+      dispatch(getBanner());
+    }
+  }, [dispatch, loaded, loading]);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch banners");
-        }
+  const getBanners = (data) => {
+    if (Array.isArray(data)) {
+      return data;
+    }
 
-        const data = await response.json();
+    if (Array.isArray(data?.banners)) {
+      return data.banners;
+    }
 
-        // Only show active banners and sort by order
-        const activeBanners = (data.banners || [])
-          .filter((banner) => banner.isActive)
-          .sort((a, b) => a.order - b.order);
+    if (Array.isArray(data?.data)) {
+      return data.data;
+    }
 
-        setSlides(activeBanners);
-      } catch (error) {
-        console.error("Failed to fetch banners:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (Array.isArray(data?.data?.banners)) {
+      return data.data.banners;
+    }
 
-    fetchBanners();
-  }, []);
+    return [];
+  };
 
-  if (isLoading) {
-    return (
-      <section className="h-[250px] w-full animate-pulse bg-[#101010] sm:h-[400px] lg:h-[600px]" />
+  const slides = getBanners(bannerList)
+    .filter((banner) => {
+      return (
+        banner?.isActive === true ||
+        banner?.isActive === 1 ||
+        banner?.isActive === "true"
+      );
+    })
+    .sort(
+      (a, b) =>
+        Number(a?.order || 0) -
+        Number(b?.order || 0)
     );
+
+  if (loading && !loaded) {
+    return (
+      <section className="w-full bg-[#101010]">
+        <div
+          className="
+            h-[190px]
+            w-full
+            animate-pulse
+            bg-[#151515]
+            sm:h-[280px]
+            md:h-[360px]
+            lg:h-[500px]
+          "
+        />
+      </section>
+    );
+  }
+
+  if (error && !slides.length) {
+    return null;
   }
 
   if (!slides.length) {
@@ -56,9 +101,13 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-[#101010]">
+    <section className="relative w-full overflow-hidden bg-[#101010]">
       <Swiper
-        modules={[Autoplay, Navigation, EffectFade]}
+        modules={[
+          Autoplay,
+          Navigation,
+          EffectFade,
+        ]}
         effect="fade"
         fadeEffect={{
           crossFade: true,
@@ -75,71 +124,168 @@ export default function Hero() {
           nextEl: ".hero-next",
         }}
         onSlideChange={(swiper) => {
-          setActiveSlide(swiper.realIndex);
+          setActiveSlide(
+            swiper.realIndex
+          );
         }}
-        className="hero-swiper"
+        className="hero-swiper w-full"
       >
-        {slides.map((slide) => (
-          <SwiperSlide key={slide.id}>
-            <div className="relative w-full">
-              <picture className="block w-full">
-                {/* Mobile */}
-               <img
-                  src={slide.mobileImage}
-                  alt={slide.title || `Cost2Cost banner ${slide.id}`}
-                  className="block h-110 w-full block sm:hidden"
-                />
+        {slides.map((slide) => {
+          const mobileImage =
+            slide?.mobileImage ||
+            slide?.image ||
+            slide?.desktopImage;
 
-                {/* Desktop + Tablet */}
-                <img
-                  src={slide.desktopImage}
-                  alt={slide.title || `Cost2Cost banner ${slide.id}`}
-                  className="block h-auto w-full hidden sm:block"
-                />
-              </picture>
-            </div>
-          </SwiperSlide>
-        ))}
+          const desktopImage =
+            slide?.desktopImage ||
+            slide?.image ||
+            slide?.mobileImage;
+
+          if (
+            !mobileImage &&
+            !desktopImage
+          ) {
+            return null;
+          }
+
+          return (
+            <SwiperSlide
+              key={slide?.id}
+            >
+              <div className="relative w-full overflow-hidden">
+                <picture className="block w-full">
+                  <source
+                    media="(max-width: 639px)"
+                    srcSet={mobileImage}
+                  />
+
+                  <img
+                    src={desktopImage}
+                    alt={
+                      slide?.title ||
+                      `Cost2Cost banner ${
+                        slide?.id || ""
+                      }`
+                    }
+                    className="
+                      block
+                      h-auto
+                      w-full
+                      object-contain
+                      object-center
+                    "
+                  />
+                </picture>
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
 
-      {/* Navigation Controls */}
       {slides.length > 1 && (
-        <div className="absolute bottom-5 left-5 z-30 flex items-center gap-3 sm:bottom-6 sm:left-8 lg:bottom-8 lg:left-10 xl:left-16">
-          <button
-            type="button"
-            className="hero-prev flex h-11 w-11 items-center justify-center border border-white/30 bg-black/40 text-white backdrop-blur-md transition-all duration-300 hover:border-[#E52323] hover:bg-[#E52323] sm:h-12 sm:w-12"
-            aria-label="Previous slide"
+        <>
+          <div
+            className="
+              absolute
+              bottom-4
+              left-4
+              z-30
+              flex
+              items-center
+              gap-2
+              sm:bottom-6
+              sm:left-8
+              sm:gap-3
+              lg:bottom-8
+              lg:left-10
+              xl:left-16
+            "
           >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
+            <button
+              type="button"
+              className="
+                hero-prev
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                border
+                border-white/30
+                bg-black/40
+                text-white
+                backdrop-blur-md
+                transition-all
+                duration-300
+                hover:border-[#E52323]
+                hover:bg-[#E52323]
+                sm:h-12
+                sm:w-12
+              "
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
 
-          <button
-            type="button"
-            className="hero-next flex h-11 w-11 items-center justify-center border border-white/30 bg-black/40 text-white backdrop-blur-md transition-all duration-300 hover:border-[#E52323] hover:bg-[#E52323] sm:h-12 sm:w-12"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Slide Number */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-5 right-5 z-30 sm:bottom-6 sm:right-8 lg:bottom-8 lg:right-10 xl:right-16">
-          <div className="flex items-baseline">
-            <span className="bebas text-4xl text-white sm:text-5xl">
-              {String(activeSlide + 1).padStart(2, "0")}
-            </span>
-
-            <span className="bebas mx-2 text-xl text-white/40 sm:text-2xl">
-              /
-            </span>
-
-            <span className="bebas text-xl text-white/40 sm:text-2xl">
-              {String(slides.length).padStart(2, "0")}
-            </span>
+            <button
+              type="button"
+              className="
+                hero-next
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                border
+                border-white/30
+                bg-black/40
+                text-white
+                backdrop-blur-md
+                transition-all
+                duration-300
+                hover:border-[#E52323]
+                hover:bg-[#E52323]
+                sm:h-12
+                sm:w-12
+              "
+              aria-label="Next slide"
+            >
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
           </div>
-        </div>
+
+          <div
+            className="
+              absolute
+              bottom-4
+              right-4
+              z-30
+              sm:bottom-6
+              sm:right-8
+              lg:bottom-8
+              lg:right-10
+              xl:right-16
+            "
+          >
+            <div className="flex items-baseline">
+              <span className="bebas text-3xl text-white sm:text-5xl">
+                {String(
+                  activeSlide + 1
+                ).padStart(2, "0")}
+              </span>
+
+              <span className="bebas mx-1.5 text-lg text-white/40 sm:mx-2 sm:text-2xl">
+                /
+              </span>
+
+              <span className="bebas text-lg text-white/40 sm:text-2xl">
+                {String(
+                  slides.length
+                ).padStart(2, "0")}
+              </span>
+            </div>
+          </div>
+        </>
       )}
     </section>
   );

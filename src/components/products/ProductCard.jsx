@@ -130,19 +130,43 @@ export default function ProductCard({ product }) {
     discount,
   } = useMemo(() => {
     const topLevelPrice =
+      Number(product?.salePrice) ||
+      Number(product?.price) ||
+      0;
+
+    const productPrice =
       Number(product?.price) || 0;
 
-    const topLevelOriginalPrice =
-      Number(product?.originalPrice) || 0;
+    const productSalePrice =
+      Number(product?.salePrice) || 0;
 
-    const topLevelDiscount =
-      Number(product?.discount) || 0;
+    if (
+      productSalePrice > 0 &&
+      productPrice > productSalePrice
+    ) {
+      return {
+        price: productSalePrice,
+        originalPrice: productPrice,
+        discount: Math.round(
+          ((productPrice - productSalePrice) /
+            productPrice) *
+            100
+        ),
+      };
+    }
 
     if (topLevelPrice > 0) {
+      const topLevelOriginalPrice =
+        Number(product?.originalPrice) || 0;
+
+      const topLevelDiscount =
+        Number(product?.discount) || 0;
+
       const calculatedDiscount =
         topLevelDiscount > 0
           ? topLevelDiscount
-          : topLevelOriginalPrice > topLevelPrice
+          : topLevelOriginalPrice >
+            topLevelPrice
           ? Math.round(
               ((topLevelOriginalPrice -
                 topLevelPrice) /
@@ -168,6 +192,7 @@ export default function ProductCard({ product }) {
       variants.find(
         (item) =>
           Number(item?.discountedPrice) > 0 ||
+          Number(item?.salePrice) > 0 ||
           Number(item?.price) > 0
       ) || variants[0];
 
@@ -183,15 +208,14 @@ export default function ProductCard({ product }) {
       Number(variant?.price) || 0;
 
     const discountedPrice =
-      variant?.discountedPrice !== null &&
-      variant?.discountedPrice !== undefined &&
       Number(variant?.discountedPrice) > 0
         ? Number(variant.discountedPrice)
+        : Number(variant?.salePrice) > 0
+        ? Number(variant.salePrice)
         : null;
 
     const displayPrice =
-      discountedPrice !== null &&
-      discountedPrice > 0
+      discountedPrice !== null
         ? discountedPrice
         : basePrice;
 
@@ -241,8 +265,8 @@ export default function ProductCard({ product }) {
       : product?.category?.name || "";
 
   const rating =
-    Number(product?.rating) ||
     Number(product?.averageRating) ||
+    Number(product?.rating) ||
     0;
 
   const reviewCount =
@@ -259,36 +283,44 @@ export default function ProductCard({ product }) {
 
   const formattedOriginalPrice =
     Number(originalPrice) > 0
-      ? Number(originalPrice).toLocaleString(
-          "en-IN"
-        )
+      ? Number(
+          originalPrice
+        ).toLocaleString("en-IN")
       : "0";
 
   const productHref = productSlug
     ? `/product/${productSlug}`
     : "/products";
 
+  const handleWishlist = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (product?.id) {
+      toggleWishlist(product.id);
+    }
+  };
+
   return (
     <article
-      className="
-        group
-        relative
-        flex
-        h-full
-        min-w-0
-        flex-col
-        overflow-hidden
-        rounded-2xl
-        border
-        border-border
-        bg-card
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:border-primary/30
-        hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
-      "
-    >
+  className="
+    group
+    relative
+    flex
+    min-w-0
+    flex-col
+    overflow-hidden
+    rounded-2xl
+    border
+    border-border
+    bg-card
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:border-primary/30
+    hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
+  "
+>
       {discount > 0 && (
         <div
           className="
@@ -296,11 +328,11 @@ export default function ProductCard({ product }) {
             left-0
             top-0
             z-20
-            rounded-br-2xl
+            rounded-br-xl
             bg-primary
-            px-2.5
-            py-1.5
-            text-[8px]
+            px-2
+            py-1
+            text-[7px]
             font-black
             uppercase
             tracking-wide
@@ -314,16 +346,64 @@ export default function ProductCard({ product }) {
         </div>
       )}
 
+      <button
+        type="button"
+        onClick={handleWishlist}
+        aria-label={
+          wishlistActive
+            ? "Remove from wishlist"
+            : "Add to wishlist"
+        }
+        className="
+          absolute
+          right-2
+          top-2
+          z-20
+          flex
+          h-8
+          w-8
+          items-center
+          justify-center
+          rounded-full
+          bg-white/95
+          text-text-primary
+          shadow-sm
+          transition-all
+          duration-200
+          hover:scale-105
+          hover:text-primary
+          sm:right-3
+          sm:top-3
+          sm:h-10
+          sm:w-10
+        "
+      >
+        <Heart
+          className="
+            h-4
+            w-4
+            sm:h-5
+            sm:w-5
+          "
+          fill={
+            wishlistActive
+              ? "currentColor"
+              : "none"
+          }
+        />
+      </button>
+
       <Link
         href={productHref}
-        className="block"
+        className="block shrink-0"
       >
         <div
           className="
             relative
-            aspect-square
+            h-[165px]
             overflow-hidden
             bg-surface
+            sm:h-[250px]
           "
         >
           <Image
@@ -336,11 +416,13 @@ export default function ProductCard({ product }) {
               310px
             "
             className="
-              object-cover
+              object-contain
+              p-2
               transition-transform
               duration-500
               ease-out
-              group-hover:scale-[1.06]
+              group-hover:scale-[1.04]
+              sm:p-4
             "
             onError={(event) => {
               if (
@@ -353,45 +435,30 @@ export default function ProductCard({ product }) {
               }
             }}
           />
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              inset-0
-              bg-gradient-to-t
-              from-black/20
-              via-transparent
-              to-transparent
-              opacity-0
-              transition-opacity
-              duration-300
-              group-hover:opacity-100
-            "
-          />
         </div>
       </Link>
 
-      <div
-        className="
-          flex
-          flex-1
-          flex-col
-          p-3
-
-          sm:p-5
-        "
-      >
+     <div
+  className="
+    flex
+    flex-col
+    px-3
+    pb-3
+    pt-3
+    sm:px-5
+    sm:pb-5
+    sm:pt-4
+  "
+>
         <div className="flex items-center justify-between gap-2">
           <p
             className="
               truncate
-              text-[8px]
+              text-[7px]
               font-black
               uppercase
-              tracking-[0.18em]
+              tracking-[0.15em]
               text-primary
-
               sm:text-[10px]
               sm:tracking-[0.2em]
             "
@@ -412,7 +479,6 @@ export default function ProductCard({ product }) {
                   uppercase
                   tracking-wide
                   text-text-muted
-
                   sm:block
                 "
               >
@@ -423,20 +489,19 @@ export default function ProductCard({ product }) {
 
         <Link
           href={productHref}
-          className="mt-1.5 block"
+          className="mt-1 block"
         >
           <h3
             className="
               line-clamp-2
-              text-[12px]
+              text-[11px]
               font-black
-              leading-[1.3]
+              leading-[14px]
               tracking-tight
               text-text-primary
               transition-colors
               duration-200
               group-hover:text-primary
-
               sm:text-[15px]
               sm:leading-5
             "
@@ -447,12 +512,11 @@ export default function ProductCard({ product }) {
 
         <div
           className="
-            mt-2
+            mt-1
             flex
             items-center
-            gap-1.5
-
-            sm:mt-3
+            gap-1
+            sm:mt-2
             sm:gap-2
           "
         >
@@ -465,10 +529,8 @@ export default function ProductCard({ product }) {
                 className={`
                   h-2.5
                   w-2.5
-
                   sm:h-3.5
                   sm:w-3.5
-
                   ${
                     index <
                     Math.round(rating)
@@ -482,10 +544,9 @@ export default function ProductCard({ product }) {
 
           <span
             className="
-              text-[8px]
+              text-[7px]
               font-semibold
               text-text-muted
-
               sm:text-[11px]
             "
           >
@@ -500,7 +561,6 @@ export default function ProductCard({ product }) {
                 hidden
                 text-[10px]
                 text-text-muted
-
                 sm:inline
               "
             >
@@ -511,26 +571,23 @@ export default function ProductCard({ product }) {
 
         <div
           className="
-            mt-auto
+            mt-2
             flex
             items-end
             justify-between
             gap-2
-            pt-3
-
-            sm:pt-5
+            sm:mt-4
           "
         >
           <div className="min-w-0">
-            <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <div className="flex items-baseline gap-1 sm:gap-2">
               <span
                 className="
                   whitespace-nowrap
-                  text-[15px]
+                  text-[14px]
                   font-black
                   tracking-tight
                   text-text-primary
-
                   sm:text-xl
                 "
               >
@@ -545,7 +602,6 @@ export default function ProductCard({ product }) {
                     font-medium
                     text-text-muted
                     line-through
-
                     sm:inline
                   "
                 >
@@ -558,12 +614,11 @@ export default function ProductCard({ product }) {
               <p
                 className="
                   mt-0.5
-                  text-[7px]
+                  text-[6px]
                   font-bold
                   uppercase
                   tracking-wide
                   text-primary
-
                   sm:mt-1
                   sm:text-[9px]
                 "
