@@ -3620,8 +3620,6 @@ function CheckoutCartItem({
   slug
 }) {
 
-  console.log(slug)
-
   const product =
     item?.product ?? {};
 
