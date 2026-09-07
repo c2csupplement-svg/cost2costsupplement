@@ -379,11 +379,11 @@ function BlogCard({ post }) {
           />
         )}
 
-        <div className="absolute left-4 top-4">
+        {/* <div className="absolute left-4 top-4">
           <span className="rounded-full bg-white/95 px-3 py-1.5 font-oxanium text-[10px] font-bold uppercase tracking-[0.12em] text-primary shadow-sm backdrop-blur">
             {post.category}
           </span>
-        </div>
+        </div> */}
       </div>
 
       <div className="p-5">

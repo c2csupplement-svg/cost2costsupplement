@@ -62,7 +62,6 @@ export const getCategoryBySlug = async (slug, page = 1, limit = 20) => {
 export const getProductSearchApi = async (query) => {
     try {
 
-
         const response = await axios.get(`${API_BASE_URL}/products/search?q=${query}`);
 
         return response.data
@@ -378,11 +377,10 @@ export const homePageSeo = async () => {
     }
 }
 
-export const getProductFilter = async (filter) => {
-
+export const ProductFilter = async (filter, currentPage=1,pageSize=20) => {
     try{
-        const response = await axios.get(`${API_BASE_URL}/products/filter`,
-           filter
+
+        const response = await axios.get(`${API_BASE_URL}/products/filter?sortBy=${filter.sortBy}&page=${currentPage}&limit=${pageSize}`,
         );
 
 

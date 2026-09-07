@@ -51,46 +51,45 @@ export const addToCart = (product) => async (dispatch) => {
   }
 };
 
-export const fetchCartItems =
-  (refresh = false) => async (dispatch, getState) => {
-    const { products } = getState().product;
+export const fetchCartItems = (refresh = false) => async (dispatch, getState) => {
+  const { products } = getState().product;
 
-    if (!refresh && products?.cart?.items) {
-      return products;
-    }
+  if (!refresh && products?.cart?.items) {
+    return products;
+  }
 
-    if (fetchCartPromise) {
-      return fetchCartPromise;
-    }
-
-    fetchCartPromise = (async () => {
-      try {
-        dispatch(setLoading(true));
-        dispatch(setError(null));
-
-        const response = await getCartItem();
-
-        dispatch(setProducts(response.data));
-
-        return response.data;
-      } catch (err) {
-        dispatch(
-          setError(
-            err?.response?.data?.message ||
-            err?.message ||
-            "Failed to fetch cart"
-          )
-        );
-
-        throw err;
-      } finally {
-        dispatch(setLoading(false));
-        fetchCartPromise = null;
-      }
-    })();
-
+  if (fetchCartPromise) {
     return fetchCartPromise;
-  };
+  }
+
+  fetchCartPromise = (async () => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response = await getCartItem();
+
+      dispatch(setProducts(response.data));
+
+      return response.data;
+    } catch (err) {
+      dispatch(
+        setError(
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to fetch cart"
+        )
+      );
+
+      throw err;
+    } finally {
+      dispatch(setLoading(false));
+      fetchCartPromise = null;
+    }
+  })();
+
+  return fetchCartPromise;
+};
 
 export const updateItemQuantity = (itemId, quantity) => async (dispatch) => {
   try {
@@ -178,3 +177,31 @@ export const clearCart = () => async (dispatch) => {
     dispatch(setLoading(false));
   }
 };
+
+export const fetchCartItemsCheckOut = () => async (dispatch) => {
+  try {
+    dispatch(setLoading(true));
+    dispatch(setError(null));
+
+    const response = await getCartItem();
+
+    dispatch(setProducts(response.data));
+
+    return response.data;
+  }
+  catch (err) {
+    dispatch(
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to fetch cart"
+      )
+    );
+
+    throw err;
+  }
+  finally {
+    dispatch(setLoading(false));
+    fetchCartPromise = null;
+  }
+}

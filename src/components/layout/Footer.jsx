@@ -13,18 +13,18 @@ import {
 
 const shopLinks = [
   { label: "All Products", href: "/products" },
-  { label: "Protein", href: "/shop?category=protein" },
-  { label: "Creatine", href: "/shop?category=creatine" },
-  { label: "Pre-Workout", href: "/shop?category=pre-workout" },
-  { label: "Vitamins", href: "/shop?category=vitamins" },
-  { label: "Mass Gainers", href: "/shop?category=mass-gainers" },
+  { label: "Sports Nutrition", href: "/product-categories/sports-nutrition" },
+  { label: "Amino Acid", href: "/product-categories/amino-acid" },
+  { label: "Healthy Foods", href: "/product-categories/healthy-foods" },
+  { label: "Trial Pack", href: "/product-categories/trial-pack" },
+  { label: "Hormonal Support", href: "/product-categories/hormonal-support" },
 ];
 
 const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Blogs", href: "/blogs" },
   { label: "Contact Us", href: "/contact" },
-  { label: "Track Order", href: "/order-tracking" },
+  // { label: "Track Order", href: "/order-tracking" },
   { label: "FAQs", href: "/faq" },
   { label: "Why Cost2Cost Supplements", href: "/why-cost2cost" },
 ];
@@ -40,7 +40,7 @@ const supportLinks = [
 export default function Footer() {
   return (
     <footer className="border-t border-[#E0E0E0] bg-[#000000] text-[#111111]">
-      <div className="border-b border-[#E0E0E0] bg-[#FFFFFF]">
+      {/* <div className="border-b border-[#E0E0E0] bg-[#FFFFFF]">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-7 px-5 py-12 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10 lg:py-14">
 
           <div className="max-w-xl">
@@ -74,156 +74,164 @@ export default function Footer() {
             </button>
           </form>
         </div>
-      </div>
+      </div> */}
 
 
-          <div className="bg-[#000000] text-[#FFFFFF]">
-  <div className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
-    <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr] lg:gap-10">
+      <div className="bg-[#000000] text-[#FFFFFF]">
+        <div className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr] lg:gap-10">
 
-      <div className="col-span-2 lg:col-span-1">
-        <Link href="/" className="shrink-0">
-          <img
-            src="/images/c2c white.webp"
-            alt="C2C Supplement"
-            className="h-12 w-auto object-contain sm:h-14"
-          />
-        </Link>
+            <div className="col-span-2 lg:col-span-1">
+              <Link href="/" className="shrink-0">
+                <img
+                  src="/images/c2c white.webp"
+                  alt="C2C Supplement"
+                  className="h-12 w-auto object-contain sm:h-14"
+                />
+              </Link>
 
-        <p className="mt-5 max-w-sm text-sm leading-6 text-[#FFFFFFF]">
-          Your destination for genuine sports nutrition, supplements and
-          wellness products. Fuel your goals with products you can trust.
-        </p>
+              <p className="mt-5 max-w-sm text-sm leading-6 text-[#FFFFFFF]">
+                Your destination for genuine sports nutrition, supplements and
+                wellness products. Fuel your goals with products you can trust.
+              </p>
 
-        <div className="mt-7 space-y-3">
-          <div className="flex items-start gap-3 text-sm text-[#B8B8B8]">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#E52323]" />
-            <span>India</span>
+              <div className="mt-7 space-y-3">
+                <div className="flex items-start gap-3 text-sm text-[#B8B8B8]">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#E52323]" />
+                  <span>India</span>
+                </div>
+
+                <a
+                  href="mailto:info@cost2costsupplement.com"
+                  className="flex items-center gap-3 text-sm text-[#B8B8B8] transition-colors hover:text-white"
+                >
+                  <Mail className="h-4 w-4 shrink-0 text-[#E52323]" />
+                  <span>info@cost2costsupplement.com</span>
+                </a>
+              </div>
+
+              <div className="mt-7 flex items-center gap-3">
+                <a
+                  href="https://www.facebook.com/cost2costsupplement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
+                >
+                  <FaFacebookF className="h-4 w-4" />
+                </a>
+
+                <a
+                  href="https://www.instagram.com/cost2cost.supplement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
+                >
+                  <FaInstagram className="h-4 w-4" />
+                </a>
+
+                <a
+                  href="https://www.youtube.com/@cost2costsupplement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
+                >
+                  <FaYoutube className="h-4 w-4" />
+                </a>
+
+                <a
+                  href="https://x.com/c2csupplement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
+                >
+                  <FaTwitter className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Shop
+              </h3>
+
+              <ul className="mt-5 space-y-3">
+                {shopLinks.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Company
+              </h3>
+
+              <ul className="mt-5 space-y-3">
+                {companyLinks.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="col-span-2 lg:col-span-1">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Support
+              </h3>
+
+              <ul className="mt-5 grid grid-cols-1 gap-3 sm:block sm:space-y-3">
+                {supportLinks.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
-
-          <a
-            href="mailto:info@cost2costsupplement.com"
-            className="flex items-center gap-3 text-sm text-[#B8B8B8] transition-colors hover:text-white"
-          >
-            <Mail className="h-4 w-4 shrink-0 text-[#E52323]" />
-            <span>info@cost2costsupplement.com</span>
-          </a>
         </div>
 
-        <div className="mt-7 flex items-center gap-3">
-          <a
-            href="https://www.facebook.com/cost2costsupplement"
-            aria-label="Facebook"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
-          >
-            <FaFacebookF className="h-4 w-4" />
-          </a>
+        <div className="border-t border-[#292929]">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
 
-          <a
-            href="https://www.instagram.com/cost2cost.supplement"
-            aria-label="Instagram"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
-          >
-            <FaInstagram className="h-4 w-4" />
-          </a>
+            <p className="text-xs text-[#888888]">
+              © {new Date().getFullYear()} Cost2Cost Supplement. All rights
+              reserved.
+            </p>
 
-          <a
-            href="https://www.youtube.com/@cost2costsupplement"
-            aria-label="YouTube"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
-          >
-            <FaYoutube className="h-4 w-4" />
-          </a>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#888888]">
+              <span>Secure Payments</span>
+              <span className="h-1 w-1 rounded-full bg-[#E52323]" />
+              <span>100% Genuine Products</span>
+              <span className="h-1 w-1 rounded-full bg-[#E52323]" />
+              <span>Fast Delivery</span>
+            </div>
 
-          <a
-            href="https://x.com/c2csupplement"
-            aria-label="Twitter"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#333333] bg-[#111111] text-[#B8B8B8] transition-all hover:border-[#E52323] hover:bg-[#E52323] hover:text-white"
-          >
-            <FaTwitter className="h-4 w-4" />
-          </a>
+          </div>
         </div>
       </div>
-
-      <div>
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-          Shop
-        </h3>
-
-        <ul className="mt-5 space-y-3">
-          {shopLinks.map((link) => (
-            <li key={link.label}>
-              <Link
-                href={link.href}
-                className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-          Company
-        </h3>
-
-        <ul className="mt-5 space-y-3">
-          {companyLinks.map((link) => (
-            <li key={link.label}>
-              <Link
-                href={link.href}
-                className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="col-span-2 lg:col-span-1">
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-          Support
-        </h3>
-
-        <ul className="mt-5 grid grid-cols-1 gap-3 sm:block sm:space-y-3">
-          {supportLinks.map((link) => (
-            <li key={link.label}>
-              <Link
-                href={link.href}
-                className="text-sm text-[#B8B8B8] transition-colors hover:text-[#E52323]"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-    </div>
-  </div>
-
-  <div className="border-t border-[#292929]">
-    <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
-
-      <p className="text-xs text-[#888888]">
-        © {new Date().getFullYear()} Cost2Cost Supplement. All rights
-        reserved.
-      </p>
-
-      <div className="flex flex-wrap items-center gap-4 text-xs text-[#888888]">
-        <span>Secure Payments</span>
-        <span className="h-1 w-1 rounded-full bg-[#E52323]" />
-        <span>100% Genuine Products</span>
-        <span className="h-1 w-1 rounded-full bg-[#E52323]" />
-        <span>Fast Delivery</span>
-      </div>
-
-    </div>
-  </div>
-</div>
     </footer>
   );
 }

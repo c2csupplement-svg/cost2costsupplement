@@ -14,6 +14,7 @@ import {
   SearchIcon,
   Loader2,
 } from "lucide-react";
+
 import { getProductSearchApi } from "@/apiService/api";
 import { fetchCartItems } from "@/redux/features/cart/cartActions";
 import { getWishItem } from "@/redux/features/wish/wishAction";
@@ -143,15 +144,19 @@ export default function Header() {
   const pathname = usePathname();
   const dispatch = useDispatch();
 
-  const {products: cartState} = useSelector((state) => state.product);
-  const     {wishItems : wishState} = useSelector((state) => state.wish);
+  const { products: cartState } = useSelector(
+    (state) => state.product
+  );
 
+  const { wishItems: wishState } = useSelector(
+    (state) => state.wish
+  );
 
   const cartItems = getArrayFromState(
     cartState?.cart?.items
   );
 
-  const wishlistCount = wishState?.total || 0
+  const wishlistCount = wishState?.total || 0;
 
   const cartCount = cartItems.reduce(
     (total, item) =>
@@ -409,164 +414,186 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 font-oxanium backdrop-blur-md">
-        <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-          <div className="relative flex h-[76px] items-center">
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white lg:hidden"
-            >
-              <Menu className="h-6 w-6 transition-transform duration-300 group-hover:scale-105" />
-            </button>
+  <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+    <div className="relative flex h-[76px] items-center">
 
-            <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
+      <button
+        type="button"
+        onClick={() => setMenuOpen(true)}
+        aria-label="Open menu"
+        aria-expanded={menuOpen}
+        className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white xl:hidden"
+      >
+        <Menu className="h-6 w-6 transition-transform duration-300 group-hover:scale-105" />
+      </button>
 
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`relative text-sm font-bold uppercase tracking-wide transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:text-primary hover:after:w-full ${
-                      active
-                        ? "text-primary after:w-full"
-                        : "text-text-primary after:w-0"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+      <nav className="hidden items-center gap-5 xl:flex 2xl:gap-8">
+        {navItems.map((item) => {
+          const active = isActive(item.href);
 
+          return (
             <Link
-              href="/"
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+              key={item.label}
+              href={item.href}
+              className={`relative whitespace-nowrap text-sm font-bold uppercase tracking-wide transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:text-primary hover:after:w-full ${
+                active
+                  ? "text-primary after:w-full"
+                  : "text-text-primary after:w-0"
+              }`}
             >
-              <img
-                src="/images/c2c-logo-black.png"
-                alt="C2C Supplement"
-                className="h-11 w-auto object-contain sm:h-13"
-              />
+              {item.label}
             </Link>
+          );
+        })}
+      </nav>
 
-            <div className="ml-auto flex items-center gap-3 sm:gap-5">
-              <div
-                ref={desktopSearchRef}
-                className="relative hidden sm:block"
-              >
-                <form
-                  onSubmit={handleSearchSubmit}
-                  className="relative"
-                >
-                  <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
+      <Link
+        href="/"
+        className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+      >
+        <img
+          src="/images/c2c-logo-black.png"
+          alt="C2C Supplement"
+          className="h-10 w-auto object-contain sm:h-11 xl:h-13"
+        />
+      </Link>
 
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    onFocus={handleSearchFocus}
-                    placeholder="Search products..."
-                    className="h-12 w-[275px] rounded-full border border-border bg-white pl-12 pr-5 text-sm font-semibold text-text-primary outline-none transition-colors focus:border-primary lg:w-[320px]"
-                  />
-                </form>
+      <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2 xl:gap-5">
 
-                {searchOpen && (
-                  <SearchDropdown
-                    results={searchResults}
-                    loading={searchLoading}
-                    query={searchQuery}
-                    onProductClick={
-                      handleProductClick
-                    }
-                  />
-                )}
-              </div>
-
-              <Link
-                href="/wishlist"
-                aria-label={`Wishlist${
-                  wishlistCount
-                    ? `, ${wishlistCount} items`
-                    : ""
-                }`}
-                className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-              >
-                <Heart className="h-6 w-6" />
-
-                {wishlistCount > 0 && (
-                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
-                    {wishlistCount > 99
-                      ? "99+"
-                      : wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                href="/cart"
-                aria-label={`Cart${
-                  cartCount
-                    ? `, ${cartCount} items`
-                    : ""
-                }`}
-                className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-              >
-                <ShoppingCart className="h-6 w-6" />
-
-                {cartCount > 0 && (
-                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
-                    {cartCount > 99
-                      ? "99+"
-                      : cartCount}
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                href="/account"
-                aria-label="Account"
-                className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-              >
-                <User className="h-6 w-6" />
-              </Link>
-            </div>
-          </div>
-
-          <div
-            ref={mobileSearchRef}
-            className="relative pb-3 sm:hidden"
+        <div
+          ref={desktopSearchRef}
+          className="relative hidden min-w-0 md:block"
+        >
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative"
           >
-            <form
-              onSubmit={handleSearchSubmit}
-              className="relative"
-            >
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
 
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={handleSearchFocus}
-                placeholder="Search products..."
-                className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-4 text-xs font-semibold text-text-primary outline-none transition-colors focus:border-primary"
-              />
-            </form>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onFocus={handleSearchFocus}
+              placeholder="Search products..."
+              className="
+                h-11
+                w-[180px]
+                rounded-full
+                border
+                border-border
+                bg-white
+                pl-10
+                pr-4
+                text-xs
+                font-semibold
+                text-text-primary
+                outline-none
+                transition-colors
+                focus:border-primary
+                lg:w-[220px]
+                xl:h-12
+                xl:w-[230px]
+                xl:pl-12
+                xl:pr-5
+                xl:text-sm
+                2xl:w-[320px]
+              "
+            />
+          </form>
 
-            {searchOpen && (
-              <SearchDropdown
-                results={searchResults}
-                loading={searchLoading}
-                query={searchQuery}
-                onProductClick={handleProductClick}
-                mobile
-              />
-            )}
-          </div>
+          {searchOpen && (
+            <SearchDropdown
+              results={searchResults}
+              loading={searchLoading}
+              query={searchQuery}
+              onProductClick={handleProductClick}
+            />
+          )}
         </div>
-      </header>
+
+        <Link
+          href="/wishlist"
+          aria-label={`Wishlist${
+            wishlistCount
+              ? `, ${wishlistCount} items`
+              : ""
+          }`}
+          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+        >
+          <Heart className="h-6 w-6" />
+
+          {wishlistCount > 0 && (
+            <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+              {wishlistCount > 99
+                ? "99+"
+                : wishlistCount}
+            </span>
+          )}
+        </Link>
+
+        <Link
+          href="/cart"
+          aria-label={`Cart${
+            cartCount
+              ? `, ${cartCount} items`
+              : ""
+          }`}
+          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+        >
+          <ShoppingCart className="h-6 w-6" />
+
+          {cartCount > 0 && (
+            <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+              {cartCount > 99
+                ? "99+"
+                : cartCount}
+            </span>
+          )}
+        </Link>
+
+        <Link
+          href="/account"
+          aria-label="Account"
+          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+        >
+          <User className="h-6 w-6" />
+        </Link>
+      </div>
+    </div>
+
+    <div
+      ref={mobileSearchRef}
+      className="relative pb-3 md:hidden"
+    >
+      <form
+        onSubmit={handleSearchSubmit}
+        className="relative"
+      >
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          onFocus={handleSearchFocus}
+          placeholder="Search products..."
+          className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-4 text-xs font-semibold text-text-primary outline-none transition-colors focus:border-primary"
+        />
+      </form>
+
+      {searchOpen && (
+        <SearchDropdown
+          results={searchResults}
+          loading={searchLoading}
+          query={searchQuery}
+          onProductClick={handleProductClick}
+          mobile
+        />
+      )}
+    </div>
+  </div>
+</header>
 
       {menuOpen && (
         <div className="fixed inset-0 z-[100]">

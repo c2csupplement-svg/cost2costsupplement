@@ -18,6 +18,8 @@ import {
   Trash2,
   Truck,
   X,
+   Heart,
+   MoreVertical,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -34,6 +36,8 @@ import {
   removeCouponApi,
   appplyCouponApi,
 } from "@/apiService/api";
+
+import {toggleItem} from "@/redux/features/wish/wishAction"
 
 
 function formatPrice(value) {
@@ -313,6 +317,7 @@ export default function CartPage() {
   const cartState = useSelector(
     (state) => state.product
   );
+
 
   const cartData =
     cartState?.products?.cart ??
@@ -2413,10 +2418,6 @@ function CartItem({
   );
 }
 
-/* ==========================================================================
-   QUANTITY CONTROL
-   ========================================================================== */
-
 function QuantityControl({
   quantity,
   onDecrease,
@@ -2473,10 +2474,6 @@ function QuantityControl({
     </div>
   );
 }
-
-/* ==========================================================================
-   CART SKELETON
-   ========================================================================== */
 
 function CartSkeleton() {
   return (
