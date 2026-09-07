@@ -295,39 +295,6 @@ export default function ProductCard({ product }) {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleWishlist}
-        aria-label={
-          wishlistActive
-            ? "Remove from wishlist"
-            : "Add to wishlist"
-        }
-        className="
-          absolute
-          right-2
-          top-2
-          z-20
-          flex
-          h-8
-          w-8
-          items-center
-          justify-center
-          rounded-full
-          bg-white/95
-          text-text-primary
-          shadow-sm
-          transition-all
-          duration-200
-          hover:scale-105
-          hover:text-primary
-          sm:right-3
-          sm:top-3
-          sm:h-10
-          sm:w-10
-        "
-      >
-      </button>
 
       <Link
         href={productHref}
