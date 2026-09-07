@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -65,10 +65,6 @@ const emptyAddress = {
   country: "India",
   isDefault: false,
 };
-
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
 
 function getImageUrl(image) {
   if (!image) return null;
@@ -161,6 +157,16 @@ function calculateCouponDiscount(coupon, subtotal) {
 }
 
 export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={<CheckoutSkeleton />}
+    >
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+function CheckoutContent() {
   const dispatch = useDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -179,9 +185,7 @@ export default function CheckoutPage() {
     (state) => state.address
   );
 
-  /* ---------------------------------------------------------------------- */
-  /* Address state                                                          */
-  /* ---------------------------------------------------------------------- */
+  
 
   const [selectedAddressId, setSelectedAddressId] =
     useState(null);
@@ -219,9 +223,7 @@ export default function CheckoutPage() {
   const [mobileSummaryOpen, setMobileSummaryOpen] =
     useState(true);
 
-  /* ---------------------------------------------------------------------- */
-  /* Coupon state                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const [coupons, setCoupons] = useState([]);
 
@@ -243,16 +245,12 @@ export default function CheckoutPage() {
   const [showCouponModal, setShowCouponModal] =
     useState(false);
 
-  /* ---------------------------------------------------------------------- */
-  /* Buy Now state                                                          */
-  /* ---------------------------------------------------------------------- */
+  
 
   const [buyNowItem, setBuyNowItem] =
     useState(null);
 
-  /* ---------------------------------------------------------------------- */
-  /* Cart data                                                              */
-  /* ---------------------------------------------------------------------- */
+  
 
   const cartStateProducts =
     cartState?.products;
@@ -279,9 +277,7 @@ export default function CheckoutPage() {
       : []
     : normalCart;
 
-  /* ---------------------------------------------------------------------- */
-  /* Address data                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const addressData =
     addressState?.addressData;
@@ -297,9 +293,7 @@ export default function CheckoutPage() {
       ? rawAddresses
       : [];
 
-  /* ---------------------------------------------------------------------- */
-  /* Authentication                                                         */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     const token =
@@ -310,18 +304,14 @@ export default function CheckoutPage() {
     }
   }, [router]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Format price                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const formatPrice = (price) =>
     `₹${Number(price || 0).toLocaleString(
       "en-IN"
     )}`;
 
-  /* ---------------------------------------------------------------------- */
-  /* Cart / Buy Now totals                                                  */
-  /* ---------------------------------------------------------------------- */
+  
 
   const calculatedCartTotal =
     cart.reduce((total, item) => {
@@ -500,9 +490,7 @@ export default function CheckoutPage() {
     isBuyNow,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Sync Buy Now quantity into sessionStorage                              */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     if (
@@ -562,9 +550,7 @@ export default function CheckoutPage() {
     appliedCoupon,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Sync normal cart coupon                                                */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     if (isBuyNow) {
@@ -611,9 +597,7 @@ export default function CheckoutPage() {
     cartData?.discountAmount,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Load coupons - works for Buy Now too                                   */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     let active = true;
@@ -660,9 +644,7 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  /* ---------------------------------------------------------------------- */
-  /* Coupon modal keyboard handling                                         */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     if (!showCouponModal) {
@@ -703,9 +685,7 @@ export default function CheckoutPage() {
     showCouponModal,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Select default address                                                 */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     if (!addresses.length) {
@@ -742,9 +722,7 @@ export default function CheckoutPage() {
     selectedAddressId,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* If selected address is hidden, automatically expand                    */
-  /* ---------------------------------------------------------------------- */
+  
 
   useEffect(() => {
     if (
@@ -775,9 +753,7 @@ export default function CheckoutPage() {
     addresses,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Coupon description                                                     */
-  /* ---------------------------------------------------------------------- */
+  
 
   const getCouponDescription =
     (coupon) => {
@@ -811,9 +787,7 @@ export default function CheckoutPage() {
       return "Special discount";
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Apply coupon                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleApplyCoupon =
     async (coupon) => {
@@ -853,10 +827,6 @@ export default function CheckoutPage() {
         setCouponLoading(true);
         setCouponError("");
 
-        /*
-         * Normal cart:
-         * use backend coupon API exactly as before.
-         */
         if (!isBuyNow) {
           const response =
             await appplyCouponApi(
@@ -932,17 +902,6 @@ export default function CheckoutPage() {
           return;
         }
 
-        /*
-         * Buy Now:
-         *
-         * appplyCouponApi() is cart-oriented in the
-         * current API usage, so don't mutate the user's
-         * actual cart just to apply a Buy Now coupon.
-         *
-         * Calculate the discount against the Buy Now
-         * item and keep the coupon attached to the
-         * Buy Now checkout session.
-         */
         const localDiscount =
           calculateCouponDiscount(
             coupon,
@@ -1041,9 +1000,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Coupon input submit                                                    */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleCouponSubmit =
     async (event) => {
@@ -1089,9 +1046,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Remove coupon                                                          */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleRemoveCoupon =
     async () => {
@@ -1106,9 +1061,6 @@ export default function CheckoutPage() {
           true
         );
 
-        /*
-         * Normal cart coupon removal
-         */
         if (!isBuyNow) {
           const response =
             await removeCouponApi({
@@ -1137,9 +1089,6 @@ export default function CheckoutPage() {
           );
         }
 
-        /*
-         * Buy Now coupon is local checkout state.
-         */
         if (isBuyNow) {
           try {
             const saved =
@@ -1207,9 +1156,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Address form change                                                    */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleFormChange =
     (event) => {
@@ -1238,9 +1185,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Add address                                                            */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleAddAddress =
     () => {
@@ -1259,9 +1204,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Edit address                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleEditAddress =
     (address) => {
@@ -1284,9 +1227,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Validate address                                                       */
-  /* ---------------------------------------------------------------------- */
+  
 
   const validateAddress =
     () => {
@@ -1353,9 +1294,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Save address                                                           */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleSaveAddress =
     async (event) => {
@@ -1438,9 +1377,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Pincode lookup                                                         */
-  /* ---------------------------------------------------------------------- */
+  
 
   const lookupPincode =
     async (pincode) => {
@@ -1535,9 +1472,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Browser location                                                       */
-  /* ---------------------------------------------------------------------- */
+  
 
   const detectLocation =
     () => {
@@ -1633,9 +1568,7 @@ export default function CheckoutPage() {
       );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Quantity update                                                        */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleQuantityChange =
     async (
@@ -1656,12 +1589,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      /*
-       * BUY NOW
-       *
-       * Buy Now does not have a normal
-       * cartItemId, so update local state.
-       */
       if (isBuyNow) {
         setBuyNowItem(
           (previous) => {
@@ -1680,7 +1607,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      /* Normal cart */
       const itemId =
         item?.id ??
         item?.cartItemId ??
@@ -1727,9 +1653,7 @@ export default function CheckoutPage() {
         );
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Remove item                                                            */
-  /* ---------------------------------------------------------------------- */
+  
 
   const handleRemoveItem =
     async (item) => {
@@ -1772,9 +1696,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Start payment                                                          */
-  /* ---------------------------------------------------------------------- */
+  
 
   const startPayment =
     async () => {
@@ -1802,13 +1724,7 @@ export default function CheckoutPage() {
         let response;
 
         if (isBuyNow) {
-          /*
-           * Buy Now request.
-           *
-           * couponCode is included so the backend
-           * can apply the same coupon at order level
-           * if buyNowApi supports couponCode.
-           */
+          
           response =
             await buyNowApi({
               productId:
@@ -1868,9 +1784,7 @@ export default function CheckoutPage() {
           );
         }
 
-        /* ---------------------------------------------------------------- */
-        /* COD                                                               */
-        /* ---------------------------------------------------------------- */
+        
 
         if (
           paymentMode === "COD"
@@ -1892,9 +1806,7 @@ export default function CheckoutPage() {
           return;
         }
 
-        /* ---------------------------------------------------------------- */
-        /* Razorpay                                                          */
-        /* ---------------------------------------------------------------- */
+        
 
         const razorpayOrder =
           data?.order ??
@@ -2056,9 +1968,7 @@ export default function CheckoutPage() {
       }
     };
 
-  /* ---------------------------------------------------------------------- */
-  /* Loading                                                                */
-  /* ---------------------------------------------------------------------- */
+  
 
   if (
     !isBuyNow &&
@@ -2070,9 +1980,7 @@ export default function CheckoutPage() {
     );
   }
 
-  /* ---------------------------------------------------------------------- */
-  /* Visible addresses                                                      */
-  /* ---------------------------------------------------------------------- */
+  
 
   const visibleAddresses =
     showAllAddresses
@@ -2088,16 +1996,14 @@ export default function CheckoutPage() {
       addresses.length - 2
     );
 
-  /* ---------------------------------------------------------------------- */
-  /* Render                                                                 */
-  /* ---------------------------------------------------------------------- */
+  
 
   return (
     <main className="min-h-screen bg-background text-text-primary pb-28 lg:pb-10">
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Header                                                             */}
-      {/* ------------------------------------------------------------------ */}
+      {}
+      {}
+      {}
 
       <header className="border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-10 lg:py-5">
@@ -2149,15 +2055,15 @@ export default function CheckoutPage() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_390px] xl:grid-cols-[minmax(0,1fr)_430px]">
 
-          {/* ============================================================ */}
-          {/* LEFT                                                          */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
 
           <div className="min-w-0 space-y-5 sm:space-y-6">
 
-            {/* ========================================================== */}
-            {/* ADDRESS                                                     */}
-            {/* ========================================================== */}
+            {}
+            {}
+            {}
 
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
@@ -2198,7 +2104,7 @@ export default function CheckoutPage() {
 
               <div className="p-4 sm:p-6">
 
-                {/* Address form */}
+                {}
                 {showAddressForm ? (
                   <form
                     onSubmit={
@@ -2558,7 +2464,6 @@ export default function CheckoutPage() {
                   </form>
                 ) : addresses.length ? (
 
-
                   <div className="space-y-3">
 
                     <div className="grid gap-3 md:grid-cols-2">
@@ -2720,9 +2625,9 @@ export default function CheckoutPage() {
 
                     </div>
 
-                    {/* -------------------------------------------------- */}
-                    {/* View more / Show less                             */}
-                    {/* -------------------------------------------------- */}
+                    {}
+                    {}
+                    {}
 
                     {hiddenAddressCount >
                       0 && (
@@ -2753,9 +2658,7 @@ export default function CheckoutPage() {
                   </div>
                 ) : (
 
-                  /* ------------------------------------------------------ */
-                  /* No addresses                                           */
-                  /* ------------------------------------------------------ */
+                  
 
                   <div className="rounded-2xl border border-dashed border-border bg-background p-8 text-center sm:p-10">
 
@@ -2784,9 +2687,9 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            {/* ========================================================== */}
-            {/* COUPON                                                      */}
-            {/* ========================================================== */}
+            {}
+            {}
+            {}
 
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
@@ -2949,9 +2852,9 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            {/* ========================================================== */}
-            {/* PAYMENT                                                     */}
-            {/* ========================================================== */}
+            {}
+            {}
+            {}
 
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
@@ -2977,7 +2880,7 @@ export default function CheckoutPage() {
 
               <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
 
-                {/* Prepaid */}
+                {}
                 <button
                   type="button"
                   onClick={() =>
@@ -3038,7 +2941,7 @@ export default function CheckoutPage() {
                   </div>
                 </button>
 
-                {/* COD */}
+                {}
                 <button
                   type="button"
                   onClick={() =>
@@ -3101,7 +3004,6 @@ export default function CheckoutPage() {
               </div>
             </section>
           </div>
-
 
           <aside className="min-w-0 lg:sticky lg:top-6">
 
@@ -3200,9 +3102,9 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {/* ---------------------------------------------------- */}
-                  {/* Totals                                                */}
-                  {/* ---------------------------------------------------- */}
+                  {}
+                  {}
+                  {}
 
                   <div className="mt-5 space-y-3 border-t border-border pt-5">
 
@@ -3290,7 +3192,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Security */}
+                  {}
                   <div className="mt-5 hidden items-start gap-3 rounded-xl border border-green-500/15 bg-green-500/5 p-3 sm:flex">
 
                     <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
@@ -3307,7 +3209,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Desktop checkout button */}
+                  {}
                   <button
                     type="button"
                     onClick={
@@ -3343,9 +3245,9 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Mobile fixed checkout bar                                         */}
-      {/* ------------------------------------------------------------------ */}
+      {}
+      {}
+      {}
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 p-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:hidden">
 
@@ -3392,9 +3294,9 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Coupon modal                                                       */}
-      {/* ------------------------------------------------------------------ */}
+      {}
+      {}
+      {}
 
       {showCouponModal && (
         <CouponModal
@@ -3425,10 +3327,6 @@ export default function CheckoutPage() {
   );
 }
 
-/* ========================================================================== */
-/* Coupon Modal                                                               */
-/* ========================================================================== */
-
 function CouponModal({
   coupons,
   cartTotal,
@@ -3455,7 +3353,7 @@ function CouponModal({
 
       <div className="max-h-[88vh] w-full overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:max-w-lg sm:rounded-3xl">
 
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
 
           <div>
@@ -3488,7 +3386,7 @@ function CouponModal({
           </button>
         </div>
 
-        {/* Coupon list */}
+        {}
         <div className="max-h-[calc(88vh-90px)] overflow-y-auto p-4 sm:p-6">
 
           {!coupons.length ? (
@@ -3609,10 +3507,6 @@ function CouponModal({
   );
 }
 
-/* ========================================================================== */
-/* Cart Item                                                                  */
-/* ========================================================================== */
-
 function CheckoutCartItem({
   item,
   formatPrice,
@@ -3635,7 +3529,6 @@ function CheckoutCartItem({
     product?.title ??
     "Product";
 
-  /* Variant image first, featured image fallback */
   const variantImage =
     getImageUrl(
       variant?.image
@@ -3699,7 +3592,7 @@ function CheckoutCartItem({
 
       <div className="flex gap-3 sm:gap-4">
 
-        {/* Image */}
+        {}
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-surface sm:h-20 sm:w-20">
 
           {imageUrl ? (
@@ -3721,7 +3614,7 @@ function CheckoutCartItem({
           )}
         </div>
 
-        {/* Details */}
+        {}
         <div className="min-w-0 flex-1">
 
           <div className="flex items-start justify-between gap-3">
@@ -3752,7 +3645,7 @@ function CheckoutCartItem({
             </span>
           </div>
 
-          {/* Quantity */}
+          {}
           <div className="mt-3 flex items-center justify-between gap-3">
 
             <div className="inline-flex items-center overflow-hidden rounded-lg border border-border bg-background">
@@ -3805,10 +3698,6 @@ function CheckoutCartItem({
     </div>
   );
 }
-
-/* ========================================================================== */
-/* Address Input                                                              */
-/* ========================================================================== */
 
 function AddressInput({
   label,
@@ -3881,10 +3770,6 @@ function AddressInput({
     </div>
   );
 }
-
-/* ========================================================================== */
-/* Loading Skeleton                                                           */
-/* ========================================================================== */
 
 function CheckoutSkeleton() {
   return (
