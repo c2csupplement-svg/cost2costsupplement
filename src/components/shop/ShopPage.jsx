@@ -14,13 +14,12 @@ import {
 } from "lucide-react";
 
 import ProductCard from "@/components/products/ProductCard";
-import { getProductSearchApi } from "@/apiService/api";
-
 import {
-  getProduct,
+  getProductSearchApi,
   getProductFilter,
-} from "@/redux/features/product/productAction";
+} from "@/apiService/api";
 
+import { getProduct } from "@/redux/features/product/productAction";
 import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
 
 const getBooleanValue = (value) => {
@@ -32,6 +31,64 @@ const getBooleanValue = (value) => {
   );
 };
 
+const getProductsFromResponse = (response) => {
+  const data = response?.data ?? response;
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.products)) {
+    return data.products;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (Array.isArray(data?.data?.products)) {
+    return data.data.products;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results;
+  }
+
+  return [];
+};
+
+const getTotalFromResponse = (response, fallback = 0) => {
+  const data = response?.data ?? response;
+
+  return (
+    Number(data?.total) ||
+    Number(data?.data?.total) ||
+    Number(data?.pagination?.total) ||
+    Number(data?.meta?.total) ||
+    fallback
+  );
+};
+
+const getTotalPagesFromResponse = (
+  response,
+  total,
+  pageSize
+) => {
+  const data = response?.data ?? response;
+
+  return (
+    Number(data?.totalPages) ||
+    Number(data?.data?.totalPages) ||
+    Number(data?.pagination?.totalPages) ||
+    Number(data?.meta?.totalPages) ||
+    Math.max(1, Math.ceil(total / pageSize))
+  );
+};
+
 export default function ShopPage() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
@@ -40,23 +97,44 @@ export default function ShopPage() {
     searchParams.get("search") || ""
   ).trim();
 
-  const [selectedCategory, setSelectedCategory] = useState({
-    id: null,
-    name: "All Products",
-  });
+  const [selectedCategory, setSelectedCategory] =
+    useState({
+      id: null,
+      name: "All Products",
+    });
 
-  const [selectedBrand, setSelectedBrand] = useState({
-    id: null,
-    name: "All Brands",
-  });
+  const [selectedBrand, setSelectedBrand] =
+    useState({
+      id: null,
+      name: "All Brands",
+    });
 
   const [sortBy, setSortBy] = useState("All");
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] =
+    useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [searchProducts, setSearchProducts] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState(null);
+  const [filteredProducts, setFilteredProducts] =
+    useState([]);
+
+  const [filterLoading, setFilterLoading] =
+    useState(false);
+
+  const [filterError, setFilterError] =
+    useState(null);
+
+  const [filterTotal, setFilterTotal] = useState(0);
+  const [filterTotalPages, setFilterTotalPages] =
+    useState(1);
+
+  const [searchProducts, setSearchProducts] =
+    useState([]);
+
+  const [searchLoading, setSearchLoading] =
+    useState(false);
+
+  const [searchError, setSearchError] =
+    useState(null);
 
   const pageSize = 20;
 
@@ -75,19 +153,31 @@ export default function ShopPage() {
     productState.data ??
     productState;
 
-  const productLoading = Boolean(productState.loading);
-  const productError = productState.error || null;
+  const productLoading = Boolean(
+    productState.loading
+  );
 
-  const adsLoading = Boolean(productAdState.loading);
-  const adsLoaded = Boolean(productAdState.loaded);
-  const adsError = productAdState.error || null;
+  const productError =
+    productState.error || null;
+
+  const adsLoading = Boolean(
+    productAdState.loading
+  );
+
+  const adsLoaded = Boolean(
+    productAdState.loaded
+  );
+
+  const adsError =
+    productAdState.error || null;
 
   const productCategory =
     productAdState.productCateogry ??
     productAdState.productCategory ??
     null;
 
-  const productBrands = productAdState.brands ?? null;
+  const productBrands =
+    productAdState.brands ?? null;
 
   const allProducts = (() => {
     if (Array.isArray(productData)) {
@@ -102,7 +192,11 @@ export default function ShopPage() {
       return productData.data;
     }
 
-    if (Array.isArray(productData?.data?.products)) {
+    if (
+      Array.isArray(
+        productData?.data?.products
+      )
+    ) {
       return productData.data.products;
     }
 
@@ -124,51 +218,41 @@ export default function ShopPage() {
         setSearchLoading(true);
         setSearchError(null);
 
-        const response = await getProductSearchApi(searchQuery);
+        const response =
+          await getProductSearchApi(searchQuery);
 
         if (!active) {
           return;
         }
 
-        const data = response?.data ?? response;
+        const products =
+          getProductsFromResponse(response);
 
-        let products = [];
+        const uniqueProducts =
+          products.filter(
+            (product, index, array) => {
+              const productId =
+                product?.id ??
+                product?.productId ??
+                product?._id ??
+                product?.slug;
 
-        if (Array.isArray(data)) {
-          products = data;
-        } else if (Array.isArray(data?.products)) {
-          products = data.products;
-        } else if (Array.isArray(data?.data)) {
-          products = data.data;
-        } else if (Array.isArray(data?.data?.products)) {
-          products = data.data.products;
-        } else if (Array.isArray(data?.results)) {
-          products = data.results;
-        } else if (Array.isArray(data?.data?.results)) {
-          products = data.data.results;
-        }
+              return (
+                array.findIndex((item) => {
+                  const itemId =
+                    item?.id ??
+                    item?.productId ??
+                    item?._id ??
+                    item?.slug;
 
-        const uniqueProducts = products.filter(
-          (product, index, array) => {
-            const productId =
-              product?.id ??
-              product?.productId ??
-              product?._id ??
-              product?.slug;
-
-            return (
-              array.findIndex((item) => {
-                const itemId =
-                  item?.id ??
-                  item?.productId ??
-                  item?._id ??
-                  item?.slug;
-
-                return String(itemId) === String(productId);
-              }) === index
-            );
-          }
-        );
+                  return (
+                    String(itemId) ===
+                    String(productId)
+                  );
+                }) === index
+              );
+            }
+          );
 
         setSearchProducts(uniqueProducts);
         setCurrentPage(1);
@@ -202,43 +286,175 @@ export default function ShopPage() {
       return;
     }
 
-    const filters = {};
+    let active = true;
 
-    if (selectedCategory.id !== null) {
-      filters.categoryId = selectedCategory.id;
-    }
+    const loadFilteredProducts =
+      async () => {
+        const hasCategory =
+          selectedCategory.id !== null;
 
-    if (selectedBrand.id !== null) {
-      filters.brandId = selectedBrand.id;
-    }
+        const hasBrand =
+          selectedBrand.id !== null;
 
-    if (sortBy === "Featured") {
-      filters.isFeatured = true;
-    }
+        const hasFeatured =
+          sortBy === "Featured";
 
-    if (Object.keys(filters).length > 0) {
-      dispatch(
-        getProductFilter(
-          filters,
-          currentPage,
-          pageSize
-        )
-      );
-    } else {
-      dispatch(
-        getProduct(
-          currentPage,
-          pageSize
-        )
-      );
-    }
+        const hasSort =
+          sortBy !== "All" &&
+          sortBy !== "Featured";
+
+        const filters = {};
+
+        if (hasCategory) {
+          filters.categoryId =
+            selectedCategory.id;
+        }
+
+        if (hasBrand) {
+          filters.brandId =
+            selectedBrand.id;
+        }
+
+        if (hasFeatured) {
+          filters.isFeatured = true;
+        }
+
+        if (sortBy === "Newest") {
+          filters.sortBy = "newest";
+        }
+
+        if (
+          sortBy ===
+          "Price: Low to High"
+        ) {
+          filters.sortBy =
+            "price_low_high";
+        }
+
+        if (
+          sortBy ===
+          "Price: High to Low"
+        ) {
+          filters.sortBy =
+            "price_high_low";
+        }
+
+        if (
+          sortBy ===
+          "Stock Availability"
+        ) {
+          filters.sortBy = "stock";
+        }
+
+        if (
+          sortBy ===
+          "Best Discount"
+        ) {
+          filters.sortBy =
+            "most_discount";
+        }
+
+        if (
+          sortBy ===
+          "Highest Rated"
+        ) {
+          filters.sortBy = "rating";
+        }
+
+        const shouldUseFilterApi =
+          hasCategory ||
+          hasBrand ||
+          hasFeatured ||
+          hasSort;
+
+        if (!shouldUseFilterApi) {
+          setFilteredProducts([]);
+          setFilterError(null);
+          setFilterLoading(false);
+
+          dispatch(
+            getProduct(
+              currentPage,
+              pageSize
+            )
+          );
+
+          return;
+        }
+
+        try {
+          setFilterLoading(true);
+          setFilterError(null);
+
+          const response =
+            await getProductFilter(
+              filters,
+              currentPage,
+              pageSize
+            );
+
+          
+
+          if (!active) {
+            return;
+          }
+
+          const products =
+            getProductsFromResponse(
+              response
+            );
+
+          const total =
+            getTotalFromResponse(
+              response,
+              products.length
+            );
+
+          const totalPages =
+            getTotalPagesFromResponse(
+              response,
+              total,
+              pageSize
+            );
+
+          setFilteredProducts(products);
+          setFilterTotal(total);
+          setFilterTotalPages(
+            totalPages
+          );
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          setFilteredProducts([]);
+          setFilterTotal(0);
+          setFilterTotalPages(1);
+
+          setFilterError(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Unable to load filtered products."
+          );
+        } finally {
+          if (active) {
+            setFilterLoading(false);
+          }
+        }
+      };
+
+    loadFilteredProducts();
+
+    return () => {
+      active = false;
+    };
   }, [
-    dispatch,
     currentPage,
     selectedCategory.id,
     selectedBrand.id,
     sortBy,
     searchQuery,
+    dispatch,
   ]);
 
   useEffect(() => {
@@ -252,43 +468,54 @@ export default function ShopPage() {
   ]);
 
   const categories = (() => {
-    const apiCategories = Array.isArray(productCategory)
-      ? productCategory
-      : Array.isArray(productCategory?.categories)
-      ? productCategory.categories
-      : Array.isArray(productCategory?.data)
-      ? productCategory.data
-      : Array.isArray(productCategory?.data?.categories)
-      ? productCategory.data.categories
-      : [];
+    const apiCategories =
+      Array.isArray(productCategory)
+        ? productCategory
+        : Array.isArray(
+            productCategory?.categories
+          )
+        ? productCategory.categories
+        : Array.isArray(
+            productCategory?.data
+          )
+        ? productCategory.data
+        : Array.isArray(
+            productCategory?.data?.categories
+          )
+        ? productCategory.data
+            .categories
+        : [];
 
-    const normalizedCategories = apiCategories
-      .map((category) => {
-        const id =
-          category?.id ??
-          category?.categoryId ??
-          category?._id ??
-          null;
+    const normalizedCategories =
+      apiCategories
+        .map((category) => {
+          const id =
+            category?.id ??
+            category?.categoryId ??
+            category?._id ??
+            null;
 
-        const name =
-          category?.name ??
-          category?.title ??
-          category?.categoryName ??
-          "";
+          const name =
+            category?.name ??
+            category?.title ??
+            category?.categoryName ??
+            "";
 
-        return {
-          id,
-          name:
-            typeof name === "string"
-              ? name.trim()
-              : String(name || "").trim(),
-        };
-      })
-      .filter(
-        (category) =>
-          category.id !== null &&
-          category.name
-      );
+          return {
+            id,
+            name:
+              typeof name === "string"
+                ? name.trim()
+                : String(
+                    name || ""
+                  ).trim(),
+          };
+        })
+        .filter(
+          (category) =>
+            category.id !== null &&
+            category.name
+        );
 
     const uniqueCategories =
       normalizedCategories.filter(
@@ -305,67 +532,91 @@ export default function ShopPage() {
         id: null,
         name: "All Products",
       },
-      ...uniqueCategories.sort((a, b) =>
-        a.name.localeCompare(b.name)
+      ...uniqueCategories.sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name
+          )
       ),
     ];
   })();
 
   const brands = (() => {
-    const apiBrands = Array.isArray(productBrands)
-      ? productBrands
-      : Array.isArray(productBrands?.brands)
-      ? productBrands.brands
-      : Array.isArray(productBrands?.data)
-      ? productBrands.data
-      : Array.isArray(productBrands?.data?.brands)
-      ? productBrands.data.brands
-      : [];
+    const apiBrands =
+      Array.isArray(productBrands)
+        ? productBrands
+        : Array.isArray(
+            productBrands?.brands
+          )
+        ? productBrands.brands
+        : Array.isArray(
+            productBrands?.data
+          )
+        ? productBrands.data
+        : Array.isArray(
+            productBrands?.data?.brands
+          )
+        ? productBrands.data.brands
+        : [];
 
-    const normalizedBrands = apiBrands
-      .map((brand) => {
-        const id =
-          brand?.id ??
-          brand?.brandId ??
-          brand?._id ??
-          null;
+    const normalizedBrands =
+      apiBrands
+        .map((brand) => {
+          const id =
+            brand?.id ??
+            brand?.brandId ??
+            brand?._id ??
+            null;
 
-        const name =
-          brand?.name ??
-          brand?.title ??
-          brand?.brandName ??
-          "";
+          const name =
+            brand?.name ??
+            brand?.title ??
+            brand?.brandName ??
+            "";
 
-        return {
-          id,
-          name:
-            typeof name === "string"
-              ? name.trim()
-              : String(name || "").trim(),
-          slug:
-            brand?.slug ||
-            brand?.name
-              ?.toLowerCase()
-              ?.trim()
-              ?.replace(/[^a-z0-9]+/g, "-")
-              ?.replace(/^[-]+|[-]+$/g, "") ||
-            "",
-          logo:
-            brand?.logo ||
-            brand?.image ||
-            brand?.imageUrl ||
-            null,
-          productCount:
-            Number(brand?.productCount) ||
-            Number(brand?._count?.products) ||
-            0,
-        };
-      })
-      .filter(
-        (brand) =>
-          brand.id !== null &&
-          brand.name
-      );
+          return {
+            id,
+            name:
+              typeof name === "string"
+                ? name.trim()
+                : String(
+                    name || ""
+                  ).trim(),
+            slug:
+              brand?.slug ||
+              brand?.name
+                ?.toLowerCase()
+                ?.trim()
+                ?.replace(
+                  /[^a-z0-9]+/g,
+                  "-"
+                )
+                ?.replace(
+                  /^[-]+|[-]+$/g,
+                  ""
+                ) ||
+              "",
+            logo:
+              brand?.logo ||
+              brand?.image ||
+              brand?.imageUrl ||
+              null,
+            productCount:
+              Number(
+                brand?.productCount
+              ) ||
+              Number(
+                brand?._count
+                  ?.products
+              ) ||
+              0,
+          };
+        })
+        .filter(
+          (brand) =>
+            brand.id !== null &&
+            brand.name
+        );
 
     const uniqueBrands =
       normalizedBrands.filter(
@@ -383,228 +634,300 @@ export default function ShopPage() {
         name: "All Brands",
         slug: "all",
         productCount:
-          Number(productData?.total) ||
-          Number(productData?.data?.total) ||
+          Number(
+            productData?.total
+          ) ||
+          Number(
+            productData?.data?.total
+          ) ||
           allProducts.length ||
           0,
       },
-      ...uniqueBrands.sort((a, b) =>
-        a.name.localeCompare(b.name)
+      ...uniqueBrands.sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name
+          )
       ),
     ];
   })();
 
-  const sourceProducts = searchQuery
-    ? searchProducts
-    : allProducts;
+  const sourceProducts =
+    searchQuery
+      ? searchProducts
+      : sortBy !== "All" ||
+        selectedCategory.id !==
+          null ||
+        selectedBrand.id !== null
+      ? filteredProducts
+      : allProducts;
 
-  const products = sourceProducts.map((product) => {
-    const price = Number(product?.price) || 0;
+  const products =
+    sourceProducts.map(
+      (product) => {
+        const price =
+          Number(product?.price) ||
+          0;
 
-    const salePrice =
-      product?.salePrice !== null &&
-      product?.salePrice !== undefined
-        ? Number(product.salePrice)
-        : null;
+        const salePrice =
+          product?.salePrice !==
+            null &&
+          product?.salePrice !==
+            undefined
+            ? Number(
+                product.salePrice
+              )
+            : null;
 
-    const originalPrice =
-      salePrice !== null && salePrice < price
-        ? price
-        : Number(product?.originalPrice) || 0;
+        const originalPrice =
+          salePrice !== null &&
+          salePrice < price
+            ? price
+            : Number(
+                product?.originalPrice
+              ) || 0;
 
-    const displayPrice =
-      salePrice !== null && salePrice > 0
-        ? salePrice
-        : price;
+        const displayPrice =
+          salePrice !== null &&
+          salePrice > 0
+            ? salePrice
+            : price;
 
-    const discount =
-      originalPrice > 0 &&
-      salePrice !== null &&
-      salePrice < originalPrice
-        ? Math.round(
-            ((originalPrice - salePrice) /
-              originalPrice) *
-              100
+        const discount =
+          originalPrice > 0 &&
+          salePrice !== null &&
+          salePrice <
+            originalPrice
+            ? Math.round(
+                ((originalPrice -
+                  salePrice) /
+                  originalPrice) *
+                  100
+              )
+            : Number(
+                product?.discount
+              ) || 0;
+
+        let images = [];
+
+        if (
+          Array.isArray(
+            product?.images
           )
-        : Number(product?.discount) || 0;
+        ) {
+          images =
+            product.images.filter(
+              Boolean
+            );
+        } else if (
+          product?.images
+        ) {
+          images = [
+            product.images,
+          ];
+        }
 
-    let images = [];
+        if (
+          product?.featuredimg &&
+          !images.includes(
+            product.featuredimg
+          )
+        ) {
+          images.unshift(
+            product.featuredimg
+          );
+        }
 
-    if (Array.isArray(product?.images)) {
-      images = product.images.filter(Boolean);
-    } else if (product?.images) {
-      images = [product.images];
-    }
+        if (
+          product?.featuredImage &&
+          !images.includes(
+            product.featuredImage
+          )
+        ) {
+          images.unshift(
+            product.featuredImage
+          );
+        }
 
-    if (
-      product?.featuredimg &&
-      !images.includes(product.featuredimg)
-    ) {
-      images.unshift(product.featuredimg);
-    }
+        return {
+          ...product,
 
-    if (
-      product?.featuredImage &&
-      !images.includes(product.featuredImage)
-    ) {
-      images.unshift(product.featuredImage);
-    }
+          id:
+            product?.id ??
+            product?.productId ??
+            product?._id,
 
-    return {
-      ...product,
+          slug:
+            product?.slug || "",
 
-      id:
-        product?.id ??
-        product?.productId ??
-        product?._id,
+          name:
+            product?.name ||
+            product?.title ||
+            "",
 
-      slug: product?.slug || "",
+          brand:
+            product?.brand?.name ||
+            product?.brand ||
+            "",
 
-      name:
-        product?.name ||
-        product?.title ||
-        "",
+          category:
+            product?.category?.name ||
+            product?.category ||
+            "",
 
-      brand:
-        product?.brand?.name ||
-        product?.brand ||
-        "",
+          images,
 
-      category:
-        product?.category?.name ||
-        product?.category ||
-        "",
+          price:
+            displayPrice,
 
-      images,
+          originalPrice,
 
-      price: displayPrice,
+          discount,
 
-      originalPrice,
+          rating:
+            Number(
+              product?.rating
+            ) ||
+            Number(
+              product?.averageRating
+            ) ||
+            0,
 
-      discount,
+          reviewCount:
+            product?._count
+              ?.reviews ||
+            product?.reviews
+              ?.length ||
+            Number(
+              product?.reviewCount
+            ) ||
+            0,
 
-      rating:
-        Number(product?.rating) ||
-        Number(product?.averageRating) ||
-        0,
+          isFeatured:
+            getBooleanValue(
+              product?.isFeatured
+            ),
 
-      reviewCount:
-        product?._count?.reviews ||
-        product?.reviews?.length ||
-        Number(product?.reviewCount) ||
-        0,
+          isPopular:
+            getBooleanValue(
+              product?.isPopular
+            ),
 
-      isFeatured: getBooleanValue(
-        product?.isFeatured
-      ),
+          isTrending:
+            getBooleanValue(
+              product?.isTrending
+            ),
 
-      isPopular: getBooleanValue(
-        product?.isPopular
-      ),
+          isTopRated:
+            getBooleanValue(
+              product?.isTopRated
+            ),
 
-      isTrending: getBooleanValue(
-        product?.isTrending
-      ),
+          isRecent:
+            getBooleanValue(
+              product?.isRecent
+            ),
 
-      isTopRated: getBooleanValue(
-        product?.isTopRated
-      ),
+          viewCount:
+            Number(
+              product?.viewCount
+            ) || 0,
 
-      isRecent: getBooleanValue(
-        product?.isRecent
-      ),
+          stock:
+            Number(
+              product?.stock
+            ) || 0,
 
-      viewCount:
-        Number(product?.viewCount) || 0,
+          createdAt:
+            product?.createdAt ||
+            product?.created_at ||
+            null,
 
-      stock:
-        Number(product?.stock) || 0,
-
-      createdAt:
-        product?.createdAt ||
-        product?.created_at ||
-        null,
-
-      variants:
-        product?.variants || [],
-    };
-  });
-
-  const filteredProducts = [...products];
-
-  if (sortBy === "Newest") {
-    filteredProducts.sort((a, b) => {
-      const dateA = a.createdAt
-        ? new Date(a.createdAt).getTime()
-        : 0;
-
-      const dateB = b.createdAt
-        ? new Date(b.createdAt).getTime()
-        : 0;
-
-      return dateB - dateA;
-    });
-  }
-
-  if (sortBy === "Price: Low to High") {
-    filteredProducts.sort(
-      (a, b) => a.price - b.price
+          variants:
+            product?.variants ||
+            [],
+        };
+      }
     );
-  }
 
-  if (sortBy === "Price: High to Low") {
-    filteredProducts.sort(
-      (a, b) => b.price - a.price
-    );
-  }
+  const searchTotal =
+    searchQuery
+      ? products.length
+      : 0;
 
-  if (sortBy === "Discount") {
-    filteredProducts.sort(
-      (a, b) => b.discount - a.discount
-    );
-  }
+  const normalTotal =
+    sortBy !== "All" ||
+    selectedCategory.id !==
+      null ||
+    selectedBrand.id !== null
+      ? filterTotal
+      : Number(
+          productData?.total
+        ) ||
+        Number(
+          productData?.data?.total
+        ) ||
+        allProducts.length ||
+        0;
 
-  if (sortBy === "Rating") {
-    filteredProducts.sort(
-      (a, b) => b.rating - a.rating
-    );
-  }
+  const totalProducts =
+    searchQuery
+      ? searchTotal
+      : normalTotal;
 
-  const totalProducts = searchQuery
-    ? filteredProducts.length
-    : Number(productData?.total) ||
-      Number(productData?.data?.total) ||
-      filteredProducts.length ||
-      0;
+  const normalTotalPages =
+    sortBy !== "All" ||
+    selectedCategory.id !==
+      null ||
+    selectedBrand.id !== null
+      ? filterTotalPages
+      : Number(
+          productData?.totalPages
+        ) ||
+        Number(
+          productData?.data
+            ?.totalPages
+        ) ||
+        Math.max(
+          1,
+          Math.ceil(
+            totalProducts /
+              pageSize
+          )
+        );
 
-  const totalPages = searchQuery
-    ? Math.max(
-        1,
-        Math.ceil(
-          totalProducts / pageSize
+  const totalPages =
+    searchQuery
+      ? Math.max(
+          1,
+          Math.ceil(
+            totalProducts /
+              pageSize
+          )
         )
-      )
-    : Number(productData?.totalPages) ||
-      Number(productData?.data?.totalPages) ||
-      Math.max(
-        1,
-        Math.ceil(
-          totalProducts / pageSize
-        )
-      );
+      : Math.max(
+          1,
+          normalTotalPages
+        );
 
-  const paginatedProducts = searchQuery
-    ? filteredProducts.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-      )
-    : filteredProducts;
+  const paginatedProducts =
+    searchQuery
+      ? products.slice(
+          (currentPage - 1) *
+            pageSize,
+          currentPage *
+            pageSize
+        )
+      : products;
 
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [currentPage, totalPages]);
+  }, [
+    currentPage,
+    totalPages,
+  ]);
 
   const paginationPages = [];
 
@@ -614,13 +937,17 @@ export default function ShopPage() {
       page <= totalPages;
       page += 1
     ) {
-      paginationPages.push(page);
+      paginationPages.push(
+        page
+      );
     }
   } else {
     paginationPages.push(1);
 
     if (currentPage > 4) {
-      paginationPages.push("...");
+      paginationPages.push(
+        "..."
+      );
     }
 
     const start = Math.max(
@@ -638,32 +965,50 @@ export default function ShopPage() {
       page <= end;
       page += 1
     ) {
-      paginationPages.push(page);
+      paginationPages.push(
+        page
+      );
     }
 
-    if (currentPage < totalPages - 3) {
-      paginationPages.push("...");
+    if (
+      currentPage <
+      totalPages - 3
+    ) {
+      paginationPages.push(
+        "..."
+      );
     }
 
-    paginationPages.push(totalPages);
+    paginationPages.push(
+      totalPages
+    );
   }
 
-  const isProductsLoading = searchQuery
-    ? searchLoading
-    : productLoading;
+  const isProductsLoading =
+    searchQuery
+      ? searchLoading
+      : productLoading ||
+        filterLoading;
 
-  const isProductsFetching = searchQuery
-    ? searchLoading
-    : productLoading;
+  const isProductsFetching =
+    searchQuery
+      ? searchLoading
+      : productLoading ||
+        filterLoading;
 
-  const isProductsError = searchQuery
-    ? Boolean(searchError)
-    : Boolean(productError);
+  const isProductsError =
+    searchQuery
+      ? Boolean(searchError)
+      : Boolean(
+          productError ||
+            filterError
+        );
 
   const isBrandsLoading =
     adsLoading && !adsLoaded;
 
-  const isBrandsError = Boolean(adsError);
+  const isBrandsError =
+    Boolean(adsError);
 
   const isInitialLoading =
     isProductsLoading ||
@@ -673,98 +1018,190 @@ export default function ShopPage() {
     isProductsError ||
     isBrandsError;
 
-  const error = searchQuery
-    ? searchError || adsError
-    : productError || adsError;
+  const error =
+    searchQuery
+      ? searchError ||
+        adsError
+      : filterError ||
+        productError ||
+        adsError;
 
   const refetch = () => {
+    setCurrentPage(
+      currentPage
+    );
+
     if (searchQuery) {
       setSearchProducts([]);
       setSearchError(null);
 
-      const searchProductsApi = async () => {
-        try {
-          setSearchLoading(true);
-
-          const response =
-            await getProductSearchApi(
-              searchQuery
+      const searchAgain =
+        async () => {
+          try {
+            setSearchLoading(
+              true
             );
 
-          const data =
-            response?.data ?? response;
+            const response =
+              await getProductSearchApi(
+                searchQuery
+              );
 
-          let products = [];
+            const products =
+              getProductsFromResponse(
+                response
+              );
 
-          if (Array.isArray(data)) {
-            products = data;
-          } else if (
-            Array.isArray(data?.products)
-          ) {
-            products = data.products;
-          } else if (
-            Array.isArray(data?.data)
-          ) {
-            products = data.data;
-          } else if (
-            Array.isArray(
-              data?.data?.products
-            )
-          ) {
-            products = data.data.products;
-          } else if (
-            Array.isArray(data?.results)
-          ) {
-            products = data.results;
-          } else if (
-            Array.isArray(
-              data?.data?.results
-            )
-          ) {
-            products = data.data.results;
+            setSearchProducts(
+              products
+            );
+          } catch (err) {
+            setSearchError(
+              err?.response
+                ?.data
+                ?.message ||
+                err?.message ||
+                "Unable to search products."
+            );
+          } finally {
+            setSearchLoading(
+              false
+            );
           }
+        };
 
-          setSearchProducts(products);
-        } catch (err) {
-          setSearchError(
-            err?.response?.data?.message ||
-              err?.message ||
-              "Unable to search products."
-          );
-        } finally {
-          setSearchLoading(false);
-        }
-      };
-
-      searchProductsApi();
-
+      searchAgain();
       return;
     }
 
     const filters = {};
 
-    if (selectedCategory.id !== null) {
+    if (
+      selectedCategory.id !==
+      null
+    ) {
       filters.categoryId =
         selectedCategory.id;
     }
 
-    if (selectedBrand.id !== null) {
+    if (
+      selectedBrand.id !== null
+    ) {
       filters.brandId =
         selectedBrand.id;
     }
 
-    if (sortBy === "Featured") {
-      filters.isFeatured = true;
+    if (
+      sortBy === "Featured"
+    ) {
+      filters.isFeatured =
+        true;
     }
 
-    if (Object.keys(filters).length > 0) {
-      dispatch(
-        getProductFilter(
-          filters,
-          currentPage,
-          pageSize
-        )
+    if (
+      sortBy === "Newest"
+    ) {
+      filters.sortBy =
+        "newest";
+    }
+
+    if (
+      sortBy ===
+      "Price: Low to High"
+    ) {
+      filters.sortBy =
+        "price_low_high";
+    }
+
+    if (
+      sortBy ===
+      "Price: High to Low"
+    ) {
+      filters.sortBy =
+        "price_high_low";
+    }
+
+    if (
+      sortBy ===
+      "Stock Availability"
+    ) {
+      filters.sortBy =
+        "stock";
+    }
+
+    if (
+      sortBy ===
+      "Best Discount"
+    ) {
+      filters.sortBy =
+        "most_discount";
+    }
+
+    if (
+      sortBy ===
+      "Highest Rated"
+    ) {
+      filters.sortBy =
+        "rating";
+    }
+
+    if (
+      Object.keys(filters)
+        .length > 0
+    ) {
+      setFilterLoading(
+        true
       );
+      setFilterError(null);
+
+      getProductFilter(
+        filters,
+        currentPage,
+        pageSize
+      )
+        .then((response) => {
+          const data =
+            getProductsFromResponse(
+              response
+            );
+
+          const total =
+            getTotalFromResponse(
+              response,
+              data.length
+            );
+
+          const totalPages =
+            getTotalPagesFromResponse(
+              response,
+              total,
+              pageSize
+            );
+
+          setFilteredProducts(
+            data
+          );
+          setFilterTotal(
+            total
+          );
+          setFilterTotalPages(
+            totalPages
+          );
+        })
+        .catch((err) => {
+          setFilterError(
+            err?.response
+              ?.data
+              ?.message ||
+              err?.message ||
+              "Unable to load filtered products."
+          );
+        })
+        .finally(() => {
+          setFilterLoading(
+            false
+          );
+        });
     } else {
       dispatch(
         getProduct(
@@ -774,26 +1211,32 @@ export default function ShopPage() {
       );
     }
 
-    dispatch(getAllProductAds());
+    dispatch(
+      getAllProductAds()
+    );
   };
 
-  const clearAllFilters = () => {
-    setSelectedCategory({
-      id: null,
-      name: "All Products",
-    });
+  const clearAllFilters =
+    () => {
+      setSelectedCategory({
+        id: null,
+        name: "All Products",
+      });
 
-    setSelectedBrand({
-      id: null,
-      name: "All Brands",
-    });
+      setSelectedBrand({
+        id: null,
+        name: "All Brands",
+      });
 
-    setSortBy("All");
-    setCurrentPage(1);
-  };
+      setSortBy("All");
+      setCurrentPage(1);
+      setFilteredProducts([]);
+      setFilterError(null);
+    };
 
   const hasActiveFilters =
-    selectedCategory.id !== null ||
+    selectedCategory.id !==
+      null ||
     selectedBrand.id !== null ||
     sortBy !== "All";
 
@@ -809,7 +1252,10 @@ export default function ShopPage() {
 
     setCurrentPage(page);
 
-    if (typeof window !== "undefined") {
+    if (
+      typeof window !==
+      "undefined"
+    ) {
       window.scrollTo({
         top: 0,
         behavior: "smooth",
@@ -818,7 +1264,9 @@ export default function ShopPage() {
   };
 
   useEffect(() => {
-    setMobileFiltersOpen(false);
+    setMobileFiltersOpen(
+      false
+    );
   }, [currentPage]);
 
   return (
@@ -859,40 +1307,49 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="border-y border-[#E5E5E5] bg-white">
+      <div className="border-y border-[#E5E5E5] bg-">
         <div className="mx-auto max-w-[1440px] overflow-x-auto px-5 sm:px-8 lg:px-10">
           <div className="flex min-w-max items-center gap-2 py-4">
-            {categories.map((category) => {
-              const active =
-                String(
-                  selectedCategory.id
-                ) ===
-                  String(category.id) &&
-                selectedCategory.name ===
-                  category.name;
+            {categories.map(
+              (category) => {
+                const active =
+                  String(
+                    selectedCategory.id
+                  ) ===
+                    String(
+                      category.id
+                    ) &&
+                  selectedCategory.name ===
+                    category.name;
 
-              return (
-                <button
-                  key={
-                    category.id ?? "all"
-                  }
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(
-                      category
-                    );
-                    setCurrentPage(1);
-                  }}
-                  className={`rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition-all ${
-                    active
-                      ? "border-[#E52323] bg-[#E52323] text-white"
-                      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={
+                      category.id ??
+                      "all"
+                    }
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory(
+                        category
+                      );
+                      setCurrentPage(
+                        1
+                      );
+                    }}
+                    className={`rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition-all ${
+                      active
+                        ? "border-[#E52323] bg-[#E52323] text-white"
+                        : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
+                    }`}
+                  >
+                    {
+                      category.name
+                    }
+                  </button>
+                );
+              }
+            )}
           </div>
         </div>
       </div>
@@ -904,11 +1361,15 @@ export default function ShopPage() {
               <p className="text-sm text-[#737373]">
                 Showing{" "}
                 <span className="font-semibold text-[#111111]">
-                  {paginatedProducts.length}
+                  {
+                    paginatedProducts.length
+                  }
                 </span>{" "}
                 of{" "}
                 <span className="font-semibold text-[#111111]">
-                  {totalProducts}
+                  {
+                    totalProducts
+                  }
                 </span>{" "}
                 products
               </p>
@@ -916,13 +1377,14 @@ export default function ShopPage() {
               {searchQuery && (
                 <p className="mt-2 text-xs text-[#737373]">
                   Search results for{" "}
-                  <span className="font-semibold text-[#111111]">
+                  <span className="font-semibold text-black">
                     "{searchQuery}"
                   </span>
                 </p>
               )}
 
-              {sortBy === "Featured" &&
+              {sortBy ===
+                "Featured" &&
                 !searchQuery && (
                   <p className="mt-2 text-xs font-medium text-[#E52323]">
                     Showing featured products
@@ -931,52 +1393,71 @@ export default function ShopPage() {
 
               {hasActiveFilters && (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {selectedCategory.id !== null && (
+                  {selectedCategory.id !==
+                    null && (
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedCategory({
-                          id: null,
-                          name: "All Products",
-                        });
-
-                        setCurrentPage(1);
+                        setSelectedCategory(
+                          {
+                            id: null,
+                            name: "All Products",
+                          }
+                        );
+                        setCurrentPage(
+                          1
+                        );
                       }}
                       className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs"
                     >
-                      {selectedCategory.name}
+                      {
+                        selectedCategory.name
+                      }
                       <X className="h-3 w-3" />
                     </button>
                   )}
 
-                  {selectedBrand.id !== null && (
+                  {selectedBrand.id !==
+                    null && (
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedBrand({
-                          id: null,
-                          name: "All Brands",
-                        });
-
-                        setCurrentPage(1);
+                        setSelectedBrand(
+                          {
+                            id: null,
+                            name: "All Brands",
+                          }
+                        );
+                        setCurrentPage(
+                          1
+                        );
                       }}
                       className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs"
                     >
-                      {selectedBrand.name}
+                      {
+                        selectedBrand.name
+                      }
                       <X className="h-3 w-3" />
                     </button>
                   )}
 
-                  {sortBy !== "All" && (
+                  {sortBy !==
+                    "All" && (
                     <button
                       type="button"
                       onClick={() => {
-                        setSortBy("All");
-                        setCurrentPage(1);
+                        setSortBy(
+                          "All"
+                        );
+                        setCurrentPage(
+                          1
+                        );
                       }}
-                      className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs"
+                      className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
                     >
-                      {sortBy}
+                      {
+                        sortBy
+                      }
                       <X className="h-3 w-3" />
                     </button>
                   )}
@@ -988,7 +1469,9 @@ export default function ShopPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setMobileFiltersOpen(true)
+                  setMobileFiltersOpen(
+                    true
+                  )
                 }
                 className="flex h-11 shrink-0 items-center gap-2 rounded-md border border-[#D4D4D4] bg-white px-4 text-sm font-medium text-[#111111] lg:hidden"
               >
@@ -998,12 +1481,16 @@ export default function ShopPage() {
 
               <div className="relative shrink-0">
                 <select
-                  value={sortBy}
+                  value={
+                    sortBy
+                  }
                   onChange={(e) => {
                     setSortBy(
                       e.target.value
                     );
-                    setCurrentPage(1);
+                    setCurrentPage(
+                      1
+                    );
                   }}
                   className="h-11 appearance-none rounded-md border border-[#D4D4D4] bg-white pl-4 pr-10 text-sm text-[#111111] outline-none focus:border-[#E52323]"
                 >
@@ -1019,8 +1506,8 @@ export default function ShopPage() {
                     Newest
                   </option>
 
-                  <option value="Rating">
-                    Rating
+                  <option value="Highest Rated">
+                    Highest Rated
                   </option>
 
                   <option value="Price: Low to High">
@@ -1031,8 +1518,12 @@ export default function ShopPage() {
                     Price: High to Low
                   </option>
 
-                  <option value="Discount">
-                    Discount
+                  <option value="Stock Availability">
+                    Stock Availability
+                  </option>
+
+                  <option value="Best Discount">
+                    Best Discount
                   </option>
                 </select>
 
@@ -1045,9 +1536,13 @@ export default function ShopPage() {
         <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <FilterSidebar
-              categories={categories}
+              categories={
+                categories
+              }
               brands={brands}
-              selectedBrand={selectedBrand}
+              selectedBrand={
+                selectedBrand
+              }
               setSelectedBrand={
                 setSelectedBrand
               }
@@ -1068,12 +1563,14 @@ export default function ShopPage() {
               <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({
                   length: 8,
-                }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-[360px] animate-pulse rounded-xl border border-[#E5E5E5] bg-white"
-                  />
-                ))}
+                }).map(
+                  (_, index) => (
+                    <div
+                      key={index}
+                      className="h-[360px] animate-pulse rounded-xl border border-[#E5E5E5] bg-white"
+                    />
+                  )
+                )}
               </div>
             ) : isError ? (
               <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-[#E5E5E5] bg-white px-6 text-center">
@@ -1082,7 +1579,8 @@ export default function ShopPage() {
                 </h3>
 
                 <p className="mt-2 text-sm text-[#737373]">
-                  {error?.data?.message ||
+                  {error?.data
+                    ?.message ||
                     error?.message ||
                     error ||
                     "Something went wrong."}
@@ -1090,13 +1588,16 @@ export default function ShopPage() {
 
                 <button
                   type="button"
-                  onClick={refetch}
+                  onClick={
+                    refetch
+                  }
                   className="mt-5 rounded-md bg-[#E52323] px-5 py-2.5 text-sm font-semibold text-white"
                 >
                   Try Again
                 </button>
               </div>
-            ) : paginatedProducts.length > 0 ? (
+            ) : paginatedProducts.length >
+              0 ? (
               <div className="relative">
                 {isProductsFetching && (
                   <div className="absolute inset-0 z-20 flex items-start justify-center bg-white/40 pt-10 backdrop-blur-[1px]">
@@ -1110,8 +1611,12 @@ export default function ShopPage() {
                   {paginatedProducts.map(
                     (product) => (
                       <ProductCard
-                        key={product.id}
-                        product={product}
+                        key={
+                          product.id
+                        }
+                        product={
+                          product
+                        }
                       />
                     )
                   )}
@@ -1128,16 +1633,18 @@ export default function ShopPage() {
                 {searchQuery && (
                   <p className="mt-2 text-sm text-[#737373]">
                     No products match "
-                    {searchQuery}".
+                    {
+                      searchQuery
+                    }
+                    ".
                   </p>
                 )}
 
-                {sortBy === "Featured" &&
+                {sortBy ===
+                  "Featured" &&
                   !searchQuery && (
                     <p className="mt-2 text-sm text-[#737373]">
-                      No featured products are
-                      available for the selected
-                      filters.
+                      No featured products are available for the selected filters.
                     </p>
                   )}
 
@@ -1161,68 +1668,70 @@ export default function ShopPage() {
             <div className="mt-12 flex flex-wrap items-center justify-center gap-2 border-t border-[#E5E5E5] pt-8">
               <button
                 type="button"
-                onClick={() =>
-                  goToPage(
-                    currentPage - 1
-                  )
-                }
                 disabled={
-                  currentPage === 1 ||
+                  currentPage ===
+                    1 ||
                   isProductsFetching
                 }
-                className="flex h-10 items-center justify-center rounded-md border border-[#D4D4D4] bg-white px-4 text-sm text-[#111111] transition hover:border-[#E52323] hover:text-[#E52323] disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() =>
+                  goToPage(
+                    currentPage -
+                      1
+                  )
+                }
+                className="flex h-10 items-center rounded-md border border-[#D4D4D4] bg-white px-4 text-sm font-medium text-[#525252] transition hover:border-[#E52323] hover:text-[#E52323] disabled:cursor-not-allowed disabled:opacity-40"
               >
+                <ChevronRight className="mr-1 h-4 w-4 rotate-180" />
                 Previous
               </button>
 
               {paginationPages.map(
-                (page, index) => {
-                  if (page === "...") {
-                    return (
-                      <span
-                        key={`ellipsis-${index}`}
-                        className="flex h-10 w-10 items-center justify-center text-sm text-[#737373]"
-                      >
-                        ...
-                      </span>
-                    );
-                  }
-
-                  return (
+                (page, index) =>
+                  page === "..." ? (
+                    <span
+                      key={`ellipsis-${index}`}
+                      className="flex h-10 w-10 items-center justify-center text-sm text-[#737373]"
+                    >
+                      ...
+                    </span>
+                  ) : (
                     <button
                       key={page}
                       type="button"
                       onClick={() =>
-                        goToPage(page)
+                        goToPage(
+                          page
+                        )
                       }
                       disabled={
                         isProductsFetching
                       }
-                      className={`flex h-10 w-10 items-center justify-center rounded-md border text-sm font-bold transition ${
-                        currentPage === page
+                      className={`flex h-10 w-10 items-center justify-center rounded-md border text-sm font-semibold transition ${
+                        currentPage ===
+                        page
                           ? "border-[#E52323] bg-[#E52323] text-white"
-                          : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
-                      } disabled:cursor-not-allowed disabled:opacity-40`}
+                          : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       {page}
                     </button>
-                  );
-                }
+                  )
               )}
 
               <button
                 type="button"
-                onClick={() =>
-                  goToPage(
-                    currentPage + 1
-                  )
-                }
                 disabled={
                   currentPage ===
                     totalPages ||
                   isProductsFetching
                 }
-                className="flex h-10 items-center justify-center rounded-md border border-[#D4D4D4] bg-white px-4 text-sm text-[#111111] transition hover:border-[#E52323] hover:text-[#E52323] disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() =>
+                  goToPage(
+                    currentPage +
+                      1
+                  )
+                }
+                className="flex h-10 items-center rounded-md border border-[#D4D4D4] bg-white px-4 text-sm font-medium text-[#525252] transition hover:border-[#E52323] hover:text-[#E52323] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
                 <ChevronRight className="ml-1 h-4 w-4" />
@@ -1237,7 +1746,9 @@ export default function ShopPage() {
             type="button"
             aria-label="Close filters"
             onClick={() =>
-              setMobileFiltersOpen(false)
+              setMobileFiltersOpen(
+                false
+              )
             }
             className="absolute inset-0 bg-black/70"
           />
@@ -1268,7 +1779,9 @@ export default function ShopPage() {
             </div>
 
             <FilterSidebar
-              categories={categories}
+              categories={
+                categories
+              }
               brands={brands}
               selectedBrand={
                 selectedBrand
@@ -1324,21 +1837,26 @@ function FilterSidebar({
                 String(
                   selectedCategory.id
                 ) ===
-                  String(category.id) &&
+                  String(
+                    category.id
+                  ) &&
                 selectedCategory.name ===
                   category.name;
 
               return (
                 <button
                   key={
-                    category.id ?? "all"
+                    category.id ??
+                    "all"
                   }
                   type="button"
                   onClick={() => {
                     setSelectedCategory(
                       category
                     );
-                    setCurrentPage(1);
+                    setCurrentPage(
+                      1
+                    );
                   }}
                   className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${
                     active
@@ -1347,7 +1865,9 @@ function FilterSidebar({
                   }`}
                 >
                   <span>
-                    {category.name}
+                    {
+                      category.name
+                    }
                   </span>
 
                   {active && (
@@ -1366,59 +1886,70 @@ function FilterSidebar({
         </h3>
 
         <div className="space-y-2">
-          {brands.map((brand) => {
-            const active =
-              String(
-                selectedBrand.id
-              ) ===
-                String(brand.id) &&
-              selectedBrand.name ===
-                brand.name;
+          {brands.map(
+            (brand) => {
+              const active =
+                String(
+                  selectedBrand.id
+                ) ===
+                  String(
+                    brand.id
+                  ) &&
+                selectedBrand.name ===
+                  brand.name;
 
-            return (
-              <button
-                key={
-                  brand.id ?? "all"
-                }
-                type="button"
-                onClick={() => {
-                  setSelectedBrand(
-                    brand
-                  );
-                  setCurrentPage(1);
-                }}
-                className="flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm text-[#525252] transition hover:text-[#E52323]"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                      active
-                        ? "border-[#E52323] bg-[#E52323]"
-                        : "border-[#A3A3A3]"
-                    }`}
-                  >
-                    {active && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </span>
+              return (
+                <button
+                  key={
+                    brand.id ??
+                    "all"
+                  }
+                  type="button"
+                  onClick={() => {
+                    setSelectedBrand(
+                      brand
+                    );
+                    setCurrentPage(
+                      1
+                    );
+                  }}
+                  className="flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm text-[#525252] transition hover:text-[#E52323]"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        active
+                          ? "border-[#E52323] bg-[#E52323]"
+                          : "border-[#A3A3A3]"
+                      }`}
+                    >
+                      {active && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
+                    </span>
 
-                  <span>
-                    {brand.name}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+                    <span>
+                      {
+                        brand.name
+                      }
+                    </span>
+                  </div>
+                </button>
+              );
+            }
+          )}
         </div>
       </div>
 
       <button
         type="button"
         onClick={() => {
-          setSelectedCategory({
-            id: null,
-            name: "All Products",
-          });
+          setSelectedCategory(
+            {
+              id: null,
+              name: "All Products",
+            }
+          );
 
           setSelectedBrand({
             id: null,
@@ -1434,4 +1965,3 @@ function FilterSidebar({
     </div>
   );
 }
-

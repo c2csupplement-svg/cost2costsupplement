@@ -35,8 +35,10 @@ import {
   appplyCouponApi,
 } from "@/apiService/api";
 
+
 function formatPrice(value) {
   const number = Number(value || 0);
+
   return `₹ ${number.toLocaleString("en-IN")}`;
 }
 
@@ -52,9 +54,14 @@ function getItemPrice(item) {
   return Number(price) || 0;
 }
 
+/**
+ * Get original/MRP price of a cart item.
+ */
 function getItemOriginalPrice(item) {
   const currentPrice = getItemPrice(item);
-  const variantPrice = Number(item?.variant?.price) || 0;
+
+  const variantPrice =
+    Number(item?.variant?.price) || 0;
 
   const originalPrice =
     Number(item?.originalPrice) ||
@@ -63,22 +70,32 @@ function getItemOriginalPrice(item) {
     Number(item?.product?.mrp) ||
     variantPrice;
 
-  if (variantPrice > currentPrice && currentPrice > 0) {
+  if (
+    variantPrice > currentPrice &&
+    currentPrice > 0
+  ) {
     return variantPrice;
   }
 
-  return originalPrice > currentPrice ? originalPrice : 0;
+  return originalPrice > currentPrice
+    ? originalPrice
+    : 0;
 }
 
 function getItemImage(item) {
   const product = item?.product ?? item;
   const variant = item?.variant ?? null;
 
-  const images = item?.images ?? product?.images ?? [];
+  const images =
+    item?.images ??
+    product?.images ??
+    [];
 
   const sources = [
     variant?.image,
+    variant?.imageUrl,
     item?.image,
+    item?.imageUrl,
     product?.image,
     product?.featuredImage,
     product?.featuredimg,
@@ -86,11 +103,17 @@ function getItemImage(item) {
   ];
 
   for (const source of sources) {
-    if (typeof source === "string" && source.trim()) {
+    if (
+      typeof source === "string" &&
+      source.trim()
+    ) {
       return source.trim();
     }
 
-    if (source && typeof source === "object") {
+    if (
+      source &&
+      typeof source === "object"
+    ) {
       const value =
         source?.url ||
         source?.src ||
@@ -98,7 +121,10 @@ function getItemImage(item) {
         source?.imageUrl ||
         source?.path;
 
-      if (typeof value === "string" && value.trim()) {
+      if (
+        typeof value === "string" &&
+        value.trim()
+      ) {
         return value.trim();
       }
     }
@@ -107,9 +133,14 @@ function getItemImage(item) {
   return "";
 }
 
+/**
+ * Get variant attributes.
+ */
 function getVariantAttributes(item) {
   const attributes =
-    item?.variant?.attributes ?? item?.attributes ?? [];
+    item?.variant?.attributes ??
+    item?.attributes ??
+    [];
 
   if (!Array.isArray(attributes)) {
     return [];
@@ -126,9 +157,14 @@ function getVariantAttributes(item) {
 
 function getVariantDetails(item) {
   const variant = item?.variant ?? {};
-  const attributes = getVariantAttributes(item);
 
-  const size = item?.size ?? variant?.size ?? "";
+  const attributes =
+    getVariantAttributes(item);
+
+  const size =
+    item?.size ??
+    variant?.size ??
+    "";
 
   const flavour =
     item?.flavour ??
@@ -139,16 +175,23 @@ function getVariantDetails(item) {
 
   const attributeNames = new Set(
     attributes.map((attribute) =>
-      String(attribute?.attribute?.name || "").toLowerCase()
+      String(
+        attribute?.attribute?.name || ""
+      ).toLowerCase()
     )
   );
 
   const details = [];
 
   attributes.forEach((attribute) => {
-    const name = attribute?.attribute?.name;
-    const value = attribute?.value;
-    const unit = attribute?.attribute?.unit;
+    const name =
+      attribute?.attribute?.name;
+
+    const value =
+      attribute?.value;
+
+    const unit =
+      attribute?.attribute?.unit;
 
     if (!name || !value) {
       return;
@@ -161,7 +204,10 @@ function getVariantDetails(item) {
     });
   });
 
-  if (size && !attributeNames.has("size")) {
+  if (
+    size &&
+    !attributeNames.has("size")
+  ) {
     details.push({
       name: "Size",
       value: size,
@@ -184,48 +230,89 @@ function getVariantDetails(item) {
   return details;
 }
 
-function calculateCouponDiscount(coupon, subtotal) {
+function calculateCouponDiscount(
+  coupon,
+  subtotal
+) {
   if (!coupon) {
     return 0;
   }
 
-  const discountValue = Number(coupon?.discountValue) || 0;
-  const minimumCartValue = Number(coupon?.minCartValue) || 0;
+  const discountValue =
+    Number(
+      coupon?.discountValue
+    ) || 0;
 
-  if (subtotal < minimumCartValue) {
+  const minimumCartValue =
+    Number(
+      coupon?.minCartValue
+    ) || 0;
+
+  if (
+    subtotal < minimumCartValue
+  ) {
     return 0;
   }
 
-  if (coupon?.discountType === "PERCENTAGE") {
+  if (
+    coupon?.discountType ===
+    "PERCENTAGE"
+  ) {
     return Math.min(
-      subtotal * (discountValue / 100),
+      subtotal *
+        (discountValue / 100),
       subtotal
     );
   }
 
-  if (coupon?.discountType === "FIXED") {
-    return Math.min(discountValue, subtotal);
+  if (
+    coupon?.discountType === "FIXED"
+  ) {
+    return Math.min(
+      discountValue,
+      subtotal
+    );
   }
 
   return 0;
 }
 
 function getCouponDescription(coupon) {
-  if (coupon?.discountType === "PERCENTAGE") {
+  if (
+    coupon?.discountType ===
+    "PERCENTAGE"
+  ) {
     return `${coupon?.discountValue || 0}% OFF`;
   }
 
-  if (coupon?.discountType === "FIXED") {
-    return `${formatPrice(coupon?.discountValue)} OFF`;
+  if (
+    coupon?.discountType === "FIXED"
+  ) {
+    return `${formatPrice(
+      coupon?.discountValue
+    )} OFF`;
+  }
+
+  if (
+    coupon?.discountAmount !==
+      undefined &&
+    coupon?.discountAmount !== null
+  ) {
+    return `${formatPrice(
+      coupon.discountAmount
+    )} OFF`;
   }
 
   return "Special discount";
 }
 
+
 export default function CartPage() {
   const dispatch = useDispatch();
 
-  const cartState = useSelector((state) => state.product);
+  const cartState = useSelector(
+    (state) => state.product
+  );
 
   const cartData =
     cartState?.products?.cart ??
@@ -233,80 +320,222 @@ export default function CartPage() {
     {};
 
   const rawItems =
-    cartData?.cart?.items ??
     cartData?.items ??
+    cartData?.cart?.items ??
     cartState?.products?.cart?.items ??
     [];
 
-  const cart = Array.isArray(rawItems) ? rawItems : [];
+  const cart = Array.isArray(
+    rawItems
+  )
+    ? rawItems
+    : [];
 
-  const loading = Boolean(cartState?.loading);
+  const loading = Boolean(
+    cartState?.loading
+  );
+
   const error = cartState?.error;
 
-  const [coupons, setCoupons] = useState([]);
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError] = useState("");
-  const [showCouponModal, setShowCouponModal] = useState(false);
+  const apiTotalAmount =
+    Number(
+      cartData?.totalAmount
+    ) || 0;
 
-  const cartCount = cart.reduce(
-    (total, item) => total + Number(item?.quantity || 0),
-    0
-  );
+  const apiDiscountAmount =
+    Number(
+      cartData?.discountAmount
+    ) || 0;
 
-  const cartTotal = cart.reduce((total, item) => {
-    return (
-      total +
-      getItemPrice(item) * Number(item?.quantity || 0)
-    );
-  }, 0);
+  const apiFinalAmount =
+    Number(
+      cartData?.finalAmount
+    ) || 0;
 
-  const mrpTotal = cart.reduce((total, item) => {
-    const price = getItemPrice(item);
-    const originalPrice = getItemOriginalPrice(item);
-    const quantity = Number(item?.quantity) || 0;
+  const apiCouponCode =
+    cartData?.couponCode ||
+    cartData?.coupon?.code ||
+    "";
 
-    const effectiveOriginal =
-      originalPrice > price ? originalPrice : price;
+  const [
+    coupons,
+    setCoupons,
+  ] = useState([]);
 
-    return total + effectiveOriginal * quantity;
-  }, 0);
+  const [
+    couponCode,
+    setCouponCode,
+  ] = useState("");
 
-  const mrpSavings = Math.max(0, mrpTotal - cartTotal);
+  const [
+    appliedCoupon,
+    setAppliedCoupon,
+  ] = useState(null);
 
-  const finalTotal = Math.max(
-    0,
-    cartTotal - couponDiscount
-  );
+  const [
+    couponDiscount,
+    setCouponDiscount,
+  ] = useState(0);
 
-  const totalSavings = mrpSavings + couponDiscount;
+  const [
+    couponLoading,
+    setCouponLoading,
+  ] = useState(false);
+
+  const [
+    couponError,
+    setCouponError,
+  ] = useState("");
+
+  const [
+    showCouponModal,
+    setShowCouponModal,
+  ] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCartItems());
   }, [dispatch]);
 
   useEffect(() => {
+    const code =
+      cartData?.couponCode ||
+      cartData?.coupon?.code ||
+      "";
+
+    const discount =
+      Number(
+        cartData?.discountAmount
+      ) || 0;
+
+    if (code) {
+      setCouponCode(code);
+
+      setAppliedCoupon({
+        ...(cartData?.coupon || {}),
+        code,
+        discountAmount:
+          discount,
+      });
+
+      setCouponDiscount(
+        discount
+      );
+    } else {
+      setCouponCode("");
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    }
+  }, [
+    cartData?.couponCode,
+    cartData?.coupon,
+    cartData?.discountAmount,
+  ]);
+
+  const cartCount = cart.reduce(
+    (total, item) =>
+      total +
+      Number(
+        item?.quantity || 0
+      ),
+    0
+  );
+
+  const calculatedCartTotal =
+    cart.reduce(
+      (total, item) =>
+        total +
+        getItemPrice(item) *
+          Number(
+            item?.quantity || 0
+          ),
+      0
+    );
+
+  const cartTotal =
+    apiTotalAmount > 0
+      ? apiTotalAmount
+      : calculatedCartTotal;
+  const finalCouponDiscount =
+    apiDiscountAmount > 0
+      ? apiDiscountAmount
+      : couponDiscount;
+
+  const mrpTotal = cart.reduce(
+    (total, item) => {
+      const price =
+        getItemPrice(item);
+
+      const originalPrice =
+        getItemOriginalPrice(item);
+
+      const quantity =
+        Number(
+          item?.quantity
+        ) || 0;
+
+      const effectiveOriginal =
+        originalPrice > price
+          ? originalPrice
+          : price;
+
+      return (
+        total +
+        effectiveOriginal *
+          quantity
+      );
+    },
+    0
+  );
+
+
+  const mrpSavings = Math.max(
+    0,
+    mrpTotal -
+      calculatedCartTotal
+  );
+  const finalTotal =
+    apiFinalAmount > 0
+      ? apiFinalAmount
+      : Math.max(
+          0,
+          cartTotal -
+            finalCouponDiscount
+        );
+
+  const totalSavings =
+    mrpSavings +
+    finalCouponDiscount;
+
+  useEffect(() => {
     const loadCoupons = async () => {
       try {
         setCouponLoading(true);
 
-        const response = await couponApi();
-        const data = response?.data ?? response;
+        const response =
+          await couponApi();
+
+        const data =
+          response?.data ??
+          response;
 
         if (
           data?.success &&
-          Array.isArray(data?.coupons)
+          Array.isArray(
+            data?.coupons
+          )
         ) {
-          setCoupons(data.coupons);
+          setCoupons(
+            data.coupons
+          );
         } else {
           setCoupons([]);
         }
       } catch (error) {
         console.error(
           "Coupon API error:",
-          error?.response?.data || error?.message
+          error?.response
+            ?.data ||
+            error?.message
         );
 
         setCoupons([]);
@@ -318,81 +547,62 @@ export default function CartPage() {
     loadCoupons();
   }, []);
 
-  const handleUpdateQuantity = async (item, quantity) => {
+  const handleUpdateQuantity = async (
+    item,
+    quantity
+  ) => {
     const itemId =
       item?.id ??
       item?.cartItemId ??
       item?._id;
 
     if (!itemId) {
-      toast.error("Cart item ID is missing.");
+      toast.error(
+        "Cart item ID is missing."
+      );
+
       return;
     }
 
     try {
+
       if (quantity <= 0) {
-        await dispatch(deleteCartItem(itemId));
-        toast.success("Item removed from cart.");
+        await dispatch(
+          deleteCartItem(itemId)
+        );
+
+        toast.success(
+          "Item removed from cart."
+        );
       } else {
         await dispatch(
-          updateItemQuantity(itemId, quantity)
+          updateItemQuantity(
+            itemId,
+            quantity
+          )
         );
       }
 
-      await dispatch(fetchCartItems());
-
-      if (appliedCoupon) {
-        const newSubtotal = cart.reduce(
-          (total, currentItem) => {
-            const currentItemId =
-              currentItem?.id ??
-              currentItem?.cartItemId ??
-              currentItem?._id;
-
-            if (
-              String(currentItemId) ===
-              String(itemId)
-            ) {
-              return (
-                total +
-                getItemPrice(currentItem) *
-                quantity
-              );
-            }
-
-            return (
-              total +
-              getItemPrice(currentItem) *
-              Number(currentItem?.quantity || 0)
-            );
-          },
-          0
-        );
-
-        const discount = calculateCouponDiscount(
-          appliedCoupon,
-          newSubtotal
-        );
-
-        if (discount > 0) {
-          setCouponDiscount(discount);
-        } else {
-          setAppliedCoupon(null);
-          setCouponDiscount(0);
-          setCouponCode("");
-        }
-      }
+      await dispatch(
+        fetchCartItems()
+      );
     } catch (error) {
-      console.error("Cart quantity error:", error);
+      console.error(
+        "Cart quantity error:",
+        error
+      );
 
       toast.error(
-        error?.response?.data?.message ||
-        "Unable to update cart."
+        error?.response
+          ?.data?.message ||
+          "Unable to update cart."
       );
     }
   };
 
-  const handleRemoveItem = async (item) => {
+  const handleRemoveItem = async (
+    item
+  ) => {
     const itemId =
       item?.id ??
       item?.cartItemId ??
@@ -403,249 +613,320 @@ export default function CartPage() {
     }
 
     try {
-      await dispatch(deleteCartItem(itemId));
-      await dispatch(fetchCartItems());
+      await dispatch(
+        deleteCartItem(itemId)
+      );
+      await dispatch(
+        fetchCartItems()
+      );
 
-      toast.success("Item removed from cart.");
+      toast.success(
+        "Item removed from cart."
+      );
+    } catch (error) {
+      console.error(
+        "Remove cart item:",
+        error
+      );
 
-      if (cart.length <= 1) {
+      toast.error(
+        error?.response
+          ?.data?.message ||
+          "Unable to remove item."
+      );
+    }
+  };
+
+
+  const handleClearCart =
+    async () => {
+      if (cart.length === 0) {
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to clear your entire cart?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        await dispatch(
+          clearCart()
+        );
+
+        await dispatch(
+          fetchCartItems()
+        );
+
         setAppliedCoupon(null);
         setCouponDiscount(0);
         setCouponCode("");
-      }
-    } catch (error) {
-      console.error("Remove cart item:", error);
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Unable to remove item."
-      );
-    }
-  };
+        toast.success(
+          "Cart cleared successfully."
+        );
+      } catch (error) {
+        console.error(
+          "Clear cart:",
+          error
+        );
 
-  const handleClearCart = async () => {
-    if (cart.length === 0) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Are you sure you want to clear your entire cart?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await dispatch(clearCart());
-      await dispatch(fetchCartItems());
-
-      setAppliedCoupon(null);
-      setCouponDiscount(0);
-      setCouponCode("");
-
-      toast.success("Cart cleared successfully.");
-    } catch (error) {
-      console.error("Clear cart:", error);
-
-      toast.error(
-        error?.response?.data?.message ||
-        "Unable to clear cart."
-      );
-    }
-  };
-
-  const handleApplyCoupon = async (coupon) => {
-    if (!coupon) {
-      setCouponError("Invalid coupon code.");
-      return;
-    }
-
-    if (couponLoading) {
-      return;
-    }
-
-    const subtotal = Number(cartTotal) || 0;
-
-    const minimumCartValue =
-      Number(coupon?.minCartValue) || 0;
-
-    if (
-      minimumCartValue > 0 &&
-      subtotal < minimumCartValue
-    ) {
-      const message = `Minimum cart value is ${formatPrice(
-        minimumCartValue
-      )}.`;
-
-      setCouponError(message);
-
-      toast.error(
-        `Add ${formatPrice(
-          minimumCartValue - subtotal
-        )} more to use ${coupon.code}.`
-      );
-
-      return;
-    }
-
-    try {
-      setCouponLoading(true);
-      setCouponError("");
-
-      const response = await appplyCouponApi(coupon.code);
-
-      const data = response?.data ?? response;
-
-      if (!data?.success) {
-        throw new Error(
-          data?.message ||
-          "Unable to apply coupon."
+        toast.error(
+          error?.response
+            ?.data?.message ||
+            "Unable to clear cart."
         );
       }
+    };
 
-      const serverCoupon =
-        data?.coupon ||
-        data?.appliedCoupon ||
-        coupon;
+  const handleApplyCoupon =
+    async (coupon) => {
+      if (!coupon) {
+        setCouponError(
+          "Invalid coupon code."
+        );
 
-      const serverDiscount = Number(
-        data?.discount ??
-        data?.discountAmount ??
-        data?.couponDiscount
-      );
+        return;
+      }
 
-      const discount =
-        Number.isFinite(serverDiscount) &&
-          serverDiscount > 0
-          ? serverDiscount
-          : calculateCouponDiscount(
-            serverCoupon,
-            subtotal
+      if (couponLoading) {
+        return;
+      }
+
+      try {
+        setCouponLoading(true);
+        setCouponError("");
+
+        const code =
+          coupon?.code ||
+          coupon?.couponCode;
+
+        if (!code) {
+          throw new Error(
+            "Coupon code is missing."
+          );
+        }
+
+        /*
+         * Send coupon code to backend.
+         */
+
+        const response =
+          await appplyCouponApi(
+            code
           );
 
-      if (discount <= 0) {
-        throw new Error(
-          data?.message ||
-          "This coupon cannot be applied."
-        );
-      }
+        const data =
+          response?.data ??
+          response;
 
-      setAppliedCoupon(serverCoupon);
-      setCouponDiscount(discount);
-
-      setCouponCode(
-        serverCoupon?.code ||
-        coupon.code
-      );
-
-      setCouponError("");
-
-      toast.success(
-        `Coupon ${serverCoupon?.code ||
-        coupon.code
-        } applied successfully.`,
-        {
-          description: `You saved ${formatPrice(
-            discount
-          )}.`,
+        if (!data?.success) {
+          throw new Error(
+            data?.message ||
+              "Unable to apply coupon."
+          );
         }
-      );
 
-      setShowCouponModal(false);
-    } catch (error) {
-      console.error(
-        "Apply coupon API error:",
-        error?.response?.data ||
-        error?.message
-      );
+        const serverCouponCode =
+          data?.couponCode ||
+          data?.coupon?.code ||
+          data?.appliedCoupon
+            ?.code ||
+          code;
 
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to apply coupon.";
+        const serverDiscount =
+          Number(
+            data?.discountAmount ??
+              data?.discount ??
+              data?.couponDiscount ??
+              0
+          );
+        const nextCoupon = {
+          ...coupon,
+          ...(data?.coupon ||
+            {}),
+          code:
+            serverCouponCode,
+          discountAmount:
+            serverDiscount,
+        };
 
-      setCouponError(message);
-      setAppliedCoupon(null);
-      setCouponDiscount(0);
+        setAppliedCoupon(
+          nextCoupon
+        );
 
-      toast.error(message);
-    } finally {
-      setCouponLoading(false);
-    }
-  };
+        setCouponCode(
+          serverCouponCode
+        );
 
-  const handleCouponSubmit = async (event) => {
-    event.preventDefault();
+        setCouponDiscount(
+          serverDiscount
+        );
 
-    const code = couponCode.trim().toUpperCase();
+        setCouponError("");
 
-    if (!code) {
-      setCouponError("Please enter a coupon code.");
-      return;
-    }
+        await dispatch(
+          fetchCartItems()
+        );
 
-    const coupon = coupons.find(
-      (item) =>
-        String(item?.code || "").toUpperCase() ===
-        code
-    );
+        toast.success(
+          `Coupon ${serverCouponCode} applied successfully.`,
+          {
+            description:
+              serverDiscount > 0
+                ? `You saved ${formatPrice(
+                    serverDiscount
+                  )}.`
+                : "Coupon applied successfully.",
+          }
+        );
 
-    if (!coupon) {
-      setCouponError("Invalid coupon code.");
-      toast.error("Coupon code not found.");
-      return;
-    }
+        setShowCouponModal(
+          false
+        );
+      } catch (error) {
+        console.error(
+          "Apply coupon API error:",
+          error?.response
+            ?.data ||
+            error?.message
+        );
 
-    await handleApplyCoupon(coupon);
-  };
+        const message =
+          error?.response
+            ?.data?.message ||
+          error?.message ||
+          "Unable to apply coupon.";
 
-  const handleRemoveCoupon = async () => {
-    if (!appliedCoupon) {
-      return;
-    }
+        setCouponError(
+          message
+        );
 
-    try {
-      setCouponLoading(true);
-
-      const response = await removeCouponApi({
-        couponId: appliedCoupon.id,
-        code: appliedCoupon.code,
-      });
-
-      const data = response?.data ?? response;
-
-      if (data?.success === false) {
-        throw new Error(
-          data?.message ||
-          "Unable to remove coupon."
+        toast.error(message);
+      } finally {
+        setCouponLoading(
+          false
         );
       }
+    };
 
-      setAppliedCoupon(null);
-      setCouponDiscount(0);
-      setCouponCode("");
-      setCouponError("");
+  const handleCouponSubmit =
+    async (event) => {
+      event.preventDefault();
 
-      toast.success("Coupon removed.");
-    } catch (error) {
-      console.error(
-        "Remove coupon API error:",
-        error?.response?.data ||
-        error?.message
+      const code =
+        couponCode
+          .trim()
+          .toUpperCase();
+
+      if (!code) {
+        setCouponError(
+          "Please enter a coupon code."
+        );
+
+        return;
+      }
+
+      const coupon =
+        coupons.find(
+          (item) =>
+            String(
+              item?.code || ""
+            ).toUpperCase() ===
+            code
+        );
+
+      if (!coupon) {
+        setCouponError(
+          "Invalid coupon code."
+        );
+
+        toast.error(
+          "Coupon code not found."
+        );
+
+        return;
+      }
+
+      await handleApplyCoupon(
+        coupon
       );
+    };
+  const handleRemoveCoupon =
+    async () => {
+      if (!appliedCoupon) {
+        return;
+      }
 
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to remove coupon."
-      );
-    } finally {
-      setCouponLoading(false);
-    }
-  };
+      try {
+        setCouponLoading(true);
 
-  if (loading && cart.length === 0) {
+        const response =
+          await removeCouponApi({
+            couponId:
+              appliedCoupon?.id,
+
+            code:
+              appliedCoupon?.code ||
+              couponCode,
+          });
+
+        const data =
+          response?.data ??
+          response;
+
+        if (
+          data?.success === false
+        ) {
+          throw new Error(
+            data?.message ||
+              "Unable to remove coupon."
+          );
+        }
+
+
+        await dispatch(
+          fetchCartItems()
+        );
+
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        setCouponCode("");
+        setCouponError("");
+
+        toast.success(
+          "Coupon removed."
+        );
+      } catch (error) {
+        console.error(
+          "Remove coupon API error:",
+          error?.response
+            ?.data ||
+            error?.message
+        );
+
+        toast.error(
+          error?.response
+            ?.data?.message ||
+            error?.message ||
+            "Unable to remove coupon."
+        );
+      } finally {
+        setCouponLoading(
+          false
+        );
+      }
+    };
+
+
+  if (
+    loading &&
+    cart.length === 0
+  ) {
     return <CartSkeleton />;
   }
 
@@ -682,7 +963,8 @@ export default function CartPage() {
 
           {error && (
             <p className="oxanium mt-4 text-sm text-primary">
-              {typeof error === "string"
+              {typeof error ===
+              "string"
                 ? error
                 : "Unable to load your cart."}
             </p>
@@ -693,6 +975,7 @@ export default function CartPage() {
             className="oxanium group mt-8 inline-flex h-13 items-center gap-3 rounded-xl bg-primary px-8 py-4 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary-hover"
           >
             Start shopping
+
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -703,10 +986,16 @@ export default function CartPage() {
   return (
     <main className="min-h-screen bg-background pb-28 text-text-primary lg:pb-10">
       <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
+
+        {/* ---------------------------------------------------------------
+            PAGE HEADER
+        ---------------------------------------------------------------- */}
+
         <div className="mb-6 flex flex-col gap-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-8 rounded-full bg-primary" />
+
               <p className="oxanium text-xs font-bold uppercase tracking-[0.22em] text-primary">
                 Shopping cart
               </p>
@@ -718,10 +1007,14 @@ export default function CartPage() {
 
             <p className="oxanium mt-2 text-sm text-text-muted">
               {cartCount}{" "}
-              {cartCount === 1 ? "product" : "products"}{" "}
+              {cartCount === 1
+                ? "product"
+                : "products"}{" "}
               ready for checkout
             </p>
           </div>
+
+          {/* Secure shopping badge */}
 
           <div className="hidden rounded-xl border border-border bg-card px-4 py-3 sm:block">
             <div className="flex items-center gap-3">
@@ -733,6 +1026,7 @@ export default function CartPage() {
                 <p className="text-xs font-bold">
                   Secure shopping
                 </p>
+
                 <p className="mt-0.5 text-[10px] text-text-muted">
                   Safe & protected checkout
                 </p>
@@ -741,29 +1035,59 @@ export default function CartPage() {
           </div>
         </div>
 
+        {/* ---------------------------------------------------------------
+            CART ACTION BAR
+        ---------------------------------------------------------------- */}
+
         <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-2.5 shadow-sm sm:p-3">
           <Link
             href="/products"
             className="oxanium group inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[11px] font-bold uppercase tracking-wide text-text-primary transition hover:bg-surface hover:text-primary sm:px-5 sm:text-xs"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            <span>Continue shopping</span>
+
+            <span>
+              Continue shopping
+            </span>
           </Link>
 
           <button
             type="button"
-            onClick={handleClearCart}
+            onClick={
+              handleClearCart
+            }
             className="oxanium inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[11px] font-bold uppercase tracking-wide text-red-500 transition hover:bg-red-500/10 sm:px-5 sm:text-xs"
           >
             <Trash2 className="h-4 w-4" />
-            <span>Clear cart</span>
+
+            <span>
+              Clear cart
+            </span>
           </button>
         </div>
 
+        {/* ---------------------------------------------------------------
+            CONTENT GRID
+        ---------------------------------------------------------------- */}
+
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start lg:gap-8">
+
+          {/* =============================================================
+              LEFT SIDE
+          ============================================================= */}
+
           <section className="min-w-0">
+
+            {/* -----------------------------------------------------------
+                CART ITEMS
+            ------------------------------------------------------------ */}
+
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+
+              {/* Desktop table heading */}
+
               <div className="hidden grid-cols-[minmax(300px,1fr)_120px_140px_120px_44px] items-center gap-4 border-b border-border bg-surface/70 px-6 py-4 md:grid">
+
                 <span className="oxanium text-[10px] font-bold uppercase tracking-[0.18em] text-text-muted">
                   Product
                 </span>
@@ -783,56 +1107,87 @@ export default function CartPage() {
                 <span />
               </div>
 
+              {/* Cart item list */}
+
               <div className="divide-y divide-border">
-                {cart.map((item, index) => (
-                  <CartItem
-                    key={
-                      item?.id ??
-                      item?.cartItemId ??
-                      item?._id ??
-                      index
-                    }
-                    item={item}
-                    formatPrice={formatPrice}
-                    onDecrease={() =>
-                      handleUpdateQuantity(
-                        item,
-                        Number(item?.quantity || 0) - 1
-                      )
-                    }
-                    onIncrease={() =>
-                      handleUpdateQuantity(
-                        item,
-                        Number(item?.quantity || 0) + 1
-                      )
-                    }
-                    onRemove={() =>
-                      handleRemoveItem(item)
-                    }
-                  />
-                ))}
+                {cart.map(
+                  (
+                    item,
+                    index
+                  ) => (
+                    <CartItem
+                      key={
+                        item?.id ??
+                        item?.cartItemId ??
+                        item?._id ??
+                        index
+                      }
+                      item={item}
+                      formatPrice={
+                        formatPrice
+                      }
+                      onDecrease={() =>
+                        handleUpdateQuantity(
+                          item,
+                          Number(
+                            item?.quantity ||
+                              0
+                          ) - 1
+                        )
+                      }
+                      onIncrease={() =>
+                        handleUpdateQuantity(
+                          item,
+                          Number(
+                            item?.quantity ||
+                              0
+                          ) + 1
+                        )
+                      }
+                      onRemove={() =>
+                        handleRemoveItem(
+                          item
+                        )
+                      }
+                    />
+                  )
+                )}
               </div>
             </div>
+
+            {/* -----------------------------------------------------------
+                TRUST ITEMS
+            ------------------------------------------------------------ */}
 
             <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <TrustItem
                 icon={Truck}
                 label="Free shipping"
               />
+
               <TrustItem
                 icon={RotateCcw}
                 label="Easy 7-day returns"
               />
+
               <TrustItem
                 icon={ShieldCheck}
                 label="Secure checkout"
               />
             </div>
 
+            {/* ===========================================================
+                COUPON SECTION
+            ============================================================ */}
+
             <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+
+              {/* Coupon header */}
+
               <div className="border-b border-border bg-gradient-to-r from-primary/10 via-transparent to-transparent p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
+
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
                       <Tag className="h-5 w-5" />
                     </div>
@@ -852,12 +1207,21 @@ export default function CartPage() {
                 </div>
               </div>
 
+              {/* Coupon body */}
+
               <div className="p-5 sm:p-6">
+
+                {/* =====================================================
+                    APPLIED COUPON
+                ====================================================== */}
+
                 {appliedCoupon ? (
                   <div className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.08] via-card to-card p-4 shadow-sm sm:p-5">
+
                     <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
 
                     <div className="relative flex items-center gap-3.5">
+
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
                         <Check
                           className="h-5 w-5"
@@ -866,9 +1230,12 @@ export default function CartPage() {
                       </div>
 
                       <div className="min-w-0 flex-1">
+
                         <div className="flex flex-wrap items-center gap-2">
+
                           <span className="oxanium text-sm font-black uppercase tracking-wide text-emerald-600">
-                            {appliedCoupon.code}
+                            {appliedCoupon?.code ||
+                              apiCouponCode}
                           </span>
 
                           <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-600">
@@ -876,25 +1243,35 @@ export default function CartPage() {
                           </span>
                         </div>
 
+                        {/* -------------------------------------------------
+                            IMPORTANT:
+                            Use discountAmount from backend.
+                        -------------------------------------------------- */}
+
                         <p className="oxanium mt-1 text-xs text-text-muted">
-                          {appliedCoupon.discountType === "PERCENTAGE"
-                            ? `${appliedCoupon.discountValue}% OFF`
-                            : `${formatPrice(appliedCoupon.discountValue)} OFF`}
+                          Coupon applied
                           {" · "}
                           You saved{" "}
                           <span className="font-bold text-emerald-600">
-                            {formatPrice(couponDiscount)}
+                            {formatPrice(
+                              finalCouponDiscount
+                            )}
                           </span>
                         </p>
                       </div>
 
                       <button
                         type="button"
-                        onClick={handleRemoveCoupon}
-                        disabled={couponLoading}
+                        onClick={
+                          handleRemoveCoupon
+                        }
+                        disabled={
+                          couponLoading
+                        }
                         className="group flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-bold uppercase tracking-wide text-red-500 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <X className="h-3.5 w-3.5 transition-transform group-hover:rotate-90" />
+
                         <span className="hidden sm:inline">
                           Remove
                         </span>
@@ -903,6 +1280,7 @@ export default function CartPage() {
 
                     <div className="relative mt-4 border-t border-dashed border-emerald-500/20 pt-3">
                       <div className="flex items-center justify-between gap-3">
+
                         <div className="flex items-center gap-2">
                           <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
 
@@ -912,28 +1290,45 @@ export default function CartPage() {
                         </div>
 
                         <span className="oxanium whitespace-nowrap text-xs font-black text-emerald-600">
-                          - {formatPrice(couponDiscount)}
+                          -{" "}
+                          {formatPrice(
+                            finalCouponDiscount
+                          )}
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <>
+                    {/* =================================================
+                        COUPON FORM
+                    ================================================== */}
+
                     <form
-                      onSubmit={handleCouponSubmit}
+                      onSubmit={
+                        handleCouponSubmit
+                      }
                       className="flex flex-col gap-2 sm:flex-row"
                     >
                       <div className="flex h-13 min-w-0 flex-1 items-center rounded-xl border border-border bg-background px-4 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
+
                         <Tag className="mr-3 h-4 w-4 shrink-0 text-text-muted" />
 
                         <input
                           type="text"
-                          value={couponCode}
-                          onChange={(event) => {
+                          value={
+                            couponCode
+                          }
+                          onChange={(
+                            event
+                          ) => {
                             setCouponCode(
                               event.target.value.toUpperCase()
                             );
-                            setCouponError("");
+
+                            setCouponError(
+                              ""
+                            );
                           }}
                           placeholder="ENTER COUPON CODE"
                           className="oxanium w-full bg-transparent text-xs font-medium tracking-wide text-text-primary outline-none placeholder:text-text-muted"
@@ -954,6 +1349,8 @@ export default function CartPage() {
                       </button>
                     </form>
 
+                    {/* Coupon error */}
+
                     {couponError && (
                       <div className="mt-3 rounded-lg bg-red-500/10 px-3 py-2">
                         <p className="oxanium text-xs font-medium text-red-500">
@@ -962,25 +1359,33 @@ export default function CartPage() {
                       </div>
                     )}
 
+                    {/* Available coupons button */}
+
                     <button
                       type="button"
                       onClick={() =>
-                        setShowCouponModal(true)
+                        setShowCouponModal(
+                          true
+                        )
                       }
                       className="group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3.5 text-left transition hover:border-primary hover:bg-primary/10"
                     >
                       <span className="flex items-center gap-2.5">
+
                         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                           <Tag className="h-4 w-4 text-primary" />
                         </span>
 
                         <span>
                           <span className="oxanium block text-xs font-bold text-primary">
-                            {coupons.length > 0
-                              ? `View ${coupons.length} available offer${coupons.length === 1
-                                ? ""
-                                : "s"
-                              }`
+                            {coupons.length >
+                            0
+                              ? `View ${coupons.length} available offer${
+                                  coupons.length ===
+                                  1
+                                    ? ""
+                                    : "s"
+                                }`
                               : "View available offers"}
                           </span>
 
@@ -998,29 +1403,69 @@ export default function CartPage() {
             </div>
           </section>
 
+          {/* =============================================================
+              DESKTOP ORDER SUMMARY
+          ============================================================= */}
+
           <aside className="hidden lg:sticky lg:top-24 lg:block">
             <OrderSummary
-              cartCount={cartCount}
-              cartTotal={cartTotal}
-              mrpSavings={mrpSavings}
-              appliedCoupon={appliedCoupon}
-              couponDiscount={couponDiscount}
-              totalSavings={totalSavings}
-              finalTotal={finalTotal}
-              formatPrice={formatPrice}
+              cartCount={
+                cartCount
+              }
+              cartTotal={
+                cartTotal
+              }
+              mrpSavings={
+                mrpSavings
+              }
+              appliedCoupon={
+                appliedCoupon
+              }
+              couponDiscount={
+                finalCouponDiscount
+              }
+              totalSavings={
+                totalSavings
+              }
+              finalTotal={
+                finalTotal
+              }
+              formatPrice={
+                formatPrice
+              }
             />
           </aside>
 
+          {/* =============================================================
+              MOBILE ORDER SUMMARY
+          ============================================================= */}
+
           <div className="lg:hidden">
             <OrderSummary
-              cartCount={cartCount}
-              cartTotal={cartTotal}
-              mrpSavings={mrpSavings}
-              appliedCoupon={appliedCoupon}
-              couponDiscount={couponDiscount}
-              totalSavings={totalSavings}
-              finalTotal={finalTotal}
-              formatPrice={formatPrice}
+              cartCount={
+                cartCount
+              }
+              cartTotal={
+                cartTotal
+              }
+              mrpSavings={
+                mrpSavings
+              }
+              appliedCoupon={
+                appliedCoupon
+              }
+              couponDiscount={
+                finalCouponDiscount
+              }
+              totalSavings={
+                totalSavings
+              }
+              finalTotal={
+                finalTotal
+              }
+              formatPrice={
+                formatPrice
+              }
               hideCheckoutButton
             />
           </div>
@@ -1029,13 +1474,16 @@ export default function CartPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-4 py-3 shadow-2xl backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4">
+
           <div className="min-w-0">
             <p className="oxanium text-[9px] font-bold uppercase tracking-[0.18em] text-text-muted">
               Total
             </p>
 
             <p className="oxanium mt-0.5 truncate text-lg font-bold text-text-primary">
-              {formatPrice(finalTotal)}
+              {formatPrice(
+                finalTotal
+              )}
             </p>
           </div>
 
@@ -1044,30 +1492,56 @@ export default function CartPage() {
             className="oxanium group flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
           >
             Checkout
+
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
 
+
+
       <CouponModal
-        open={showCouponModal}
-        onClose={() => setShowCouponModal(false)}
+        open={
+          showCouponModal
+        }
+        onClose={() =>
+          setShowCouponModal(
+            false
+          )
+        }
         coupons={coupons}
-        couponLoading={couponLoading}
-        cartTotal={cartTotal}
-        formatPrice={formatPrice}
-        getCouponDescription={getCouponDescription}
-        onApply={handleApplyCoupon}
+        couponLoading={
+          couponLoading
+        }
+        cartTotal={
+          cartTotal
+        }
+        formatPrice={
+          formatPrice
+        }
+        getCouponDescription={
+          getCouponDescription
+        }
+        onApply={
+          handleApplyCoupon
+        }
       />
     </main>
   );
 }
 
-function TrustItem({ icon: Icon, label }) {
+function TrustItem({
+  icon: Icon,
+  label,
+}) {
   return (
     <div className="flex min-w-0 flex-col items-center justify-center gap-2 border-r border-border px-2 py-4 text-center last:border-r-0 sm:flex-row sm:py-5">
+
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" strokeWidth={1.75} />
+        <Icon
+          className="h-4 w-4"
+          strokeWidth={1.75}
+        />
       </div>
 
       <p className="oxanium text-[9px] font-bold uppercase leading-tight tracking-wide text-text-muted sm:text-[10px]">
@@ -1076,6 +1550,7 @@ function TrustItem({ icon: Icon, label }) {
     </div>
   );
 }
+
 
 function OrderSummary({
   cartCount,
@@ -1090,8 +1565,10 @@ function OrderSummary({
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+
       <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5 sm:p-6">
         <div className="flex items-center justify-between">
+
           <div>
             <p className="oxanium text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               Checkout
@@ -1109,8 +1586,12 @@ function OrderSummary({
       </div>
 
       <div className="p-5 sm:p-6">
+
+        {/* Savings message */}
+
         {totalSavings > 0 && (
           <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
@@ -1118,7 +1599,9 @@ function OrderSummary({
             <p className="oxanium text-[11px] font-semibold leading-5 text-primary">
               You're saving{" "}
               <strong>
-                {formatPrice(totalSavings)}
+                {formatPrice(
+                  totalSavings
+                )}
               </strong>{" "}
               on this order
             </p>
@@ -1128,12 +1611,18 @@ function OrderSummary({
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <span className="oxanium text-xs text-text-muted">
-              Subtotal ({cartCount}{" "}
-              {cartCount === 1 ? "item" : "items"})
+              Subtotal (
+              {cartCount}{" "}
+              {cartCount === 1
+                ? "item"
+                : "items"}
+              )
             </span>
 
             <span className="oxanium text-sm font-bold">
-              {formatPrice(cartTotal)}
+              {formatPrice(
+                cartTotal
+              )}
             </span>
           </div>
 
@@ -1144,24 +1633,36 @@ function OrderSummary({
               </span>
 
               <span className="oxanium text-xs font-bold text-green-600">
-                - {formatPrice(mrpSavings)}
+                -{" "}
+                {formatPrice(
+                  mrpSavings
+                )}
               </span>
             </div>
           )}
 
-          {appliedCoupon && couponDiscount > 0 && (
-            <div className="flex items-center justify-between gap-4">
-              <span className="oxanium text-xs text-green-600">
-                Coupon ({appliedCoupon.code})
-              </span>
+          {appliedCoupon &&
+            couponDiscount >
+              0 && (
+              <div className="flex items-center justify-between gap-4">
 
-              <span className="oxanium text-xs font-bold text-green-600">
-                - {formatPrice(couponDiscount)}
-              </span>
-            </div>
-          )}
+                <span className="oxanium text-xs text-green-600">
+                  Coupon (
+                  {appliedCoupon?.code}
+                  )
+                </span>
+
+                <span className="oxanium text-xs font-bold text-green-600">
+                  -{" "}
+                  {formatPrice(
+                    couponDiscount
+                  )}
+                </span>
+              </div>
+            )}
 
           <div className="flex items-center justify-between gap-4">
+
             <span className="oxanium text-xs text-text-muted">
               Shipping
             </span>
@@ -1175,6 +1676,7 @@ function OrderSummary({
         <div className="my-6 border-t border-dashed border-border" />
 
         <div className="flex items-center justify-between gap-4">
+
           <div>
             <p className="oxanium text-xs font-bold text-text-primary">
               Have a coupon?
@@ -1190,8 +1692,11 @@ function OrderSummary({
 
         <div className="my-6 border-t border-border" />
 
+
         <div className="rounded-xl bg-surface/70 p-4">
+
           <div className="flex items-end justify-between gap-4">
+
             <div>
               <p className="oxanium text-[10px] font-bold uppercase tracking-wider text-text-muted">
                 Total payable
@@ -1202,8 +1707,11 @@ function OrderSummary({
               </p>
             </div>
 
+
             <span className="oxanium text-2xl font-black text-text-primary sm:text-3xl">
-              {formatPrice(finalTotal)}
+              {formatPrice(
+                finalTotal
+              )}
             </span>
           </div>
         </div>
@@ -1214,11 +1722,13 @@ function OrderSummary({
             className="oxanium group mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold uppercase tracking-[0.08em] text-white shadow-xl shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary-hover"
           >
             Proceed to checkout
+
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         )}
 
         <div className="mt-5 flex items-center justify-center gap-2 text-text-muted">
+
           <BadgeCheck className="h-3.5 w-3.5 text-green-500" />
 
           <p className="oxanium text-[10px]">
@@ -1230,6 +1740,8 @@ function OrderSummary({
   );
 }
 
+
+
 function CouponModal({
   open,
   onClose,
@@ -1240,28 +1752,45 @@ function CouponModal({
   getCouponDescription,
   onApply,
 }) {
+
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
+    const onKeyDown = (
+      event
+    ) => {
+      if (
+        event.key ===
+        "Escape"
+      ) {
         onClose();
       }
     };
 
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
+
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
       document.removeEventListener(
         "keydown",
         onKeyDown
       );
-      document.body.style.overflow = "";
+
+      document.body.style.overflow =
+        "";
     };
-  }, [open, onClose]);
+  }, [
+    open,
+    onClose,
+  ]);
 
   if (!open) {
     return null;
@@ -1273,11 +1802,16 @@ function CouponModal({
       onClick={onClose}
     >
       <div
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
         className="oxanium flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:max-h-[82vh] sm:max-w-lg sm:rounded-3xl"
       >
+
         <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-primary/10 to-transparent px-5 py-4 sm:px-6">
+
           <div className="flex items-center gap-3">
+
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white">
               <Tag className="h-4 w-4" />
             </div>
@@ -1287,7 +1821,7 @@ function CouponModal({
                 Exclusive savings
               </p>
 
-              <h3 className="bebas mt-0.5 text-2xl uppercase tracking-wide">
+              <h3 className="bebas mt-0.5 text-xl uppercase tracking-wide">
                 Available offers
               </h3>
             </div>
@@ -1304,115 +1838,156 @@ function CouponModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 sm:p-6">
-          {couponLoading && coupons.length === 0 && (
-            <div className="space-y-3">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="animate-pulse rounded-2xl border border-border p-4"
-                >
-                  <div className="h-6 w-24 rounded bg-surface" />
-                  <div className="mt-3 h-4 w-32 rounded bg-surface" />
-                  <div className="mt-2 h-3 w-48 rounded bg-surface" />
-                </div>
-              ))}
-            </div>
-          )}
 
-          {!couponLoading && coupons.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border px-5 py-10 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface">
-                <Tag className="h-6 w-6 text-text-muted" />
+          {couponLoading &&
+            coupons.length ===
+              0 && (
+              <div className="space-y-3">
+                {[1, 2, 3].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="animate-pulse rounded-2xl border border-border p-4"
+                    >
+                      <div className="h-6 w-24 rounded bg-surface" />
+
+                      <div className="mt-3 h-4 w-32 rounded bg-surface" />
+
+                      <div className="mt-2 h-3 w-48 rounded bg-surface" />
+                    </div>
+                  )
+                )}
               </div>
+            )}
 
-              <p className="mt-4 text-sm font-semibold">
-                No offers available
-              </p>
+          {!couponLoading &&
+            coupons.length ===
+              0 && (
+              <div className="rounded-2xl border border-dashed border-border px-5 py-10 text-center">
 
-              <p className="mt-1 text-xs text-text-muted">
-                Check back later for new deals.
-              </p>
-            </div>
-          )}
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+                  <Tag className="h-6 w-6 text-text-muted" />
+                </div>
+
+                <p className="mt-4 text-sm font-semibold">
+                  No offers available
+                </p>
+
+                <p className="mt-1 text-xs text-text-muted">
+                  Check back later for new deals.
+                </p>
+              </div>
+            )}
 
           <div className="space-y-3">
-            {coupons.map((coupon) => {
-              const minimumCartValue =
-                Number(coupon?.minCartValue) || 0;
 
-              const eligible =
-                cartTotal >= minimumCartValue;
+            {coupons.map(
+              (coupon) => {
+                const minimumCartValue =
+                  Number(
+                    coupon?.minCartValue
+                  ) || 0;
 
-              return (
-                <div
-                  key={coupon?.id}
-                  className={`group relative overflow-hidden rounded-2xl border p-4 transition ${eligible
-                      ? "border-border bg-background hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
-                      : "border-border bg-surface/40 opacity-60"
+                const eligible =
+                  cartTotal >=
+                  minimumCartValue;
+
+                return (
+                  <div
+                    key={
+                      coupon?.id
+                    }
+                    className={`group relative overflow-hidden rounded-2xl border p-4 transition ${
+                      eligible
+                        ? "border-border bg-background hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
+                        : "border-border bg-surface/40 opacity-60"
                     }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-primary">
-                          {coupon?.code}
-                        </span>
+                  >
 
-                        {eligible && (
-                          <span className="flex items-center gap-1 text-[9px] font-bold uppercase text-green-600">
-                            <Check className="h-3 w-3" />
-                            Eligible
+                    <div className="flex items-start justify-between gap-4">
+
+                      <div className="min-w-0">
+
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <span className="rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-primary">
+                            {coupon?.code}
                           </span>
+
+                          {eligible && (
+                            <span className="flex items-center gap-1 text-[9px] font-bold uppercase text-green-600">
+                              <Check className="h-3 w-3" />
+
+                              Eligible
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-3 text-sm font-bold text-text-primary">
+                          {getCouponDescription(
+                            coupon
+                          )}
+                        </p>
+
+                        {minimumCartValue >
+                        0 ? (
+                          <p className="mt-1 text-[10px] text-text-muted">
+                            Minimum order{" "}
+                            {formatPrice(
+                              minimumCartValue
+                            )}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-[10px] font-semibold text-green-600">
+                            No minimum order
+                          </p>
                         )}
                       </div>
 
-                      <p className="mt-3 text-sm font-bold text-text-primary">
-                        {getCouponDescription(coupon)}
-                      </p>
-
-                      {minimumCartValue > 0 ? (
-                        <p className="mt-1 text-[10px] text-text-muted">
-                          Minimum order{" "}
-                          {formatPrice(minimumCartValue)}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-[10px] font-semibold text-green-600">
-                          No minimum order
-                        </p>
-                      )}
+                      <button
+                        type="button"
+                        disabled={
+                          !eligible ||
+                          couponLoading
+                        }
+                        onClick={() =>
+                          onApply(
+                            coupon
+                          )
+                        }
+                        className="shrink-0 rounded-xl bg-primary px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface disabled:text-text-muted"
+                      >
+                        {eligible
+                          ? "Apply"
+                          : "Locked"}
+                      </button>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={!eligible || couponLoading}
-                      onClick={() => onApply(coupon)}
-                      className="shrink-0 rounded-xl bg-primary px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface disabled:text-text-muted"
-                    >
-                      {eligible ? "Apply" : "Locked"}
-                    </button>
+                    {!eligible &&
+                      minimumCartValue >
+                        cartTotal && (
+                        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/5 px-3 py-2">
+                          <span className="text-[10px] text-red-500">
+                            Add{" "}
+                            {formatPrice(
+                              minimumCartValue -
+                                cartTotal
+                            )}{" "}
+                            more to unlock
+                          </span>
+                        </div>
+                      )}
                   </div>
-
-                  {!eligible &&
-                    minimumCartValue > cartTotal && (
-                      <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/5 px-3 py-2">
-                        <span className="text-[10px] text-red-500">
-                          Add{" "}
-                          {formatPrice(
-                            minimumCartValue - cartTotal
-                          )}{" "}
-                          more to unlock
-                        </span>
-                      </div>
-                    )}
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 function CartItem({
   item,
@@ -1421,8 +1996,14 @@ function CartItem({
   onIncrease,
   onRemove,
 }) {
-  const product = item?.product ?? {};
-  const variant = item?.variant ?? {};
+  const product =
+    item?.product ??
+    {};
+
+  const variant =
+    item?.variant ??
+    {};
+
 
   const name =
     product?.name ??
@@ -1431,40 +2012,68 @@ function CartItem({
     item?.title ??
     "Product";
 
+
   const slug =
     product?.slug ??
     item?.slug ??
     "";
 
-  const image = getItemImage(item);
-  const price = getItemPrice(item);
-  const originalPrice = getItemOriginalPrice(item);
+  const image =
+    getItemImage(item);
+
+
+  const price =
+    getItemPrice(item);
+
+
+  const originalPrice =
+    getItemOriginalPrice(
+      item
+    );
+
 
   const discountPercent =
     originalPrice > price
       ? Math.round(
-        ((originalPrice - price) /
-          originalPrice) *
-        100
-      )
+          ((originalPrice -
+            price) /
+            originalPrice) *
+            100
+        )
       : 0;
 
-  const quantity =
-    Number(item?.quantity) || 0;
 
-  const subtotal = price * quantity;
+
+  const quantity =
+    Number(
+      item?.quantity
+    ) || 0;
+
+
+  const subtotal =
+    price * quantity;
 
   const productHref = slug
-    ? `/product/${encodeURIComponent(slug)}`
+    ? `/product/${encodeURIComponent(
+        slug
+      )}`
     : "/products";
 
-  const variantDetails = getVariantDetails(item);
+
+  const variantDetails =
+    getVariantDetails(
+      item
+    );
+
+  /*
+   * Stock information.
+   */
 
   const stockQuantity =
     Number(
       variant?.stockQuantity ??
-      item?.stockQuantity ??
-      0
+        item?.stockQuantity ??
+        0
     );
 
   const stockStatus =
@@ -1472,9 +2081,11 @@ function CartItem({
     variant?.stockStatus ??
     null;
 
-  const inStock = stockStatus
-    ? stockStatus === "in_stock"
-    : stockQuantity > 0;
+  const inStock =
+    stockStatus
+      ? stockStatus ===
+        "in_stock"
+      : stockQuantity > 0;
 
   const lowStock =
     inStock &&
@@ -1483,10 +2094,21 @@ function CartItem({
 
   return (
     <div className="group p-4 transition-colors hover:bg-surface/20 sm:p-6">
+
+      {/* ===============================================================
+          DESKTOP ITEM
+      ================================================================ */}
+
       <div className="hidden grid-cols-[minmax(300px,1fr)_120px_140px_120px_44px] items-center gap-4 md:grid">
+
+        {/* Product */}
+
         <div className="flex min-w-0 items-center gap-4">
+
           <Link
-            href={productHref}
+            href={
+              productHref
+            }
             className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-white transition group-hover:border-primary/30"
           >
             {image ? (
@@ -1503,7 +2125,8 @@ function CartItem({
               </div>
             )}
 
-            {discountPercent > 0 && (
+            {discountPercent >
+              0 && (
               <span className="oxanium absolute left-1.5 top-1.5 rounded-md bg-primary px-1.5 py-1 text-[8px] font-black text-white shadow-md">
                 -{discountPercent}%
               </span>
@@ -1511,22 +2134,35 @@ function CartItem({
           </Link>
 
           <div className="min-w-0">
+
             <Link
-              href={productHref}
+              href={
+                productHref
+              }
               className="oxanium line-clamp-2 text-sm font-bold leading-5 text-text-primary transition hover:text-primary"
             >
               {name}
             </Link>
 
-            {variantDetails.length > 0 && (
+            {/* Variant details */}
+
+            {variantDetails.length >
+              0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {variantDetails.map(
-                  (detail, index) => (
+                  (
+                    detail,
+                    index
+                  ) => (
                     <span
                       key={`${detail.name}-${detail.value}-${index}`}
                       className="oxanium rounded-md border border-border bg-surface px-2 py-1 text-[9px] font-medium text-text-secondary"
                     >
-                      {detail.name}: {detail.value}
+                      {detail.name}:{" "}
+                      {
+                        detail.value
+                      }
+
                       {detail.unit
                         ? ` ${detail.unit}`
                         : ""}
@@ -1536,51 +2172,81 @@ function CartItem({
               </div>
             )}
 
+            {/* Stock */}
+
             {stockStatus && (
               <span
-                className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${!inStock
+                className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
+                  !inStock
                     ? "bg-red-500/10 text-red-600"
                     : lowStock
-                      ? "bg-amber-500/10 text-amber-600"
-                      : "bg-green-500/10 text-green-600"
-                  }`}
+                    ? "bg-amber-500/10 text-amber-600"
+                    : "bg-green-500/10 text-green-600"
+                }`}
               >
                 {!inStock
                   ? "Out of stock"
                   : lowStock
-                    ? `Only ${stockQuantity} left`
-                    : "In stock"}
+                  ? `Only ${stockQuantity} left`
+                  : "In stock"}
               </span>
             )}
           </div>
         </div>
 
+        {/* Price */}
+
         <div className="text-center">
+
           <div className="oxanium text-sm font-bold text-text-primary">
-            {formatPrice(price)}
+            {formatPrice(
+              price
+            )}
           </div>
 
-          {originalPrice > price && (
+          {originalPrice >
+            price && (
             <div className="oxanium mt-1 text-[10px] text-text-muted line-through">
-              {formatPrice(originalPrice)}
+              {formatPrice(
+                originalPrice
+              )}
             </div>
           )}
         </div>
 
+        {/* Quantity */}
+
         <QuantityControl
-          quantity={quantity}
-          onDecrease={onDecrease}
-          onIncrease={onIncrease}
-          max={stockQuantity || undefined}
+          quantity={
+            quantity
+          }
+          onDecrease={
+            onDecrease
+          }
+          onIncrease={
+            onIncrease
+          }
+          max={
+            stockQuantity ||
+            undefined
+          }
         />
 
+        {/* Subtotal */}
+
         <span className="oxanium text-right text-sm font-black">
-          {formatPrice(subtotal)}
+          {formatPrice(
+            subtotal
+          )}
         </span>
+
+        {/* Remove */}
 
         <button
           type="button"
-          onClick={onRemove}
+          onClick={
+            onRemove
+          }
           className="flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition hover:bg-red-500/10 hover:text-red-500"
           aria-label={`Remove ${name}`}
         >
@@ -1588,9 +2254,16 @@ function CartItem({
         </button>
       </div>
 
+      {/* ===============================================================
+          MOBILE ITEM
+      ================================================================ */}
+
       <div className="flex gap-3 md:hidden">
+
         <Link
-          href={productHref}
+          href={
+            productHref
+          }
           className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-white"
         >
           {image ? (
@@ -1607,7 +2280,8 @@ function CartItem({
             </div>
           )}
 
-          {discountPercent > 0 && (
+          {discountPercent >
+            0 && (
             <span className="oxanium absolute left-1 top-1 rounded-md bg-primary px-1.5 py-0.5 text-[8px] font-black text-white">
               -{discountPercent}%
             </span>
@@ -1615,9 +2289,13 @@ function CartItem({
         </Link>
 
         <div className="min-w-0 flex-1">
+
           <div className="flex items-start justify-between gap-2">
+
             <Link
-              href={productHref}
+              href={
+                productHref
+              }
               className="oxanium line-clamp-2 pr-1 text-xs font-bold leading-5 text-text-primary"
             >
               {name}
@@ -1625,7 +2303,9 @@ function CartItem({
 
             <button
               type="button"
-              onClick={onRemove}
+              onClick={
+                onRemove
+              }
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-red-500/10 hover:text-red-500"
               aria-label={`Remove ${name}`}
             >
@@ -1633,15 +2313,25 @@ function CartItem({
             </button>
           </div>
 
-          {variantDetails.length > 0 && (
+          {/* Variant */}
+
+          {variantDetails.length >
+            0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {variantDetails.map(
-                (detail, index) => (
+                (
+                  detail,
+                  index
+                ) => (
                   <span
                     key={`${detail.name}-${detail.value}-${index}`}
                     className="oxanium rounded-md bg-surface px-1.5 py-1 text-[9px] text-text-secondary"
                   >
-                    {detail.name}: {detail.value}
+                    {detail.name}:{" "}
+                    {
+                      detail.value
+                    }
+
                     {detail.unit
                       ? ` ${detail.unit}`
                       : ""}
@@ -1651,45 +2341,70 @@ function CartItem({
             </div>
           )}
 
+          {/* Price */}
+
           <div className="mt-2 flex items-center gap-2">
+
             <span className="oxanium text-sm font-black text-text-primary">
-              {formatPrice(price)}
+              {formatPrice(
+                price
+              )}
             </span>
 
-            {originalPrice > price && (
+            {originalPrice >
+              price && (
               <span className="oxanium text-[10px] text-text-muted line-through">
-                {formatPrice(originalPrice)}
+                {formatPrice(
+                  originalPrice
+                )}
               </span>
             )}
           </div>
 
+          {/* Stock */}
+
           {stockStatus && (
             <span
-              className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${!inStock
+              className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
+                !inStock
                   ? "bg-red-500/10 text-red-600"
                   : lowStock
-                    ? "bg-amber-500/10 text-amber-600"
-                    : "bg-green-500/10 text-green-600"
-                }`}
+                  ? "bg-amber-500/10 text-amber-600"
+                  : "bg-green-500/10 text-green-600"
+              }`}
             >
               {!inStock
                 ? "Out of stock"
                 : lowStock
-                  ? `Only ${stockQuantity} left`
-                  : "In stock"}
+                ? `Only ${stockQuantity} left`
+                : "In stock"}
             </span>
           )}
 
+          {/* Quantity + subtotal */}
+
           <div className="mt-3 flex items-center justify-between gap-3">
+
             <QuantityControl
-              quantity={quantity}
-              onDecrease={onDecrease}
-              onIncrease={onIncrease}
-              max={stockQuantity || undefined}
+              quantity={
+                quantity
+              }
+              onDecrease={
+                onDecrease
+              }
+              onIncrease={
+                onIncrease
+              }
+              max={
+                stockQuantity ||
+                undefined
+              }
             />
 
             <span className="oxanium text-sm font-black text-text-primary">
-              {formatPrice(subtotal)}
+              {formatPrice(
+                subtotal
+              )}
             </span>
           </div>
         </div>
@@ -1698,36 +2413,58 @@ function CartItem({
   );
 }
 
+/* ==========================================================================
+   QUANTITY CONTROL
+   ========================================================================== */
+
 function QuantityControl({
   quantity,
   onDecrease,
   onIncrease,
   max,
 }) {
+  /*
+   * Disable + button when stock limit is reached.
+   */
+
   const atMax =
-    typeof max === "number" &&
+    typeof max ===
+      "number" &&
     max > 0 &&
     quantity >= max;
 
   return (
     <div className="flex h-9 w-fit items-center overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+
+      {/* Decrease */}
+
       <button
         type="button"
-        onClick={onDecrease}
+        onClick={
+          onDecrease
+        }
         className="flex h-full w-9 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary"
         aria-label="Decrease quantity"
       >
         <Minus className="h-3.5 w-3.5" />
       </button>
 
+      {/* Current quantity */}
+
       <span className="oxanium flex h-full min-w-9 items-center justify-center border-x border-border px-2 text-xs font-bold tabular-nums">
         {quantity}
       </span>
 
+      {/* Increase */}
+
       <button
         type="button"
-        onClick={onIncrease}
-        disabled={atMax}
+        onClick={
+          onIncrease
+        }
+        disabled={
+          atMax
+        }
         className="flex h-full w-9 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Increase quantity"
       >
@@ -1737,11 +2474,20 @@ function QuantityControl({
   );
 }
 
+/* ==========================================================================
+   CART SKELETON
+   ========================================================================== */
+
 function CartSkeleton() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
+
       <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
+
+        {/* Header skeleton */}
+
         <div className="animate-pulse">
+
           <div className="h-3 w-28 rounded bg-surface" />
 
           <div className="mt-3 h-12 w-52 rounded bg-surface sm:h-16 sm:w-64" />
@@ -1749,30 +2495,47 @@ function CartSkeleton() {
           <div className="mt-3 h-4 w-48 rounded bg-surface" />
         </div>
 
-        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <div className="animate-pulse space-y-5">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="flex gap-4 border-b border-border pb-5 last:border-0"
-                >
-                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-surface" />
+        {/* Content skeleton */}
 
-                  <div className="min-w-0 flex-1 space-y-3">
-                    <div className="h-4 w-3/4 rounded bg-surface" />
-                    <div className="h-3 w-1/2 rounded bg-surface" />
-                    <div className="h-9 w-28 rounded bg-surface" />
+        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
+
+          {/* Items */}
+
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+
+            <div className="animate-pulse space-y-5">
+
+              {[1, 2, 3].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="flex gap-4 border-b border-border pb-5 last:border-0"
+                  >
+
+                    <div className="h-24 w-24 shrink-0 rounded-2xl bg-surface" />
+
+                    <div className="min-w-0 flex-1 space-y-3">
+
+                      <div className="h-4 w-3/4 rounded bg-surface" />
+
+                      <div className="h-3 w-1/2 rounded bg-surface" />
+
+                      <div className="h-9 w-28 rounded bg-surface" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
 
+          {/* Summary */}
+
           <div className="animate-pulse rounded-2xl border border-border bg-card p-6 shadow-sm">
+
             <div className="h-7 w-40 rounded bg-surface" />
 
             <div className="mt-7 space-y-4">
+
               <div className="flex justify-between">
                 <div className="h-4 w-20 rounded bg-surface" />
                 <div className="h-4 w-24 rounded bg-surface" />

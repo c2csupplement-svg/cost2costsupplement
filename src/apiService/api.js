@@ -377,3 +377,27 @@ export const homePageSeo = async () => {
         throw err;
     }
 }
+
+export const getProductFilter = async (filter) => {
+
+    try{
+        const response = await axios.get(`${API_BASE_URL}/products/filter`,
+           filter
+        );
+
+
+        return response.data;
+    }
+    catch(err){
+        if (err.response) {
+            console.error("Server Error:", err.response.status);
+            console.error("Response:", err.response.data);
+        } else if (err.request) {
+            console.error("No response received from server.");
+        } else {
+            console.error("Request Error:", err.message);
+        }
+
+        throw err;
+    }
+}

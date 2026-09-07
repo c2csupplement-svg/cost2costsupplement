@@ -1189,6 +1189,8 @@ export default function ProductPage() {
   const categorySlug =
     createSlug(product.category);
 
+  const brandsSlug = createSlug(product.brand)
+
   const seoData = product?.seo || {};
 
   const seoTitle =
@@ -1977,7 +1979,7 @@ export default function ProductPage() {
                 <div className="mt-7 rounded-xl border border-[#E5E5E5] bg-white p-5">
                   <div className="space-y-3 text-sm">
                     <div className="flex gap-3">
-                      <span className="w-24 shrink-0 text-[#737373]">
+                      <span className="w-24 shrink-0 text-[#000000]">
                         SKU
                       </span>
 
@@ -1988,7 +1990,7 @@ export default function ProductPage() {
                     </div>
 
                     <div className="flex gap-3">
-                      <span className="w-24 shrink-0 text-[#737373]">
+                      <span className="w-24 shrink-0 text-[#000000]">
                         Category
                       </span>
 
@@ -2001,13 +2003,16 @@ export default function ProductPage() {
                     </div>
 
                     <div className="flex gap-3">
-                      <span className="w-24 shrink-0 text-[#737373]">
+                      <span className="w-24 shrink-0 text-[#000000]">
                         Brand
                       </span>
 
-                      <span className="text-[#525252]">
-                        {product.brand}
-                      </span>
+                      <Link
+                        href={`/brands/${brandsSlug}`}
+                        className="text-[#525252] transition hover:text-[#E52323]"
+                      >
+                       {product.brand}
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -2023,114 +2028,41 @@ export default function ProductPage() {
             />
 
 
-            <div className="max-w-5xl mt-8 space-y-4">
-              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition hover:bg-surface sm:px-7"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                      <span className="text-lg font-black">!</span>
-                    </div>
+          
+<div className="mt-8 max-w-5xl">
+  <div className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6">
+    <div className="flex items-start gap-3">
+      {/* <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        >
+          <path
+            d="M10.3 3.6 2.4 17.2A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path d="M12 9v4" strokeLinecap="round" />
+          <path d="M12 17h.01" strokeLinecap="round" />
+        </svg>
+      </div> */}
 
-                    <div>
-                      <h3 className="bebas text-2xl tracking-wide text-text-primary sm:text-3xl">
-                        WARNINGS
-                      </h3>
+      <div>
+        <p className="w-full">
+          <span className="text-xs font-bold uppercase tracking-wide text-red-600">Disclaimer: {""}</span>
+          <span className="mt-1.5 text-xs leading-5 text-text-secondary">This statement has not been evaluated by the Food and Drug
+          Administration. This product is not intended to diagnose, treat,
+          cure, or prevent any disease.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 
-                      <p className="oxanium mt-0.5 text-[10px] text-text-muted sm:text-xs">
-                        Important safety information
-                      </p>
-                    </div>
-                  </div>
 
-                  <svg
-                    className="h-5 w-5 shrink-0 text-primary"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path
-                      d="m6 9 6 6 6-6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/[0.07] via-card to-card px-5 py-5 shadow-sm sm:px-7 sm:py-6">
-                <div className="pointer-events-none absolute -right-8 -top-10 opacity-[0.035]">
-                  <svg
-                    className="h-48 w-48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                  >
-                    <path
-                      d="M10.3 3.6 2.4 17.2A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"
-                    />
-                    <path
-                      d="M12 9v4"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M12 17h.01"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-
-                <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20">
-                    <svg
-                      className="h-6 w-6"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path
-                        d="M10.3 3.6 2.4 17.2A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M12 9v4"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M12 17h.01"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </div>
-
-                  <div className="min-w-0 flex-1 border-l-0 sm:border-l sm:border-amber-500/20 sm:pl-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="oxanium text-[10px] font-black uppercase tracking-[0.18em] text-amber-600 sm:text-xs">
-                        Disclaimer
-                      </span>
-
-                      <span className="h-1 w-1 rounded-full bg-amber-500/50" />
-
-                      <span className="oxanium text-[9px] font-medium uppercase tracking-wide text-text-muted">
-                        Important information
-                      </span>
-                    </div>
-
-                    <p className="oxanium mt-2.5 max-w-5xl text-[11px] leading-6 text-text-secondary sm:text-xs sm:leading-6">
-                      This statement has not been evaluated by the Food and Drug
-                      Administration. This product is not intended to diagnose,
-                      treat, cure, or prevent any disease.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <ProductReviews
               product={product}

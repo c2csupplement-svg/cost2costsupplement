@@ -27,6 +27,7 @@ function createSlug(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+
 function normalizeBrands(brands) {
   const source = Array.isArray(brands)
     ? brands
@@ -56,6 +57,8 @@ function normalizeBrands(brands) {
         brand.brandName ??
         "";
 
+      const bgcolor = brand?.bgColor || "#000000"
+
       const slug =
         brand.slug ||
         createSlug(name);
@@ -64,6 +67,7 @@ function normalizeBrands(brands) {
         id,
         name: String(name).trim(),
         slug: String(slug).trim(),
+        bgColor: bgcolor,
         logo:
           brand.logo ||
           brand.image ||
@@ -145,7 +149,12 @@ function OtherBrands({
               )}`}
               className="group flex h-[82px] min-w-[160px] shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-muted px-3 transition-all duration-300 hover:border-primary hover:shadow-[0_10px_25px_rgba(229,35,35,0.08)] sm:h-[90px] sm:min-w-[190px] sm:px-4"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white p-1.5 sm:h-14 sm:w-14">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border p-1.5 sm:h-14 sm:w-14"
+                style={{
+                  backgroundColor: brand.bgColor,
+                }}
+              >
                 {brand.logo ? (
                   <img
                     src={brand.logo}
@@ -165,7 +174,7 @@ function OtherBrands({
                   {brand.name}
                 </p>
 
-                {brand.productCount !== null &&
+                {/* {brand.productCount !== null &&
                   brand.productCount !== undefined && (
                     <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-text-secondary sm:text-[10px]">
                       {brand.productCount}{" "}
@@ -175,7 +184,7 @@ function OtherBrands({
                         ? "Product"
                         : "Products"}
                     </p>
-                  )}
+                  )} */}
               </div>
 
               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-secondary transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
@@ -357,11 +366,10 @@ function Pagination({
                 ? "page"
                 : undefined
             }
-            className={`flex h-10 w-10 items-center justify-center rounded-lg border text-xs font-black transition-all ${
-              active
+            className={`flex h-10 w-10 items-center justify-center rounded-lg border text-xs font-black transition-all ${active
                 ? "border-primary bg-primary text-white"
                 : "border-border bg-card text-text-primary hover:border-primary hover:text-primary"
-            } disabled:cursor-not-allowed disabled:opacity-50`}
+              } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {page}
           </button>
@@ -487,8 +495,8 @@ export default function BrandsPage({
 
         setBrandError(
           error?.response?.data?.message ||
-            error?.message ||
-            "Failed to load brand"
+          error?.message ||
+          "Failed to load brand"
         );
 
         setBrandData(null);
@@ -537,34 +545,34 @@ export default function BrandsPage({
 
   const filteredProducts = query
     ? products.filter((product) => {
-        const name = String(
-          product?.name ||
-            product?.title ||
-            product?.productName ||
-            ""
-        ).toLowerCase();
+      const name = String(
+        product?.name ||
+        product?.title ||
+        product?.productName ||
+        ""
+      ).toLowerCase();
 
-        const sku = String(
-          product?.sku || ""
-        ).toLowerCase();
+      const sku = String(
+        product?.sku || ""
+      ).toLowerCase();
 
-        const productSlug = String(
-          product?.slug || ""
-        ).toLowerCase();
+      const productSlug = String(
+        product?.slug || ""
+      ).toLowerCase();
 
-        return (
-          name.includes(query) ||
-          sku.includes(query) ||
-          productSlug.includes(query)
-        );
-      })
+      return (
+        name.includes(query) ||
+        sku.includes(query) ||
+        productSlug.includes(query)
+      );
+    })
     : products;
 
   const total =
     Number(
       brandData?.total ??
-        brandData?.count ??
-        0
+      brandData?.count ??
+      0
     ) || 0;
 
   const totalPages = Math.max(
@@ -572,17 +580,17 @@ export default function BrandsPage({
     Number(
       brandData?.totalPages
     ) ||
-      Math.ceil(
-        total / PAGE_SIZE
-      ) ||
-      1
+    Math.ceil(
+      total / PAGE_SIZE
+    ) ||
+    1
   );
 
   const serverPage =
     Number(
       brandData?.page ??
-        brandData?.currentPage ??
-        currentPage
+      brandData?.currentPage ??
+      currentPage
     ) || currentPage;
 
   const seoData =
@@ -604,11 +612,11 @@ export default function BrandsPage({
     seoData?.keywords
   )
     ? seoData.keywords
-        .filter(Boolean)
-        .join(", ")
+      .filter(Boolean)
+      .join(", ")
     : String(
-        seoData?.keywords || ""
-      );
+      seoData?.keywords || ""
+    );
 
   const canonical =
     seoData?.canonical || "";
@@ -662,13 +670,13 @@ export default function BrandsPage({
 
   const schemaJson =
     schemaData?.enabled &&
-    schemaData?.customJson
+      schemaData?.customJson
       ? typeof schemaData.customJson ===
         "string"
         ? schemaData.customJson
         : JSON.stringify(
-            schemaData.customJson
-          )
+          schemaData.customJson
+        )
       : "";
 
   const handlePageChange = (
@@ -905,7 +913,7 @@ export default function BrandsPage({
 
               <ChevronRight className="h-4 w-4 shrink-0" />
 
-              <span className="truncate text-primary">
+              <span className="truncate text-primary bg-[]">
                 {displayName}
               </span>
             </div>
@@ -917,7 +925,7 @@ export default function BrandsPage({
           currentSlug={slug}
         />
 
-        <section className="border-b border-border bg-card">
+        {/* <section className="border-b border-border bg-card">
           <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
             <div className="flex flex-col items-center justify-center gap-5 text-center sm:flex-row sm:text-left">
               <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm sm:h-28 sm:w-40">
@@ -936,7 +944,7 @@ export default function BrandsPage({
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
           <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

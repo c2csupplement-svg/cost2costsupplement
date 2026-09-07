@@ -84,7 +84,7 @@ export default function Footer() {
       <div className="col-span-2 lg:col-span-1">
         <Link href="/" className="shrink-0">
           <img
-            src="/images/c2c-logo-black.png"
+            src="/images/c2c white.webp"
             alt="C2C Supplement"
             className="h-12 w-auto object-contain sm:h-14"
           />

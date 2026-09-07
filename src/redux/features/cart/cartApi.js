@@ -50,6 +50,7 @@ const getCartItem = async () => {
 };
 
 const updateItemQuantityApi = async (itemId, quantity) => {
+
   try {
     const response = await axios.put(
       `${API_BASE_URL}/cart/${itemId}`,

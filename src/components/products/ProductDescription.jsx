@@ -138,7 +138,7 @@ export default function ProductDescription({ product }) {
             </>
           ) : (
             <p className="text-sm leading-6 text-[#525252]">
-              Information will be available soon.
+              Suitable for adults. Keep out of reach of children. Pregnant and lactating women should consult a healthcare professional before use.
             </p>
           )}
         </AccordionItem>
@@ -218,7 +218,9 @@ export default function ProductDescription({ product }) {
             </ul>
           ) : (
             <p className="text-sm leading-6 text-[#737373]">
-              Safety information will be available soon.
+              <span>Keep out of reach of children.</span>
+              <br/>
+              <span>Pregnant or lactating women should consult a healthcare professional before use.</span>
             </p>
           )}
 

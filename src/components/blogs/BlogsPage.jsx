@@ -154,15 +154,14 @@ export default function BlogsPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-12 sm:px-8 lg:px-10 lg:pb-14 lg:pt-16">
+      <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-8 sm:px-8 lg:px-10 lg:pb-14 lg:pt-8">
         <div className="max-w-3xl">
           <p className="mb-3 font-oxanium text-xs font-semibold uppercase tracking-[0.22em] text-primary">
             C2C Nutrition Journal
           </p>
 
           <h1 className="font-bebas text-5xl uppercase leading-[0.95] tracking-wide text-text-primary sm:text-6xl lg:text-7xl">
-            Nutrition & Fitness
-            <br />
+            Nutrition & Fitness {""}
             <span className="text-primary">
               Decoded.
             </span>
@@ -176,73 +175,6 @@ export default function BlogsPage() {
           </p>
         </div>
       </div>
-
-      {featuredPost && (
-        <div className="mx-auto max-w-[1440px] px-5 pb-12 sm:px-8 lg:px-10 lg:pb-16">
-          <Link
-            href={`/blogs/${featuredPost.slug}`}
-            className="group grid overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_35px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-primary/40 lg:grid-cols-2"
-          >
-            <div className="relative min-h-[300px] overflow-hidden bg-surface sm:min-h-[380px] lg:min-h-[460px]">
-              {featuredPost.featuredImage && (
-                <Image
-                  src={featuredPost.featuredImage}
-                  alt={
-                    featuredPost.title ||
-                    "Featured article"
-                  }
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover transition duration-700 group-hover:scale-105"
-                />
-              )}
-
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-
-              <div className="absolute left-5 top-5">
-                <span className="rounded-full bg-primary px-3 py-1.5 font-oxanium text-[10px] font-bold uppercase tracking-[0.14em] text-white shadow-sm">
-                  Featured
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
-              <div className="flex items-center gap-3 font-oxanium text-xs font-semibold uppercase tracking-[0.14em]">
-                <span className="text-primary">
-                  {featuredPost.category}
-                </span>
-
-                <span className="h-1 w-1 rounded-full bg-text-muted" />
-
-                <span className="text-text-muted">
-                  {featuredPost.date}
-                </span>
-              </div>
-
-              <h2 className="mt-5 font-bebas text-3xl uppercase leading-tight tracking-wide text-text-primary transition group-hover:text-primary sm:text-4xl lg:text-5xl">
-                {featuredPost.title}
-              </h2>
-
-              <p className="mt-5 font-oxanium text-sm leading-7 text-text-secondary sm:text-base">
-                {featuredPost.excerpt}
-              </p>
-
-              <div className="mt-8 flex items-center gap-5">
-                <span className="flex items-center gap-2 font-oxanium text-xs text-text-muted">
-                  <Clock className="h-4 w-4" />
-                  {featuredPost.readTime}
-                </span>
-
-                <span className="flex items-center gap-2 font-oxanium text-sm font-semibold text-text-primary">
-                  Read Article
-
-                  <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </div>
-      )}
 
       <div className="border-y border-border bg-surface">
         <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
