@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,14 +10,18 @@ import {
   ArrowRight,
   Building2,
   Check,
+  ChevronDown,
+  Crosshair,
+  CreditCard,
   Home,
   Lock,
   MapPin,
   Minus,
   Pencil,
   Plus,
+  ShieldCheck,
   ShoppingBag,
-  X,
+  Truck,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -25,7 +29,6 @@ import { toast } from "sonner";
 import {
   createRazorpayOrderApi,
   verifyPaymentApi,
-  buyNowApi
 } from "@/apiService/api";
 
 import {
@@ -56,6 +59,32 @@ const emptyAddress = {
   isDefault: false,
 };
 
+function getImageUrl(image) {
+  if (!image) return null;
+
+  if (typeof image === "string") {
+    const value = image.trim();
+    return value || null;
+  }
+
+  if (typeof image === "object") {
+    const value =
+      image?.url ||
+      image?.src ||
+      image?.image ||
+      image?.imageUrl ||
+      image?.path ||
+      image?.featuredImage ||
+      image?.featuredimg;
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -75,72 +104,77 @@ export default function CheckoutPage() {
 
   const [savingAddress, setSavingAddress] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [pincodeLookupLoading, setPincodeLookupLoading] =
-    useState(false);
+  const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
 
-  const [paymentMode, setPaymentMode] = useState("RAZORPAY");
+  const [paymentMode, setPaymentMode] = useState("PREPAID");
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(true);
 
-  const cartData =
-    cartState?.products?.cart ??
-    cartState?.products ??
-    {};
+  const cartStateProducts = cartState?.products;
+  const cartData = cartStateProducts?.cart ?? cartStateProducts ?? {};
 
   const rawItems =
     cartData?.cart?.items ??
     cartData?.items ??
-    cartState?.products?.cart?.items ??
+    cartStateProducts?.cart?.items ??
     [];
 
   const cart = Array.isArray(rawItems) ? rawItems : [];
 
-  const addresses = useMemo(() => {
-    const data = addressState?.addressData;
+  const addressData = addressState?.addressData;
 
-    const raw =
-      data?.addresses ??
-      data?.data?.addresses ??
-      data?.data ??
-      data;
+  
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if(!token){
+      router.push("/login")
+    }
+  },[]);
 
-    return Array.isArray(raw) ? raw : [];
-  }, [addressState]);
+  const rawAddresses =
+    addressData?.addresses ??
+    addressData?.data?.addresses ??
+    addressData?.data ??
+    addressData;
 
-  const cartCount = useMemo(() => {
-    return cart.reduce(
-      (total, item) => total + Number(item?.quantity || 0),
-      0
+  const addresses = Array.isArray(rawAddresses)
+    ? rawAddresses
+    : [];
+
+  const cartCount = cart.reduce(
+    (total, item) => total + Number(item?.quantity || 0),
+    0
+  );
+
+  const cartTotal = cart.reduce((total, item) => {
+    const variant =
+      item?.variant ??
+      item?.productVariant ??
+      item?.selectedVariant;
+
+    const product = item?.product ?? {};
+
+    const price = Number(
+      item?.price ??
+        item?.unitPrice ??
+        variant?.price ??
+        product?.price ??
+        0
     );
-  }, [cart]);
 
-  const cartTotal = useMemo(() => {
-    return cart.reduce((total, item) => {
-      const price = Number(
-        item?.price ??
-          item?.unitPrice ??
-          item?.variant?.price ??
-          item?.product?.price ??
-          0
-      );
+    const quantity = Number(item?.quantity || 0);
 
-      const quantity = Number(item?.quantity || 0);
+    return total + price * quantity;
+  }, 0);
 
-      return total + price * quantity;
-    }, 0);
-  }, [cart]);
+  const selectedAddress =
+    addresses.find(
+      (address) =>
+        Number(address?.id) === Number(selectedAddressId)
+    ) ?? null;
 
-  const selectedAddress = useMemo(() => {
-    return (
-      addresses.find(
-        (address) =>
-          Number(address?.id) ===
-          Number(selectedAddressId)
-      ) ?? null
-    );
-  }, [addresses, selectedAddressId]);
-
-  const formatPrice = (price) => {
-    return `₹ ${Number(price || 0).toLocaleString("en-IN")}`;
-  };
+  const formatPrice = (price) =>
+    `₹${Number(price || 0).toLocaleString("en-IN")}`;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -158,28 +192,42 @@ export default function CheckoutPage() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (addresses.length === 0) {
+    if (!addresses.length) {
       setSelectedAddressId(null);
       return;
     }
 
     const currentExists = addresses.some(
       (address) =>
-        Number(address?.id) ===
-        Number(selectedAddressId)
+        Number(address?.id) === Number(selectedAddressId)
     );
 
-    if (currentExists) {
-      return;
-    }
+    if (currentExists) return;
 
-    const defaultAddress =
-      addresses.find(
-        (address) => Boolean(address?.isDefault)
-      ) ?? addresses[0];
+    const defaultAddress = addresses.find(
+      (address) =>
+        address?.isDefault === true ||
+        address?.isDefault === 1 ||
+        address?.isDefault === "1" ||
+        address?.isDefault === "true"
+    );
 
-    setSelectedAddressId(defaultAddress?.id ?? null);
+    setSelectedAddressId(
+      defaultAddress?.id ?? addresses[0]?.id ?? null
+    );
   }, [addresses, selectedAddressId]);
+
+  useEffect(() => {
+    if (!showAddressForm) return;
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showAddressForm]);
 
   const handleQuantity = async (item, quantity) => {
     const itemId =
@@ -187,9 +235,7 @@ export default function CheckoutPage() {
       item?.cartItemId ??
       item?._id;
 
-    if (!itemId) {
-      return;
-    }
+    if (!itemId) return;
 
     try {
       if (quantity <= 0) {
@@ -202,13 +248,12 @@ export default function CheckoutPage() {
 
       await dispatch(fetchCartItems());
     } catch (error) {
-      console.error(
-        "Cart update error:",
-        error
-      );
+      console.error("Cart update error:", error);
 
       toast.error(
-        "Unable to update cart item."
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to update cart item."
       );
     }
   };
@@ -222,9 +267,7 @@ export default function CheckoutPage() {
     } = event.target;
 
     let nextValue =
-      type === "checkbox"
-        ? checked
-        : value;
+      type === "checkbox" ? checked : value;
 
     if (
       name === "mobile" ||
@@ -254,6 +297,7 @@ export default function CheckoutPage() {
     if (name === "pincode") {
       setForm((previous) => ({
         ...previous,
+        pincode: nextValue,
         city: "",
         state: "",
         country: "India",
@@ -280,9 +324,7 @@ export default function CheckoutPage() {
   };
 
   const handlePincodeLookup = async (pin) => {
-    if (!/^\d{6}$/.test(pin)) {
-      return;
-    }
+    if (!/^\d{6}$/.test(pin)) return;
 
     try {
       setPincodeLookupLoading(true);
@@ -298,7 +340,7 @@ export default function CheckoutPage() {
         setFormErrors((previous) => ({
           ...previous,
           pincode:
-            "Pincode not found, please check and re-enter",
+            "Pincode not found, please check and re-enter.",
         }));
 
         return;
@@ -308,8 +350,7 @@ export default function CheckoutPage() {
         ...previous,
         city: postOffice?.District || "",
         state: postOffice?.State || "",
-        country:
-          postOffice?.Country || "India",
+        country: postOffice?.Country || "India",
       }));
 
       setFormErrors((previous) => ({
@@ -320,10 +361,7 @@ export default function CheckoutPage() {
         country: "",
       }));
     } catch (error) {
-      console.error(
-        "Pincode Error:",
-        error?.message
-      );
+      console.error("Pincode error:", error);
 
       setFormErrors((previous) => ({
         ...previous,
@@ -337,12 +375,180 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(
+        "Location is not supported by your browser."
+      );
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const {
+            latitude,
+            longitude,
+          } = position.coords;
+
+          const response = await axios.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            {
+              params: {
+                lat: latitude,
+                lon: longitude,
+                format: "json",
+                addressdetails: 1,
+                zoom: 18,
+              },
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          const address =
+            response?.data?.address;
+
+          if (!address) {
+            toast.error(
+              "Unable to find an address for your location."
+            );
+            return;
+          }
+
+          const city =
+            address?.city ||
+            address?.town ||
+            address?.village ||
+            address?.municipality ||
+            address?.county ||
+            "";
+
+          const state =
+            address?.state || "";
+
+          const country =
+            address?.country || "India";
+
+          const pincode =
+            address?.postcode
+              ?.replace(/\D/g, "")
+              .slice(0, 6) || "";
+
+          const addressParts = [
+            address?.house_number,
+            address?.road,
+            address?.residential,
+            address?.neighbourhood,
+            address?.suburb,
+          ].filter(Boolean);
+
+          const addressLine1 =
+            addressParts.join(", ");
+
+          const addressLine2 = [
+            address?.quarter,
+            address?.city_district,
+            address?.district,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+          const landmark =
+            address?.landmark ||
+            address?.building ||
+            "";
+
+          setForm((previous) => ({
+            ...previous,
+            addressLine1:
+              addressLine1 ||
+              previous.addressLine1,
+            addressLine2:
+              addressLine2 ||
+              previous.addressLine2,
+            landmark:
+              landmark || previous.landmark,
+            city:
+              city || previous.city,
+            state:
+              state || previous.state,
+            country,
+            pincode:
+              pincode || previous.pincode,
+          }));
+
+          setFormErrors((previous) => ({
+            ...previous,
+            addressLine1: "",
+            addressLine2: "",
+            landmark: "",
+            city: "",
+            state: "",
+            country: "",
+            pincode: "",
+          }));
+
+          toast.success(
+            "Current location detected successfully."
+          );
+        } catch (error) {
+          console.error(
+            "Location address error:",
+            error
+          );
+
+          toast.error(
+            "Unable to get your address. Please enter it manually."
+          );
+        } finally {
+          if (mountedRef.current) {
+            setLocationLoading(false);
+          }
+        }
+      },
+      (error) => {
+        console.error(
+          "Geolocation error:",
+          error
+        );
+
+        if (error.code === 1) {
+          toast.error(
+            "Location permission denied. Please allow location access."
+          );
+        } else if (error.code === 2) {
+          toast.error(
+            "Your current location could not be determined."
+          );
+        } else if (error.code === 3) {
+          toast.error(
+            "Location request timed out. Please try again."
+          );
+        } else {
+          toast.error(
+            "Unable to get your current location."
+          );
+        }
+
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   const validateAddress = () => {
     const errors = {};
 
     if (!form.fullName.trim()) {
-      errors.fullName =
-        "Full name is required";
+      errors.fullName = "Full name is required";
     }
 
     if (!/^\d{10}$/.test(form.mobile)) {
@@ -352,9 +558,7 @@ export default function CheckoutPage() {
 
     if (
       form.alternateMobile &&
-      !/^\d{10}$/.test(
-        form.alternateMobile
-      )
+      !/^\d{10}$/.test(form.alternateMobile)
     ) {
       errors.alternateMobile =
         "Alternate mobile number must be exactly 10 digits";
@@ -366,13 +570,11 @@ export default function CheckoutPage() {
     }
 
     if (!form.city.trim()) {
-      errors.city =
-        "City is required";
+      errors.city = "City is required";
     }
 
     if (!form.state.trim()) {
-      errors.state =
-        "State is required";
+      errors.state = "State is required";
     }
 
     if (!/^\d{6}$/.test(form.pincode)) {
@@ -387,9 +589,7 @@ export default function CheckoutPage() {
 
     setFormErrors(errors);
 
-    return (
-      Object.keys(errors).length === 0
-    );
+    return Object.keys(errors).length === 0;
   };
 
   const openAddAddress = () => {
@@ -397,8 +597,7 @@ export default function CheckoutPage() {
 
     setForm({
       ...emptyAddress,
-      isDefault:
-        addresses.length === 0,
+      isDefault: addresses.length === 0,
     });
 
     setFormErrors({});
@@ -436,7 +635,10 @@ export default function CheckoutPage() {
       country:
         address?.country ?? "India",
       isDefault:
-        Boolean(address?.isDefault),
+        address?.isDefault === true ||
+        address?.isDefault === 1 ||
+        address?.isDefault === "1" ||
+        address?.isDefault === "true",
     });
 
     setFormErrors({});
@@ -444,7 +646,10 @@ export default function CheckoutPage() {
   };
 
   const closeAddressForm = () => {
-    if (savingAddress) {
+    if (
+      savingAddress ||
+      locationLoading
+    ) {
       return;
     }
 
@@ -454,64 +659,37 @@ export default function CheckoutPage() {
 
     setShowAddressForm(false);
     setEditingAddressId(null);
-    setForm({
-      ...emptyAddress,
-    });
+    setForm({ ...emptyAddress });
     setFormErrors({});
     setPincodeLookupLoading(false);
+    setLocationLoading(false);
   };
 
   const handleSaveAddress = async (event) => {
     event.preventDefault();
 
-    if (!validateAddress()) {
-      return;
-    }
+    if (!validateAddress()) return;
 
     const payload = {
-      fullName:
-        form.fullName.trim(),
-
-      mobile:
-        form.mobile.trim(),
-
+      fullName: form.fullName.trim(),
+      mobile: form.mobile.trim(),
       alternateMobile:
-        form.alternateMobile.trim() ||
-        null,
-
+        form.alternateMobile.trim() || null,
       email:
-        form.email.trim() ||
-        null,
-
+        form.email.trim() || null,
       addressLine1:
         form.addressLine1.trim(),
-
       addressLine2:
-        form.addressLine2.trim() ||
-        null,
-
+        form.addressLine2.trim() || null,
       landmark:
-        form.landmark.trim() ||
-        null,
-
-      city:
-        form.city.trim(),
-
-      state:
-        form.state.trim(),
-
+        form.landmark.trim() || null,
+      city: form.city.trim(),
+      state: form.state.trim(),
       country:
-        form.country.trim() ||
-        "India",
-
-      pincode:
-        form.pincode.trim(),
-
-      addressType:
-        form.addressType,
-
-      isDefault:
-        Boolean(form.isDefault),
+        form.country.trim() || "India",
+      pincode: form.pincode.trim(),
+      addressType: form.addressType,
+      isDefault: Boolean(form.isDefault),
     };
 
     try {
@@ -534,68 +712,66 @@ export default function CheckoutPage() {
 
       setShowAddressForm(false);
       setEditingAddressId(null);
-      setForm({
-        ...emptyAddress,
-      });
+      setForm({ ...emptyAddress });
       setFormErrors({});
+
+      toast.success(
+        editingAddressId
+          ? "Address updated successfully."
+          : "Address added successfully."
+      );
     } catch (error) {
       console.error(
         "Save address error:",
         error
       );
 
-      const message =
+      toast.error(
         error?.response?.data?.message ||
-        error?.message ||
-        "Unable to save address.";
-
-      toast.error(message);
+          error?.message ||
+          "Unable to save address."
+      );
     } finally {
       setSavingAddress(false);
     }
   };
 
-  const waitForRazorpay = () => {
-    return new Promise(
-      (resolve, reject) => {
+  const waitForRazorpay = () =>
+    new Promise((resolve, reject) => {
+      if (
+        typeof window !== "undefined" &&
+        typeof window.Razorpay !==
+          "undefined"
+      ) {
+        resolve();
+        return;
+      }
+
+      let attempts = 0;
+
+      const interval = setInterval(() => {
+        attempts++;
+
         if (
           typeof window !== "undefined" &&
           typeof window.Razorpay !==
             "undefined"
         ) {
+          clearInterval(interval);
           resolve();
-          return;
+        } else if (attempts > 20) {
+          clearInterval(interval);
+
+          reject(
+            new Error(
+              "Payment gateway failed to load. Please refresh and try again."
+            )
+          );
         }
+      }, 500);
+    });
 
-        let attempts = 0;
-
-        const interval = setInterval(() => {
-          attempts++;
-
-          if (
-            typeof window !== "undefined" &&
-            typeof window.Razorpay !==
-              "undefined"
-          ) {
-            clearInterval(interval);
-            resolve();
-          } else if (attempts > 20) {
-            clearInterval(interval);
-
-            reject(
-              new Error(
-                "Payment gateway failed to load. Please refresh and try again."
-              )
-            );
-          }
-        }, 500);
-      }
-    );
-  };
-
-  const startPayment = async (
-    addressId
-  ) => {
+  const startPayment = async (addressId) => {
     if (!addressId) {
       toast.error(
         "Please select a delivery address."
@@ -630,28 +806,41 @@ export default function CheckoutPage() {
         key,
       } = res.data;
 
+      if (!razorpayOrderId) {
+        toast.error(
+          "Payment order was not created."
+        );
+        setPaymentLoading(false);
+        return;
+      }
+
       const customerName =
         selectedAddress?.fullName ||
+        form.fullName ||
         "Customer";
 
       const customerEmail =
         selectedAddress?.email ||
+        form.email ||
         "";
 
       const customerContact =
         selectedAddress?.mobile ||
+        form.mobile ||
         "";
 
       const options = {
         key,
         amount,
         currency,
-        order_id:
-          razorpayOrderId,
+        order_id: razorpayOrderId,
 
         name: "Promolecules",
+
         description:
-          "Order Payment",
+          paymentMode === "COD"
+            ? "Cash on Delivery Order"
+            : "Prepaid Order Payment",
 
         prefill: {
           name: customerName,
@@ -660,74 +849,77 @@ export default function CheckoutPage() {
         },
 
         notes: {
-          addressId: String(
-            addressId
-          ),
+          addressId: String(addressId),
+          paymentMode,
         },
 
-        handler:
-          async function (response) {
-            try {
-              const verifyRes =
-                await verifyPaymentApi({
-                  razorpay_order_id:
-                    response.razorpay_order_id,
+        handler: async function (
+          response
+        ) {
+          try {
+            const verifyRes =
+              await verifyPaymentApi({
+                razorpay_order_id:
+                  response.razorpay_order_id,
 
-                  razorpay_payment_id:
-                    response.razorpay_payment_id,
+                razorpay_payment_id:
+                  response.razorpay_payment_id,
 
-                  razorpay_signature:
-                    response.razorpay_signature,
+                razorpay_signature:
+                  response.razorpay_signature,
 
-                  addressId,
-                });
+                addressId,
 
-              if (
-                verifyRes?.data?.success
-              ) {
-                toast.success(
-                  "Order placed successfully!",
-                  {
-                    description:
-                      verifyRes?.data?.order
-                        ?.orderNumber
-                        ? `Order ID: ${verifyRes.data.order.orderNumber}`
-                        : "Your order has been confirmed.",
-                  }
-                );
+                paymentMethod: paymentMode,
+              });
 
-                setTimeout(() => {
-                  router.push("/cart");
-                }, 700);
-              } else {
-                toast.error(
-                  verifyRes?.data
-                    ?.message ||
-                    "Payment verification failed."
-                );
-              }
-            } catch (error) {
-              console.error(
-                "Verify Error:",
-                error?.response?.data ||
-                  error?.message
-              );
-
-              toast.info(
-                "Payment successful! Confirming your order...",
+            if (
+              verifyRes?.data?.success
+            ) {
+              toast.success(
+                "Order placed successfully!",
                 {
                   description:
-                    `Payment ID: ${response.razorpay_payment_id}`,
+                    verifyRes?.data?.order
+                      ?.orderNumber
+                      ? `Order ID: ${verifyRes.data.order.orderNumber}`
+                      : "Your order has been confirmed.",
                 }
               );
 
               setTimeout(() => {
                 router.push("/cart");
-              }, 1000);
-            } finally {
-              setPaymentLoading(false);
+              }, 700);
+            } else {
+              toast.error(
+                verifyRes?.data?.message ||
+                  "Payment verification failed."
+              );
             }
-          },
+          } catch (error) {
+            console.error(
+              "Verify Error:",
+              error?.response?.data ||
+                error?.message
+            );
+
+            toast.info(
+              "Payment successful! Confirming your order...",
+              {
+                description:
+                  response?.razorpay_payment_id
+                    ? `Payment ID: ${response.razorpay_payment_id}`
+                    : "Your order is being confirmed.",
+              }
+            );
+
+            setTimeout(() => {
+              router.push("/cart");
+            }, 1000);
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
 
         modal: {
           ondismiss: () => {
@@ -741,9 +933,7 @@ export default function CheckoutPage() {
       };
 
       const razorpay =
-        new window.Razorpay(
-          options
-        );
+        new window.Razorpay(options);
 
       razorpay.on(
         "payment.failed",
@@ -754,8 +944,7 @@ export default function CheckoutPage() {
           );
 
           toast.error(
-            response?.error
-              ?.description ||
+            response?.error?.description ||
               "Payment failed. Please try again."
           );
 
@@ -772,8 +961,7 @@ export default function CheckoutPage() {
       );
 
       toast.error(
-        error?.response?.data
-          ?.message ||
+        error?.response?.data?.message ||
           error?.message ||
           "Something went wrong starting payment."
       );
@@ -790,16 +978,12 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (cart.length === 0) {
-      toast.error(
-        "Your cart is empty."
-      );
+    if (!cart.length) {
+      toast.error("Your cart is empty.");
       return;
     }
 
-    if (paymentLoading) {
-      return;
-    }
+    if (paymentLoading) return;
 
     try {
       setPaymentLoading(true);
@@ -817,6 +1001,11 @@ export default function CheckoutPage() {
     }
   };
 
+  const canPlaceOrder =
+    Boolean(selectedAddress) &&
+    addresses.length > 0 &&
+    !paymentLoading;
+
   if (
     cartState?.loading &&
     cart.length === 0
@@ -824,7 +1013,9 @@ export default function CheckoutPage() {
     return <CheckoutSkeleton />;
   }
 
-  if (cart.length === 0) {
+
+
+  if (!cart.length) {
     return (
       <main className="min-h-screen bg-background text-text-primary">
         <div className="mx-auto flex min-h-[650px] max-w-[1440px] flex-col items-center justify-center px-5 text-center sm:px-8">
@@ -842,7 +1033,7 @@ export default function CheckoutPage() {
 
           <Link
             href="/products"
-            className="oxanium mt-7 flex items-center gap-2 bg-primary px-7 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90"
+            className="oxanium mt-7 flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90 active:scale-[0.98]"
           >
             Continue Shopping
             <ArrowRight className="h-4 w-4" />
@@ -853,70 +1044,107 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-text-primary">
-      <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
-        <div className="oxanium mb-10 flex items-center gap-3 border-b border-border pb-6 text-sm">
-          <Link
-            href="/"
-            className="text-text-muted transition hover:text-primary"
-          >
-            Home
-          </Link>
+    <main className="min-h-screen bg-background pb-28 text-text-primary lg:pb-0">
+      <div className="mx-auto max-w-[1440px] px-4 py-3 sm:px-8 sm:py-5 lg:px-10 lg:py-8">
+        <div className="mb-6 flex items-center justify-between border-b border-border pb-5 sm:mb-10 sm:pb-6">
+          <div className="oxanium hidden items-center gap-3 text-sm sm:flex">
+            <Link
+              href="/"
+              className="text-text-muted transition hover:text-primary"
+            >
+              Home
+            </Link>
 
-          <span className="text-text-muted">
-            ›
-          </span>
+            <span className="text-text-muted">
+              ›
+            </span>
+
+            <Link
+              href="/cart"
+              className="text-text-muted transition hover:text-primary"
+            >
+              Cart
+            </Link>
+
+            <span className="text-text-muted">
+              ›
+            </span>
+
+            <span>Checkout</span>
+          </div>
 
           <Link
             href="/cart"
-            className="text-text-muted transition hover:text-primary"
+            className="oxanium flex items-center gap-2 text-sm text-text-muted transition hover:text-primary sm:hidden"
           >
-            Cart
+            <ArrowLeft className="h-4 w-4" />
+            Back to cart
           </Link>
 
-          <span className="text-text-muted">
-            ›
-          </span>
-
-          <span className="text-text-primary">
-            Checkout
+          <span className="oxanium hidden items-center gap-1.5 text-xs font-semibold text-text-muted sm:flex">
+            <Lock className="h-3.5 w-3.5" />
+            Secure checkout
           </span>
         </div>
 
-        <div className="mb-10">
+        <div className="mb-8 sm:mb-10">
           <p className="oxanium mb-2 text-xs font-bold uppercase tracking-[0.25em] text-primary">
-            Secure Checkout
+            Step {selectedAddress ? "2" : "1"} of 2
           </p>
 
-          <h1 className="bebas text-5xl uppercase tracking-wide sm:text-6xl">
-            Checkout
+          <h1 className="bebas text-4xl uppercase tracking-wide sm:text-6xl">
+            Secure Checkout
           </h1>
 
-          <p className="oxanium mt-3 text-sm text-text-muted">
-            Complete your information to place your order.
+          <p className="oxanium mt-3 max-w-2xl text-sm leading-6 text-text-muted">
+            {selectedAddress
+              ? "Review your delivery details and complete your payment securely."
+              : "Choose your delivery address to continue with your order."}
           </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <span className="oxanium inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-[11px] font-semibold text-text-muted">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              Safe & secure
+            </span>
+
+            <span className="oxanium inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-[11px] font-semibold text-text-muted">
+              <Truck className="h-3.5 w-3.5 text-primary" />
+              Tracked delivery
+            </span>
+          </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_430px]">
-          <section className="space-y-7">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-8">
+          <section className="space-y-5 sm:space-y-7">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="bebas text-2xl uppercase tracking-wide">
-                    Delivery Address
-                  </h2>
+                <div className="flex items-center gap-3">
+                  <span className="oxanium flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                    1
+                  </span>
 
-                  <p className="oxanium mt-2 text-sm text-text-muted">
-                    Select an address for your order.
-                  </p>
+                  <div>
+                    <h2 className="bebas text-xl uppercase tracking-wide sm:text-2xl">
+                      Delivery Address
+                    </h2>
+
+                    <p className="oxanium mt-0.5 text-xs text-text-muted sm:text-sm">
+                      {addresses.length
+                        ? `${addresses.length} saved ${
+                            addresses.length === 1
+                              ? "address"
+                              : "addresses"
+                          }`
+                        : "Add an address to continue"}
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={
-                    openAddAddress
-                  }
-                  className="oxanium inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90"
+                  onClick={openAddAddress}
+                  className="oxanium inline-flex items-center justify-center gap-2 rounded-lg border border-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-primary transition hover:bg-primary hover:text-white active:scale-[0.98]"
                 >
                   <Plus className="h-4 w-4" />
                   Add Address
@@ -924,24 +1152,21 @@ export default function CheckoutPage() {
               </div>
 
               {addressState?.loading &&
-              addresses.length === 0 ? (
-                <div className="mt-7 space-y-4">
-                  {[1, 2].map(
-                    (item) => (
-                      <div
-                        key={item}
-                        className="animate-pulse rounded-xl border border-border p-5"
-                      >
-                        <div className="h-5 w-32 rounded bg-surface" />
-                        <div className="mt-4 h-4 w-2/3 rounded bg-surface" />
-                        <div className="mt-2 h-4 w-1/2 rounded bg-surface" />
-                      </div>
-                    )
-                  )}
+              !addresses.length ? (
+                <div className="mt-6 space-y-4">
+                  {[1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="animate-pulse rounded-xl border border-border p-5"
+                    >
+                      <div className="h-5 w-32 rounded bg-surface" />
+                      <div className="mt-4 h-4 w-2/3 rounded bg-surface" />
+                      <div className="mt-2 h-4 w-1/2 rounded bg-surface" />
+                    </div>
+                  ))}
                 </div>
-              ) : addresses.length ===
-                0 ? (
-                <div className="mt-7 rounded-xl border border-dashed border-border p-8 text-center">
+              ) : !addresses.length ? (
+                <div className="mt-6 rounded-xl border border-dashed border-border p-8 text-center">
                   <MapPin className="mx-auto h-8 w-8 text-text-muted" />
 
                   <p className="oxanium mt-3 text-sm font-semibold">
@@ -954,386 +1179,504 @@ export default function CheckoutPage() {
 
                   <button
                     type="button"
-                    onClick={
-                      openAddAddress
-                    }
-                    className="oxanium mt-5 rounded-lg bg-primary px-5 py-3 text-sm font-semibold uppercase text-white"
+                    onClick={openAddAddress}
+                    className="oxanium mt-5 rounded-lg bg-primary px-5 py-3 text-sm font-semibold uppercase text-white transition hover:bg-primary/90"
                   >
                     Add Your First Address
                   </button>
                 </div>
               ) : (
-                <div className="mt-7 grid gap-4">
-                  {addresses.map(
-                    (address) => {
-                      const selected =
-                        Number(
-                          address?.id
-                        ) ===
-                        Number(
-                          selectedAddressId
-                        );
+                <div className="mt-6 grid gap-3 sm:gap-4">
+                  {addresses.map((address) => {
+                    const selected =
+                      Number(address?.id) ===
+                      Number(selectedAddressId);
 
-                      return (
-                        <div
-                          key={
-                            address.id
+                    const isDefault =
+                      address?.isDefault === true ||
+                      address?.isDefault === 1 ||
+                      address?.isDefault === "1" ||
+                      address?.isDefault === "true";
+
+                    return (
+                      <div
+                        key={address.id}
+                        className={`group relative overflow-hidden rounded-xl border p-4 transition-all sm:p-5 ${
+                          selected
+                            ? "border-primary bg-primary/[0.03] shadow-sm ring-1 ring-primary"
+                            : "border-border hover:border-primary/50 hover:bg-surface/50"
+                        }`}
+                      >
+                        {selected && (
+                          <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedAddressId(
+                              address.id
+                            )
                           }
-                          className={`relative rounded-xl border p-5 transition ${
-                            selected
-                              ? "border-primary ring-1 ring-primary"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedAddressId(
-                                address.id
-                              )
-                            }
-                            className="absolute inset-0 h-full w-full cursor-pointer"
-                            aria-label={`Select address for ${address.fullName}`}
-                          />
+                          className="absolute inset-0 h-full w-full cursor-pointer rounded-xl"
+                          aria-label={`Select address for ${address.fullName}`}
+                        />
 
-                          <div className="relative z-10">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex min-w-0 items-center gap-3">
-                                <div
-                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                                    selected
-                                      ? "bg-primary text-white"
-                                      : "bg-surface text-text-muted"
-                                  }`}
-                                >
-                                  {address.addressType ===
-                                  "Office" ? (
-                                    <Building2 className="h-5 w-5" />
-                                  ) : (
-                                    <Home className="h-5 w-5" />
+                        <div className="relative z-10">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                                  selected
+                                    ? "bg-primary text-white"
+                                    : "bg-surface text-text-muted"
+                                }`}
+                              >
+                                {address.addressType ===
+                                "Office" ? (
+                                  <Building2 className="h-5 w-5" />
+                                ) : (
+                                  <Home className="h-5 w-5" />
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <h3 className="oxanium truncate text-sm font-bold">
+                                    {address.fullName}
+                                  </h3>
+
+                                  <span className="oxanium rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase">
+                                    {address.addressType}
+                                  </span>
+
+                                  {isDefault && (
+                                    <span className="oxanium rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                                      Default
+                                    </span>
                                   )}
                                 </div>
 
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="oxanium text-sm font-bold">
-                                      {
-                                        address.fullName
-                                      }
-                                    </h3>
-
-                                    <span className="oxanium rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase">
-                                      {
-                                        address.addressType
-                                      }
-                                    </span>
-
-                                    {address.isDefault && (
-                                      <span className="oxanium rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase text-primary">
-                                        Default
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <p className="oxanium mt-1 text-xs text-text-muted">
-                                    {
-                                      address.mobile
-                                    }
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="relative z-20 flex shrink-0 items-center gap-2">
-                                {selected && (
-                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white">
-                                    <Check className="h-4 w-4" />
-                                  </div>
-                                )}
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    openEditAddress(
-                                      address
-                                    )
-                                  }
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-text-muted transition hover:border-primary hover:text-primary"
-                                  aria-label="Edit address"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </button>
+                                <p className="oxanium mt-1 text-xs text-text-muted">
+                                  {address.mobile}
+                                </p>
                               </div>
                             </div>
 
-                            <div className="mt-4 space-y-1 pl-[52px]">
-                              <p className="oxanium text-sm text-text-primary">
-                                {
-                                  address.addressLine1
-                                }
-                              </p>
+                            <div className="relative z-20 flex items-center gap-2">
+                              <span
+                                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 ${
+                                  selected
+                                    ? "border-primary bg-primary text-white"
+                                    : "border-border"
+                                }`}
+                              >
+                                {selected && (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </span>
 
-                              {address.addressLine2 && (
-                                <p className="oxanium text-sm text-text-primary">
-                                  {
-                                    address.addressLine2
-                                  }
-                                </p>
-                              )}
-
-                              {address.landmark && (
-                                <p className="oxanium text-xs text-text-muted">
-                                  Landmark:{" "}
-                                  {
-                                    address.landmark
-                                  }
-                                </p>
-                              )}
-
-                              <p className="oxanium text-sm text-text-primary">
-                                {
-                                  address.city
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openEditAddress(
+                                    address
+                                  )
                                 }
-                                ,{" "}
-                                {
-                                  address.state
-                                }{" "}
-                                {
-                                  address.pincode
-                                }
-                              </p>
-
-                              <p className="oxanium text-xs text-text-muted">
-                                {
-                                  address.country
-                                }
-                              </p>
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-text-muted transition hover:border-primary hover:text-primary"
+                                aria-label="Edit address"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           </div>
+
+                          <div className="mt-4 space-y-0.5 pl-[52px]">
+                            <p className="oxanium text-sm leading-5">
+                              {address.addressLine1}
+
+                              {address.addressLine2
+                                ? `, ${address.addressLine2}`
+                                : ""}
+                            </p>
+
+                            {address.landmark && (
+                              <p className="oxanium text-xs text-text-muted">
+                                Landmark:{" "}
+                                {address.landmark}
+                              </p>
+                            )}
+
+                            <p className="oxanium text-sm">
+                              {address.city},{" "}
+                              {address.state}{" "}
+                              {address.pincode}
+                            </p>
+
+                            <p className="oxanium text-xs text-text-muted">
+                              {address.country}
+                            </p>
+                          </div>
                         </div>
-                      );
-                    }
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Lock className="h-4 w-4 text-primary" />
-                </div>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-8">
+              <div className="flex items-center gap-3">
+                <span className="oxanium flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                  2
+                </span>
 
-                <div className="flex-1">
-                  <h2 className="bebas text-2xl uppercase tracking-wide">
+                <div>
+                  <h2 className="bebas text-xl uppercase tracking-wide sm:text-2xl">
                     Payment
                   </h2>
 
-                  <p className="oxanium mt-2 text-sm leading-6 text-text-muted">
-                    Your payment is processed securely through Razorpay.
+                  <p className="oxanium mt-0.5 text-xs text-text-muted">
+                    Choose your preferred payment method
                   </p>
-
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPaymentMode(
-                          "RAZORPAY"
-                        )
-                      }
-                      className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left transition ${
-                        paymentMode ===
-                        "RAZORPAY"
-                          ? "border-primary bg-primary/5 ring-1 ring-primary"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          paymentMode ===
-                          "RAZORPAY"
-                            ? "bg-primary text-white"
-                            : "bg-surface text-text-muted"
-                        }`}
-                      >
-                        <Lock className="h-4 w-4" />
-                      </div>
-
-                      <div className="flex-1">
-                        <p className="oxanium text-sm font-bold">
-                          Razorpay
-                        </p>
-
-                        <p className="oxanium mt-1 text-xs text-text-muted">
-                          Pay securely using UPI, cards, net banking and more.
-                        </p>
-                      </div>
-
-                      {paymentMode ===
-                        "RAZORPAY" && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
-                          <Check className="h-4 w-4" />
-                        </div>
-                      )}
-                    </button>
-                  </div>
                 </div>
+              </div>
+
+              <div
+                role="radiogroup"
+                aria-label="Payment method"
+                className="mt-6 gap-3 flex flex-row sm:flex-col"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={
+                    paymentMode === "PREPAID"
+                  }
+                  onClick={() =>
+                    setPaymentMode("PREPAID")
+                  }
+                  className={`relative flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all ${
+                    paymentMode === "PREPAID"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                      paymentMode === "PREPAID"
+                        ? "bg-primary text-white"
+                        : "bg-surface text-text-muted"
+                    }`}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="oxanium text-sm font-bold">
+                      Prepaid
+                    </p>
+
+                    <p className="oxanium mt-1 text-xs text-text-muted">
+                      Pay full amount now
+                    </p>
+                  </div>
+
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                      paymentMode === "PREPAID"
+                        ? "border-primary bg-primary text-white"
+                        : "border-border"
+                    }`}
+                  >
+                    {paymentMode ===
+                      "PREPAID" && (
+                      <Check className="h-3.5 w-3.5" />
+                    )}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={
+                    paymentMode === "COD"
+                  }
+                  onClick={() =>
+                    setPaymentMode("COD")
+                  }
+                  className={`relative flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all ${
+                    paymentMode === "COD"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                      paymentMode === "COD"
+                        ? "bg-primary text-white"
+                        : "bg-surface text-text-muted"
+                    }`}
+                  >
+                    <Truck className="h-4 w-4" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="oxanium text-sm font-bold">
+                      COD
+                    </p>
+
+                    <p className="oxanium mt-1 text-xs text-text-muted">
+                      Partial pay now
+                    </p>
+                  </div>
+
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                      paymentMode === "COD"
+                        ? "border-primary bg-primary text-white"
+                        : "border-border"
+                    }`}
+                  >
+                    {paymentMode === "COD" && (
+                      <Check className="h-3.5 w-3.5" />
+                    )}
+                  </span>
+                </button>
+              </div>
+
+              {paymentMode === "COD" && (
+  <div className="mt-4 flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3.5">
+    <div className="mt-0.5 shrink-0">
+      <ShieldCheck className="h-5 w-5 text-blue-500" />
+    </div>
+
+    <div className="oxanium min-w-0 text-xs leading-5 text-text-primary sm:text-sm">
+      <p>
+        Pay just{" "}
+        <span className="font-bold text-text-primary">
+          17% now
+        </span>{" "}
+        and the remaining amount at the time of delivery.
+      </p>
+
+      <p className="mt-1 text-text-secondary">
+        <span className="font-bold text-text-primary">
+          ₹49 extra
+        </span>{" "}
+        applies to Cash on Delivery (COD).
+      </p>
+    </div>
+  </div>
+)}
+
+              <div className="oxanium mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                  100% secure payment
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-primary" />
+                  Tracked delivery
+                </span>
               </div>
             </div>
           </section>
 
           <aside className="lg:sticky lg:top-28 lg:self-start">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-              <h2 className="bebas text-2xl uppercase tracking-wide">
-                Your Order
-              </h2>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-8">
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileSummaryOpen(
+                    (previous) => !previous
+                  )
+                }
+                className="flex w-full items-center justify-between lg:pointer-events-none lg:cursor-default"
+              >
+                <h2 className="bebas text-xl uppercase tracking-wide sm:text-2xl">
+                  Your Order
 
-              <div className="mt-6 divide-y divide-border">
-                {cart.map(
-                  (item, index) => (
+                  <span className="oxanium ml-2 text-sm font-normal normal-case text-text-muted">
+                    ({cartCount}{" "}
+                    {cartCount === 1
+                      ? "item"
+                      : "items"}
+                    )
+                  </span>
+                </h2>
+
+                <ChevronDown
+                  className={`h-5 w-5 text-text-muted transition-transform lg:hidden ${
+                    mobileSummaryOpen
+                      ? "rotate-180"
+                      : ""
+                  }`}
+                />
+              </button>
+
+              <div
+                className={`${
+                  mobileSummaryOpen
+                    ? "block"
+                    : "hidden"
+                } lg:block`}
+              >
+                <div className="mt-5 divide-y divide-border">
+                  {cart.map((item) => (
                     <CheckoutCartItem
                       key={
                         item?.id ??
                         item?.cartItemId ??
-                        item?._id ??
-                        index
+                        item?._id
                       }
                       item={item}
-                      formatPrice={
-                        formatPrice
-                      }
+                      formatPrice={formatPrice}
                       onQuantityChange={
                         handleQuantity
                       }
                     />
-                  )
-                )}
-              </div>
-
-              <div className="my-6 h-px bg-border" />
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="oxanium text-text-muted">
-                    Items
-                  </span>
-
-                  <span className="oxanium font-semibold">
-                    {cartCount}
-                  </span>
+                  ))}
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="oxanium text-text-muted">
-                    Subtotal
+                <div className="my-5 h-px bg-border" />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="oxanium text-sm text-text-muted">
+                      Subtotal
+                    </span>
+
+                    <span className="oxanium text-sm font-semibold">
+                      {formatPrice(
+                        cartTotal
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="oxanium text-sm text-text-muted">
+                      Delivery
+                    </span>
+
+                    <span className="oxanium text-sm font-semibold text-green-500">
+                      FREE
+                    </span>
+                  </div>
+
+                  {paymentMode === "COD" && (
+                    <div className="flex items-center justify-between">
+                      <span className="oxanium text-sm text-text-muted">
+                        COD charge
+                      </span>
+
+                      <span className="oxanium text-sm font-semibold">
+                        ₹49
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="my-5 h-px bg-border" />
+
+                <div className="flex items-center justify-between">
+                  <span className="bebas text-xl uppercase tracking-wide sm:text-2xl">
+                    Total
                   </span>
 
-                  <span className="oxanium font-semibold">
+                  <span className="oxanium text-xl font-bold text-primary sm:text-2xl">
                     {formatPrice(
-                      cartTotal
+                      paymentMode === "COD"
+                        ? cartTotal + 49
+                        : cartTotal
                     )}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="oxanium text-text-muted">
-                    Shipping
-                  </span>
+                {paymentMode === "COD" && (
+                  <div className="mt-4 rounded-xl bg-blue-500/10 p-3.5">
+                    <div className="flex items-center gap-2">
+                      <Truck className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
 
-                  <span className="oxanium text-xs text-text-muted">
-                    Calculated at checkout
-                  </span>
-                </div>
-              </div>
+                      <div>
+                        <p className="oxanium text-xs font-bold text-black">
+                          COD selected
+                        </p>
 
-              <div className="my-6 h-px bg-border" />
-
-              <div className="flex items-center justify-between">
-                <span className="bebas text-2xl uppercase tracking-wide">
-                  Total
-                </span>
-
-                <span className="oxanium text-2xl font-bold text-primary">
-                  {formatPrice(
-                    cartTotal
-                  )}
-                </span>
-              </div>
-
-              {selectedAddress && (
-                <div className="mt-6 rounded-xl bg-surface p-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary" />
-
-                    <span className="oxanium text-xs font-bold uppercase tracking-wide">
-                      Delivering To
-                    </span>
+                        <p className="oxanium mt-1 text-[11px] leading-5 text-black">
+                          Pay 17% now and the
+                          remaining amount at
+                          delivery.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-
-                  <p className="oxanium mt-2 text-sm font-semibold">
-                    {
-                      selectedAddress.fullName
-                    }
-                  </p>
-
-                  <p className="oxanium mt-1 text-xs leading-5 text-text-muted">
-                    {
-                      selectedAddress.addressLine1
-                    }
-                    ,{" "}
-                    {
-                      selectedAddress.city
-                    }
-                    ,{" "}
-                    {
-                      selectedAddress.state
-                    }{" "}
-                    {
-                      selectedAddress.pincode
-                    }
-                  </p>
-                </div>
-              )}
-
-              <button
-                type="button"
-                disabled={
-                  !selectedAddress ||
-                  paymentLoading ||
-                  addresses.length === 0
-                }
-                onClick={
-                  handlePlaceOrder
-                }
-                className="oxanium mt-7 flex h-14 w-full items-center justify-center gap-2 bg-primary text-sm font-bold uppercase tracking-wide text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {paymentLoading ? (
-                  <>
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    Place Order
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-
-              {!selectedAddress &&
-                addresses.length > 0 && (
-                  <p className="oxanium mt-3 text-center text-xs text-primary">
-                    Please select a delivery address.
-                  </p>
                 )}
 
-              <p className="oxanium mt-4 text-center text-xs leading-5 text-text-muted">
-                By placing your order, you agree to our terms and conditions.
-              </p>
+                {selectedAddress && (
+                  <div className="mt-5 rounded-xl bg-surface p-4 sm:mt-6">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+
+                      <span className="oxanium text-xs font-bold uppercase tracking-wide">
+                        Delivering To
+                      </span>
+                    </div>
+
+                    <p className="oxanium mt-2 text-sm font-semibold">
+                      {selectedAddress.fullName}
+                    </p>
+
+                    <p className="oxanium mt-1 text-xs leading-5 text-text-muted">
+                      {selectedAddress.addressLine1},{" "}
+                      {selectedAddress.city},{" "}
+                      {selectedAddress.state}{" "}
+                      {selectedAddress.pincode}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={!canPlaceOrder}
+                  onClick={handlePlaceOrder}
+                  className="oxanium mt-6 hidden h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold uppercase tracking-wide text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50 lg:flex"
+                >
+                  {paymentLoading ? (
+                    <>
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {paymentMode === "COD"
+                        ? "Continue with COD"
+                        : "Pay Now"}
+
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+
+                {!selectedAddress &&
+                  addresses.length > 0 && (
+                    <p className="oxanium mt-3 text-center text-xs text-primary">
+                      Please select a delivery
+                      address.
+                    </p>
+                  )}
+
+                <p className="oxanium mt-4 hidden text-center text-xs leading-5 text-text-muted lg:block">
+                  By placing your order, you agree
+                  to our terms and conditions.
+                </p>
+              </div>
             </div>
 
             <Link
               href="/cart"
-              className="oxanium mt-5 flex items-center justify-center gap-2 text-sm text-text-muted transition hover:text-primary"
+              className="oxanium mt-5 hidden items-center justify-center gap-2 text-sm text-text-muted transition hover:text-primary lg:flex"
             >
               <ArrowLeft className="h-4 w-4" />
               Return to cart
@@ -1342,432 +1685,50 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {showAddressForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-card shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-5 sm:px-8">
-              <div>
-                <h2 className="bebas text-2xl uppercase tracking-wide">
-                  {editingAddressId
-                    ? "Edit Address"
-                    : "Add Address"}
-                </h2>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="oxanium text-[11px] text-text-muted">
+              Total ({cartCount}{" "}
+              {cartCount === 1
+                ? "item"
+                : "items"}
+              )
+            </p>
 
-                <p className="oxanium mt-1 text-xs text-text-muted">
-                  Enter your delivery details.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={
-                  closeAddressForm
-                }
-                disabled={
-                  savingAddress
-                }
-                className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition hover:bg-surface hover:text-primary disabled:opacity-50"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={
-                handleSaveAddress
-              }
-              className="overflow-y-auto px-6 py-6 sm:px-8"
-            >
-              <div className="grid gap-5 sm:grid-cols-2">
-                <AddressInput
-                  label="Full Name"
-                  name="fullName"
-                  value={
-                    form.fullName
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="Full name"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  error={
-                    formErrors.fullName
-                  }
-                />
-
-                <AddressInput
-                  label="Mobile Number"
-                  name="mobile"
-                  value={
-                    form.mobile
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="10 digit mobile number"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  inputMode="numeric"
-                  maxLength={10}
-                  error={
-                    formErrors.mobile
-                  }
-                />
-
-                <AddressInput
-                  label="Alternate Mobile"
-                  name="alternateMobile"
-                  value={
-                    form.alternateMobile
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="10 digit alternate number"
-                  disabled={
-                    savingAddress
-                  }
-                  inputMode="numeric"
-                  maxLength={10}
-                  error={
-                    formErrors.alternateMobile
-                  }
-                />
-
-                <AddressInput
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={
-                    form.email
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="Email address"
-                  disabled={
-                    savingAddress
-                  }
-                />
-
-                <div className="sm:col-span-2">
-                  <AddressInput
-                    label="Address Line 1"
-                    name="addressLine1"
-                    value={
-                      form.addressLine1
-                    }
-                    onChange={
-                      handleFormChange
-                    }
-                    placeholder="House number, building, street"
-                    required
-                    disabled={
-                      savingAddress
-                    }
-                    error={
-                      formErrors.addressLine1
-                    }
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <AddressInput
-                    label="Address Line 2"
-                    name="addressLine2"
-                    value={
-                      form.addressLine2
-                    }
-                    onChange={
-                      handleFormChange
-                    }
-                    placeholder="Apartment, suite, area"
-                    disabled={
-                      savingAddress
-                    }
-                  />
-                </div>
-
-                <AddressInput
-                  label="Landmark"
-                  name="landmark"
-                  value={
-                    form.landmark
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="Nearby landmark"
-                  disabled={
-                    savingAddress
-                  }
-                />
-
-                <AddressInput
-                  label="PIN Code"
-                  name="pincode"
-                  value={
-                    form.pincode
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="6 digit PIN code"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  inputMode="numeric"
-                  maxLength={6}
-                  error={
-                    formErrors.pincode
-                  }
-                  loading={
-                    pincodeLookupLoading
-                  }
-                />
-
-                <AddressInput
-                  label="City"
-                  name="city"
-                  value={
-                    form.city
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="City"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  error={
-                    formErrors.city
-                  }
-                />
-
-                <AddressInput
-                  label="State"
-                  name="state"
-                  value={
-                    form.state
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="State"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  error={
-                    formErrors.state
-                  }
-                />
-
-                <AddressInput
-                  label="Country"
-                  name="country"
-                  value={
-                    form.country
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  placeholder="Country"
-                  required
-                  disabled={
-                    savingAddress
-                  }
-                  error={
-                    formErrors.country
-                  }
-                />
-              </div>
-
-              <div className="mt-6">
-                <label className="oxanium mb-3 block text-sm font-semibold">
-                  Address Type
-                </label>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    "Home",
-                    "Office",
-                  ].map(
-                    (type) => {
-                      const selected =
-                        form.addressType ===
-                        type;
-
-                      return (
-                        <button
-                          key={type}
-                          type="button"
-                          disabled={
-                            savingAddress
-                          }
-                          onClick={() =>
-                            setForm(
-                              (
-                                previous
-                              ) => ({
-                                ...previous,
-                                addressType:
-                                  type,
-                              })
-                            )
-                          }
-                          className={`flex h-12 items-center justify-center gap-2 rounded-lg border font-oxanium text-sm font-semibold transition ${
-                            selected
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-text-secondary hover:border-primary"
-                          }`}
-                        >
-                          {type ===
-                          "Home" ? (
-                            <Home className="h-4 w-4" />
-                          ) : (
-                            <Building2 className="h-4 w-4" />
-                          )}
-
-                          {type}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-
-              <label className="mt-6 flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="isDefault"
-                  checked={
-                    form.isDefault
-                  }
-                  onChange={
-                    handleFormChange
-                  }
-                  disabled={
-                    savingAddress
-                  }
-                  className="h-4 w-4 rounded border-border text-primary accent-primary"
-                />
-
-                <span className="oxanium text-sm font-semibold">
-                  Make this my default address
-                </span>
-              </label>
-
-              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={
-                    closeAddressForm
-                  }
-                  disabled={
-                    savingAddress
-                  }
-                  className="oxanium h-12 rounded-lg border border-border px-6 text-sm font-semibold uppercase tracking-wide text-text-secondary transition hover:border-primary hover:text-primary disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={
-                    savingAddress
-                  }
-                  className="oxanium flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {savingAddress ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" />
-                      {editingAddressId
-                        ? "Update Address"
-                        : "Save Address"}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            <p className="oxanium text-lg font-bold text-primary">
+              {formatPrice(
+                paymentMode === "COD"
+                  ? cartTotal + 49
+                  : cartTotal
+              )}
+            </p>
           </div>
+
+          <button
+            type="button"
+            disabled={!canPlaceOrder}
+            onClick={handlePlaceOrder}
+            className="oxanium flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold uppercase tracking-wide text-white transition disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
+          >
+            {paymentLoading ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Processing
+              </>
+            ) : (
+              <>
+                {paymentMode === "COD"
+                  ? "Continue with COD"
+                  : "Pay Now"}
+
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
-      )}
-    </main>
-  );
-}
-
-function AddressInput({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  disabled = false,
-  inputMode,
-  maxLength,
-  error,
-  loading = false,
-}) {
-  return (
-    <div>
-      <label className="oxanium mb-2 block text-sm font-semibold">
-        {label}
-
-        {required && (
-          <span className="ml-1 text-primary">
-            *
-          </span>
-        )}
-      </label>
-
-      <div className="relative">
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          inputMode={inputMode}
-          maxLength={maxLength}
-          className={`oxanium h-12 w-full rounded-lg border bg-background px-4 text-sm text-text-primary outline-none transition placeholder:text-text-muted focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60 ${
-            error
-              ? "border-primary focus:border-primary"
-              : "border-border focus:border-primary"
-          } ${
-            loading
-              ? "pr-12"
-              : ""
-          }`}
-        />
-
-        {loading && (
-          <span className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-        )}
       </div>
-
-      {error && (
-        <p className="oxanium mt-1.5 text-xs text-primary">
-          {error}
-        </p>
-      )}
-    </div>
+    </main>
   );
 }
 
@@ -1776,18 +1737,18 @@ function CheckoutCartItem({
   formatPrice,
   onQuantityChange,
 }) {
-  const product =
-    item?.product ?? item;
+  const product = item?.product ?? {};
+
+  const variant =
+    item?.variant ??
+    item?.productVariant ??
+    item?.selectedVariant ??
+    null;
 
   const itemId =
     item?.id ??
     item?.cartItemId ??
     item?._id;
-
-  const productId =
-    item?.productId ??
-    product?.id ??
-    product?._id;
 
   const name =
     item?.name ??
@@ -1795,21 +1756,23 @@ function CheckoutCartItem({
     product?.title ??
     "Product";
 
-  const images =
-    item?.images ??
-    product?.images ??
-    [];
+  const variantImage =
+    getImageUrl(variant?.image) ||
+    getImageUrl(variant?.featuredImage) ||
+    getImageUrl(variant?.featuredimg);
 
-  const image =
-    images?.[0]?.url ??
-    images?.[0] ??
-    item?.image ??
-    product?.image;
+  const productImage =
+    getImageUrl(product?.featuredimg) ||
+    getImageUrl(product?.featuredImage) ||
+    getImageUrl(product?.image);
+
+  const imageUrl =
+    variantImage || productImage;
 
   const price = Number(
     item?.price ??
       item?.unitPrice ??
-      item?.variant?.price ??
+      variant?.price ??
       product?.price ??
       0
   );
@@ -1821,105 +1784,111 @@ function CheckoutCartItem({
   const subtotal =
     price * quantity;
 
-  const variant =
-    item?.variant;
-
   const variantName =
     variant?.name ??
     variant?.title ??
     variant?.value ??
+    variant?.label ??
     "";
 
-  return (
-    <div className="py-5 first:pt-0 last:pb-0">
-      <div className="flex gap-4">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface">
-          <Image
-            src={image}
-            alt={name}
-            fill
-            sizes="80px"
-            className="object-cover"
-            // onError={(event) => {
-            //   event.currentTarget.src ;
-            // }}
-          />
+  const variantDetails = [
+    variant?.flavour,
+    variant?.flavor,
+    variant?.size,
+    variant?.weight,
+    variant?.packSize,
+  ]
+    .filter(Boolean)
+    .join(" • ");
 
-          <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
+  return (
+    <div className="py-4 first:pt-0 last:pb-0 sm:py-5">
+      <div className="flex gap-3 sm:gap-4">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-surface sm:h-20 sm:w-20">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={name}
+              fill
+              sizes="80px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ShoppingBag className="h-6 w-6 text-text-muted sm:h-7 sm:w-7" />
+            </div>
+          )}
+
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white sm:h-6 sm:min-w-6 sm:px-1.5">
             {quantity}
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0">
-              <h3 className="oxanium line-clamp-2 text-sm font-semibold">
+              <h3 className="oxanium line-clamp-2 text-xs font-semibold sm:text-sm">
                 {name}
               </h3>
 
               {variantName && (
-                <p className="oxanium mt-1 text-[11px] text-text-muted">
+                <p className="oxanium mt-1 text-[10px] text-text-muted sm:text-xs">
                   {variantName}
                 </p>
               )}
 
-              <p className="oxanium mt-1 text-xs text-text-muted">
-                {formatPrice(price)}
-              </p>
+              {variantDetails && (
+                <p className="oxanium mt-0.5 line-clamp-1 text-[10px] text-text-muted sm:text-xs">
+                  {variantDetails}
+                </p>
+              )}
             </div>
 
-            <span className="oxanium shrink-0 text-sm font-bold">
-              {formatPrice(
-                subtotal
-              )}
-            </span>
+            <p className="oxanium shrink-0 text-xs font-bold sm:text-sm">
+              {formatPrice(subtotal)}
+            </p>
           </div>
 
           <div className="mt-3 flex items-center justify-between">
-            <div className="flex h-8 items-center overflow-hidden rounded-lg border border-border">
+            <div className="flex items-center rounded-lg border border-border">
               <button
                 type="button"
-                disabled={!itemId}
                 onClick={() =>
                   onQuantityChange(
                     item,
                     quantity - 1
                   )
                 }
-                className="flex h-full w-8 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary disabled:opacity-50"
-                aria-label="Decrease quantity"
+                disabled={!itemId}
+                className="flex h-7 w-7 items-center justify-center text-text-muted transition hover:text-primary disabled:opacity-50 sm:h-8 sm:w-8"
+                aria-label={`Decrease quantity of ${name}`}
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
 
-              <span className="oxanium flex h-full min-w-8 items-center justify-center border-x border-border px-2 text-xs font-semibold">
+              <span className="oxanium flex h-7 min-w-7 items-center justify-center border-x border-border px-2 text-xs font-semibold sm:h-8 sm:min-w-8">
                 {quantity}
               </span>
 
               <button
                 type="button"
-                disabled={!itemId}
                 onClick={() =>
                   onQuantityChange(
                     item,
                     quantity + 1
                   )
                 }
-                className="flex h-full w-8 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary disabled:opacity-50"
-                aria-label="Increase quantity"
+                disabled={!itemId}
+                className="flex h-7 w-7 items-center justify-center text-text-muted transition hover:text-primary disabled:opacity-50 sm:h-8 sm:w-8"
+                aria-label={`Increase quantity of ${name}`}
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            {productId && (
-              <Link
-                href={`/product/${productId}`}
-                className="oxanium text-[11px] font-semibold text-text-muted transition hover:text-primary"
-              >
-                View product
-              </Link>
-            )}
+            <span className="oxanium text-[10px] text-text-muted sm:text-xs">
+              {formatPrice(price)} each
+            </span>
           </div>
         </div>
       </div>
@@ -1927,113 +1896,83 @@ function CheckoutCartItem({
   );
 }
 
+function AddressInput({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  type = "text",
+  placeholder,
+  disabled,
+  required,
+  maxLength,
+  inputMode,
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className="oxanium mb-2 block text-xs font-semibold text-text-primary"
+      >
+        {label}
+
+        {required && (
+          <span className="ml-1 text-primary">
+            *
+          </span>
+        )}
+      </label>
+
+      <div className="relative">
+        <input
+          id={name}
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          inputMode={inputMode}
+          className={`oxanium w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition ${
+            error
+              ? "border-primary focus:ring-2 focus:ring-primary/20"
+              : "border-border focus:border-primary focus:ring-2 focus:ring-primary/10"
+          } ${
+            disabled
+              ? "cursor-not-allowed opacity-60"
+              : ""
+          }`}
+        />
+      </div>
+
+      {error && (
+        <p className="oxanium mt-1.5 text-xs text-primary">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CheckoutSkeleton() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
-      <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-        <div className="mb-7 animate-pulse sm:mb-10">
-          <div className="h-3 w-32 rounded-full bg-surface sm:h-4 sm:w-40" />
-          <div className="mt-4 h-10 w-48 rounded-lg bg-surface sm:mt-5 sm:h-14 sm:w-60" />
-          <div className="mt-3 h-3 w-64 max-w-full rounded-full bg-surface sm:h-4 sm:w-80" />
-        </div>
+      <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-8 lg:px-10 lg:py-14">
+        <div className="animate-pulse">
+          <div className="h-5 w-48 rounded bg-surface" />
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_430px] lg:gap-8">
-          <section className="space-y-5 sm:space-y-7">
-            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8">
-              <div className="animate-pulse">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="h-6 w-44 rounded-lg bg-surface sm:h-7 sm:w-52" />
-                    <div className="mt-2 h-3 w-56 max-w-full rounded-full bg-surface sm:h-4 sm:w-72" />
-                  </div>
-                  <div className="hidden h-11 w-32 rounded-lg bg-surface sm:block" />
-                </div>
+          <div className="mt-10 h-12 w-72 rounded bg-surface" />
 
-                <div className="mt-6 space-y-3 sm:mt-7">
-                  {[1, 2].map((item) => (
-                    <div key={item} className="rounded-xl border border-border p-4 sm:p-5">
-                      <div className="flex gap-3">
-                        <div className="h-10 w-10 shrink-0 rounded-lg bg-surface sm:h-11 sm:w-11" />
-                        <div className="min-w-0 flex-1 space-y-3">
-                          <div className="h-4 w-32 rounded bg-surface" />
-                          <div className="h-3 w-full max-w-[360px] rounded bg-surface" />
-                          <div className="h-3 w-3/4 rounded bg-surface" />
-                          <div className="h-3 w-1/2 rounded bg-surface" />
-                        </div>
-                        <div className="hidden h-5 w-5 rounded-full bg-surface sm:block" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 h-11 w-full rounded-lg bg-surface sm:hidden" />
-              </div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_400px]">
+            <div className="space-y-6">
+              <div className="h-80 rounded-2xl border border-border bg-card" />
+              <div className="h-56 rounded-2xl border border-border bg-card" />
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8">
-              <div className="animate-pulse">
-                <div className="h-6 w-36 rounded-lg bg-surface sm:h-7 sm:w-40" />
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="h-12 rounded-lg bg-surface" />
-                  <div className="h-12 rounded-lg bg-surface" />
-                  <div className="h-12 rounded-lg bg-surface sm:col-span-2" />
-                </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <div className="h-12 rounded-lg bg-surface" />
-                  <div className="h-12 rounded-lg bg-surface" />
-                  <div className="h-12 rounded-lg bg-surface" />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8">
-              <div className="animate-pulse">
-                <div className="h-6 w-32 rounded-lg bg-surface sm:h-7 sm:w-36" />
-                <div className="mt-5 h-14 w-full rounded-lg bg-surface" />
-                <div className="mt-4 h-14 w-full rounded-lg bg-surface" />
-              </div>
-            </div>
-          </section>
-
-          <aside className="lg:sticky lg:top-6 lg:self-start">
-            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 lg:p-8">
-              <div className="animate-pulse">
-                <div className="h-6 w-32 rounded-lg bg-surface sm:h-7 sm:w-36" />
-                <div className="mt-6 space-y-5">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex gap-3 sm:gap-4">
-                      <div className="h-16 w-16 shrink-0 rounded-xl bg-surface sm:h-20 sm:w-20" />
-                      <div className="min-w-0 flex-1 space-y-2.5">
-                        <div className="h-4 w-full rounded bg-surface" />
-                        <div className="h-3 w-2/3 rounded bg-surface" />
-                        <div className="h-3 w-1/3 rounded bg-surface" />
-                      </div>
-                      <div className="h-4 w-16 shrink-0 rounded bg-surface" />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="my-6 h-px bg-border" />
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <div className="h-4 w-24 rounded bg-surface" />
-                    <div className="h-4 w-20 rounded bg-surface" />
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="h-4 w-28 rounded bg-surface" />
-                    <div className="h-4 w-16 rounded bg-surface" />
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="h-5 w-20 rounded bg-surface" />
-                    <div className="h-5 w-24 rounded bg-surface" />
-                  </div>
-                </div>
-
-                <div className="my-6 h-px bg-border" />
-                <div className="h-14 w-full rounded-xl bg-surface" />
-              </div>
-            </div>
-          </aside>
+            <div className="h-[500px] rounded-2xl border border-border bg-card" />
+          </div>
         </div>
       </div>
     </main>

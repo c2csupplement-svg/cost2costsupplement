@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ArrowRight,
@@ -14,7 +14,6 @@ import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
 
 export default function BrandsPage() {
   const dispatch = useDispatch();
-
   const [search, setSearch] = useState("");
 
   const productAdState = useSelector(
@@ -32,85 +31,79 @@ export default function BrandsPage() {
     }
   }, [dispatch, loaded, loading]);
 
-  const normalizedBrands = useMemo(() => {
-    const source = Array.isArray(brands)
-      ? brands
-      : Array.isArray(brands?.brands)
-      ? brands.brands
-      : Array.isArray(brands?.data)
-      ? brands.data
-      : Array.isArray(brands?.data?.brands)
-      ? brands.data.brands
-      : [];
+  const source = Array.isArray(brands)
+    ? brands
+    : Array.isArray(brands?.brands)
+    ? brands.brands
+    : Array.isArray(brands?.data)
+    ? brands.data
+    : Array.isArray(brands?.data?.brands)
+    ? brands.data.brands
+    : [];
 
-    return source
-      .map((brand, index) => {
-        if (!brand || typeof brand !== "object") {
-          return null;
-        }
+  const normalizedBrands = source
+    .map((brand, index) => {
+      if (!brand || typeof brand !== "object") {
+        return null;
+      }
 
-        const id =
-          brand?.id ??
-          brand?.brandId ??
-          brand?._id ??
-          `brand-${index}`;
+      const id =
+        brand?.id ??
+        brand?.brandId ??
+        brand?._id ??
+        `brand-${index}`;
 
-        const name =
-          brand?.name ??
-          brand?.title ??
-          brand?.brandName ??
-          "";
+      const name =
+        brand?.name ??
+        brand?.title ??
+        brand?.brandName ??
+        "";
 
-        const slug =
-          brand?.slug ||
-          createSlug(name);
+      const slug =
+        brand?.slug ||
+        createSlug(name);
 
-        const logo =
-          brand?.logo ??
-          brand?.image ??
-          brand?.imageUrl ??
-          brand?.logoUrl ??
-          "";
+      const logo =
+        brand?.logo ??
+        brand?.image ??
+        brand?.imageUrl ??
+        brand?.logoUrl ??
+        "";
 
-        const bgColor =
-          brand?.bgColor ??
-          brand?.backgroundColor ??
-          "#ffffff";
+      const bgColor =
+        brand?.bgColor ??
+        brand?.backgroundColor ??
+        "#ffffff";
 
-        const productCount =
-          brand?.productCount ??
-          brand?.productsCount ??
-          brand?.totalProducts ??
-          null;
+      const productCount =
+        brand?.productCount ??
+        brand?.productsCount ??
+        brand?.totalProducts ??
+        null;
 
-        return {
-          id,
-          name: String(name).trim(),
-          slug: String(slug).trim(),
-          logo,
-          bgColor,
-          productCount,
-        };
-      })
-      .filter(
-        (brand) =>
-          brand &&
-          brand.name &&
-          brand.slug
-      );
-  }, [brands]);
-
-  const filteredBrands = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    if (!query) {
-      return normalizedBrands;
-    }
-
-    return normalizedBrands.filter((brand) =>
-      brand.name.toLowerCase().includes(query)
+      return {
+        id,
+        name: String(name).trim(),
+        slug: String(slug).trim(),
+        logo,
+        bgColor,
+        productCount,
+      };
+    })
+    .filter(
+      (brand) =>
+        brand &&
+        brand.name &&
+        brand.slug
     );
-  }, [normalizedBrands, search]);
+
+  const query = search.trim().toLowerCase();
+
+  const filteredBrands = query
+    ? normalizedBrands.filter((brand) =>
+        brand.name.toLowerCase().includes(query)
+      )
+    : normalizedBrands;
 
   if (
     loading &&

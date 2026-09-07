@@ -48,6 +48,7 @@ const getWishItemApi = async () => {
       getAuthConfig()
     );
 
+
     return response;
   } catch (err) {
     handleApiError(err, "Get wishlist");

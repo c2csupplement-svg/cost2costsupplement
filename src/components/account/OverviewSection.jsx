@@ -747,7 +747,6 @@ function QuickAction({
 
 function OrderRow({ order }) {
   const rawStatus = String(
-    order?.status ||
       order?.displayStage ||
       "pending"
   )
@@ -852,15 +851,6 @@ function OrderRow({ order }) {
               {formatStatus(status)}
             </span>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {}}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/10 transition hover:border-[#e52323] hover:bg-[#e52323] hover:text-white"
-            aria-label={`View ${orderNumber}`}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </div>

@@ -40,6 +40,7 @@ const getCartItem = async () => {
       `${API_BASE_URL}/cart/`,
       getAuthConfig()
     );
+
     
     return response;
   } catch (err) {

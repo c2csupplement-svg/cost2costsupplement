@@ -1,7 +1,8 @@
 "use client";
 
+import Head from "next/head";
 import Link from "next/link";
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ArrowLeft,
@@ -69,8 +70,7 @@ function normalizeBrands(brands) {
           brand.imageUrl ||
           brand.logoUrl ||
           "",
-        description:
-          brand.description || "",
+        description: brand.description || "",
         productCount:
           brand.productCount ??
           brand.productsCount ??
@@ -87,28 +87,22 @@ function normalizeBrands(brands) {
     );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Other Brands                                                               */
-/* -------------------------------------------------------------------------- */
-
 function OtherBrands({
   brands,
   currentSlug,
 }) {
-  const otherBrands = useMemo(() => {
-    const current = String(
-      currentSlug || ""
-    )
-      .trim()
-      .toLowerCase();
+  const current = String(
+    currentSlug || ""
+  )
+    .trim()
+    .toLowerCase();
 
-    return brands.filter(
-      (brand) =>
-        String(brand.slug || "")
-          .trim()
-          .toLowerCase() !== current
-    );
-  }, [brands, currentSlug]);
+  const otherBrands = brands.filter(
+    (brand) =>
+      String(brand.slug || "")
+        .trim()
+        .toLowerCase() !== current
+  );
 
   if (!otherBrands.length) {
     return null;
@@ -151,7 +145,6 @@ function OtherBrands({
               )}`}
               className="group flex h-[82px] min-w-[160px] shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-muted px-3 transition-all duration-300 hover:border-primary hover:shadow-[0_10px_25px_rgba(229,35,35,0.08)] sm:h-[90px] sm:min-w-[190px] sm:px-4"
             >
-              {/* Logo */}
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white p-1.5 sm:h-14 sm:w-14">
                 {brand.logo ? (
                   <img
@@ -167,7 +160,6 @@ function OtherBrands({
                 )}
               </div>
 
-              {/* Brand Info */}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-black uppercase tracking-tight text-text-primary transition-colors group-hover:text-primary sm:text-sm">
                   {brand.name}
@@ -195,10 +187,6 @@ function OtherBrands({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Skeletons                                                                  */
-/* -------------------------------------------------------------------------- */
-
 function ProductSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -206,9 +194,7 @@ function ProductSkeleton() {
 
       <div className="space-y-3 p-4 sm:p-5">
         <div className="h-4 animate-pulse rounded bg-surface-muted" />
-
         <div className="h-4 w-2/3 animate-pulse rounded bg-surface-muted" />
-
         <div className="h-5 w-1/3 animate-pulse rounded bg-surface-muted" />
       </div>
     </div>
@@ -218,7 +204,6 @@ function ProductSkeleton() {
 function BrandPageSkeleton() {
   return (
     <main className="min-h-screen bg-surface-muted">
-      {/* Brands Skeleton */}
       <section className="border-b border-border bg-card">
         <div className="mx-auto max-w-[1440px] px-5 py-5 sm:px-8 lg:px-10">
           <div className="flex gap-3 overflow-hidden">
@@ -234,7 +219,6 @@ function BrandPageSkeleton() {
         </div>
       </section>
 
-      {/* Header Skeleton */}
       <section className="border-b border-border">
         <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-3xl text-center">
@@ -249,7 +233,6 @@ function BrandPageSkeleton() {
         </div>
       </section>
 
-      {/* Products Skeleton */}
       <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
         <div className="mb-8 h-7 w-48 animate-pulse rounded bg-border" />
 
@@ -264,10 +247,6 @@ function BrandPageSkeleton() {
     </main>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Pagination                                                                 */
-/* -------------------------------------------------------------------------- */
 
 function Pagination({
   currentPage,
@@ -314,7 +293,10 @@ function Pagination({
       pages.push(page);
     }
 
-    if (currentPage < totalPages - 2) {
+    if (
+      currentPage <
+      totalPages - 2
+    ) {
       pages.push("end-dots");
     }
 
@@ -323,7 +305,6 @@ function Pagination({
 
   return (
     <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-      {/* Previous */}
       <button
         type="button"
         disabled={
@@ -345,7 +326,6 @@ function Pagination({
         </span>
       </button>
 
-      {/* Page Numbers */}
       {pages.map((page, index) => {
         if (
           page === "start-dots" ||
@@ -388,7 +368,6 @@ function Pagination({
         );
       })}
 
-      {/* Next */}
       <button
         type="button"
         disabled={
@@ -439,12 +418,8 @@ export default function BrandsPage({
     (state) => state.productAd || {}
   );
 
-  const brands = useMemo(
-    () =>
-      normalizeBrands(
-        productAdState.brands
-      ),
-    [productAdState.brands]
+  const brands = normalizeBrands(
+    productAdState.brands
   );
 
   const adsLoading = Boolean(
@@ -456,7 +431,10 @@ export default function BrandsPage({
   );
 
   useEffect(() => {
-    if (!adsLoaded && !adsLoading) {
+    if (
+      !adsLoaded &&
+      !adsLoading
+    ) {
       dispatch(getAllProductAds());
     }
   }, [
@@ -528,7 +506,6 @@ export default function BrandsPage({
     };
   }, [slug, currentPage]);
 
-
   const brand =
     brandData?.brand || null;
 
@@ -548,25 +525,18 @@ export default function BrandsPage({
   const displayDescription =
     brand?.description || "";
 
-  const products = useMemo(() => {
-    return Array.isArray(
-      brandData?.products
-    )
-      ? brandData.products
-      : [];
-  }, [brandData]);
+  const products = Array.isArray(
+    brandData?.products
+  )
+    ? brandData.products
+    : [];
 
-  const filteredProducts = useMemo(() => {
-    const query = search
-      .trim()
-      .toLowerCase();
+  const query = search
+    .trim()
+    .toLowerCase();
 
-    if (!query) {
-      return products;
-    }
-
-    return products.filter(
-      (product) => {
+  const filteredProducts = query
+    ? products.filter((product) => {
         const name = String(
           product?.name ||
             product?.title ||
@@ -587,9 +557,8 @@ export default function BrandsPage({
           sku.includes(query) ||
           productSlug.includes(query)
         );
-      }
-    );
-  }, [products, search]);
+      })
+    : products;
 
   const total =
     Number(
@@ -601,12 +570,12 @@ export default function BrandsPage({
   const totalPages = Math.max(
     1,
     Number(
-      brandData?.totalPages ??
-        Math.ceil(
-          total / PAGE_SIZE
-        ) ??
-        1
-    ) || 1
+      brandData?.totalPages
+    ) ||
+      Math.ceil(
+        total / PAGE_SIZE
+      ) ||
+      1
   );
 
   const serverPage =
@@ -615,6 +584,92 @@ export default function BrandsPage({
         brandData?.currentPage ??
         currentPage
     ) || currentPage;
+
+  const seoData =
+    brand?.seo || {};
+
+  const schemaData =
+    seoData?.schema || {};
+
+  const seoTitle =
+    seoData?.title ||
+    `${displayName} | Cost2Cost Supplement`;
+
+  const seoDescription =
+    seoData?.description ||
+    displayDescription ||
+    `Shop ${displayName} products and supplements online at Cost2Cost Supplement.`;
+
+  const seoKeywords = Array.isArray(
+    seoData?.keywords
+  )
+    ? seoData.keywords
+        .filter(Boolean)
+        .join(", ")
+    : String(
+        seoData?.keywords || ""
+      );
+
+  const canonical =
+    seoData?.canonical || "";
+
+  const facebook =
+    seoData?.facebook || {};
+
+  const twitter =
+    seoData?.twitter || {};
+
+  const ogTitle =
+    facebook?.title ||
+    seoTitle;
+
+  const ogDescription =
+    facebook?.description ||
+    seoDescription;
+
+  const ogImage =
+    facebook?.image_path ||
+    displayLogo ||
+    "";
+
+  const ogUrl =
+    facebook?.url ||
+    canonical ||
+    "";
+
+  const twitterCard =
+    twitter?.card ||
+    facebook?.card ||
+    "summary_large_image";
+
+  const twitterTitle =
+    twitter?.title ||
+    seoTitle;
+
+  const twitterDescription =
+    twitter?.description ||
+    seoDescription;
+
+  const twitterImage =
+    twitter?.image_path ||
+    facebook?.image_path ||
+    displayLogo ||
+    "";
+
+  const twitterUrl =
+    twitter?.redirect_url ||
+    "";
+
+  const schemaJson =
+    schemaData?.enabled &&
+    schemaData?.customJson
+      ? typeof schemaData.customJson ===
+        "string"
+        ? schemaData.customJson
+        : JSON.stringify(
+            schemaData.customJson
+          )
+      : "";
 
   const handlePageChange = (
     pageNumber
@@ -682,7 +737,6 @@ export default function BrandsPage({
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
             >
               Try Again
-
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -721,143 +775,201 @@ export default function BrandsPage({
   }
 
   return (
-    <main className="min-h-screen bg-surface-muted">
+    <>
+      <Head>
+        <title>{seoTitle}</title>
 
-      <section className="relative overflow-hidden border-b border-border bg-surface-muted">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
+        <meta
+          name="description"
+          content={seoDescription}
+        />
 
-        <div className="relative mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
-          <div className="flex items-center gap-2 overflow-hidden text-xs font-bold uppercase tracking-wide text-text-secondary">
-            <Link
-              href="/"
-              className="shrink-0 transition-colors hover:text-primary"
-            >
-              Home
-            </Link>
+        {seoKeywords && (
+          <meta
+            name="keywords"
+            content={seoKeywords}
+          />
+        )}
 
-            <ChevronRight className="h-4 w-4 shrink-0" />
+        <meta
+          name="robots"
+          content={
+            seoData?.robots ||
+            "index, follow"
+          }
+        />
 
-            <Link
-              href="/brands"
-              className="shrink-0 transition-colors hover:text-primary"
-            >
-              Brands
-            </Link>
+        {seoData?.author && (
+          <meta
+            name="author"
+            content={seoData.author}
+          />
+        )}
 
-            <ChevronRight className="h-4 w-4 shrink-0" />
+        {canonical && (
+          <link
+            rel="canonical"
+            href={canonical}
+          />
+        )}
 
-            <span className="truncate text-primary">
-              {displayName}
-            </span>
-          </div>
-        </div>
-      </section>
+        <meta
+          property="og:title"
+          content={ogTitle}
+        />
 
-      <OtherBrands
-        brands={brands}
-        currentSlug={slug}
-      />
+        <meta
+          property="og:description"
+          content={ogDescription}
+        />
 
-      <section className="border-b border-border bg-card">
-        <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-          <div className="flex flex-col items-center justify-center gap-5 text-center sm:flex-row sm:text-left">
-            {/* Logo */}
-            <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm sm:h-28 sm:w-40">
-              {displayLogo ? (
-                <img
-                  src={displayLogo}
-                  alt={displayName}
-                  loading="eager"
-                  className="max-h-full max-w-full object-contain"
-                />
-              ) : (
-                <span className="px-3 text-center text-sm font-black uppercase text-text-primary">
-                  {displayName}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+        <meta
+          property="og:type"
+          content="website"
+        />
 
-      <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
-        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-primary">
-              {displayName}
-            </p>
+        {ogImage && (
+          <meta
+            property="og:image"
+            content={ogImage}
+          />
+        )}
 
-            <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary sm:text-3xl">
-              Products
-            </h2>
+        {ogUrl && (
+          <meta
+            property="og:url"
+            content={ogUrl}
+          />
+        )}
 
-            <p className="mt-2 text-sm text-text-secondary">
-              Showing{" "}
-              {filteredProducts.length}{" "}
-              of {total} products
-            </p>
-          </div>
+        <meta
+          name="twitter:card"
+          content={twitterCard}
+        />
 
-          {/* Search */}
-          <div className="relative w-full lg:max-w-sm">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
+        <meta
+          name="twitter:title"
+          content={twitterTitle}
+        />
 
-            <input
-              type="search"
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Search products..."
-              className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-10 text-sm font-medium text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-primary focus:ring-2 focus:ring-primary/10"
-            />
+        <meta
+          name="twitter:description"
+          content={twitterDescription}
+        />
 
-            {search && (
-              <button
-                type="button"
-                onClick={() =>
-                  setSearch("")
-                }
-                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-muted hover:text-primary"
-                aria-label="Clear search"
+        {twitterImage && (
+          <meta
+            name="twitter:image"
+            content={twitterImage}
+          />
+        )}
+
+        {twitterUrl && (
+          <meta
+            name="twitter:url"
+            content={twitterUrl}
+          />
+        )}
+
+        {schemaJson && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: schemaJson,
+            }}
+          />
+        )}
+      </Head>
+
+      <main className="min-h-screen bg-surface-muted">
+        <section className="relative overflow-hidden border-b border-border bg-surface-muted">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
+
+          <div className="relative mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+            <div className="flex items-center gap-2 overflow-hidden text-xs font-bold uppercase tracking-wide text-text-secondary">
+              <Link
+                href="/"
+                className="shrink-0 transition-colors hover:text-primary"
               >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
+                Home
+              </Link>
 
-        {/* Loading Current Page */}
-        {brandLoading &&
-          brandData && (
-            <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-xs font-bold text-text-secondary">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <ChevronRight className="h-4 w-4 shrink-0" />
 
-              Loading products...
+              <Link
+                href="/brands"
+                className="shrink-0 transition-colors hover:text-primary"
+              >
+                Brands
+              </Link>
+
+              <ChevronRight className="h-4 w-4 shrink-0" />
+
+              <span className="truncate text-primary">
+                {displayName}
+              </span>
             </div>
-          )}
+          </div>
+        </section>
 
-        {/* No Products */}
-        {filteredProducts.length === 0 &&
-          !brandLoading && (
-            <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
-                <PackageOpen className="h-7 w-7 text-text-secondary" />
+        <OtherBrands
+          brands={brands}
+          currentSlug={slug}
+        />
+
+        <section className="border-b border-border bg-card">
+          <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+            <div className="flex flex-col items-center justify-center gap-5 text-center sm:flex-row sm:text-left">
+              <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm sm:h-28 sm:w-40">
+                {displayLogo ? (
+                  <img
+                    src={displayLogo}
+                    alt={displayName}
+                    loading="eager"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <span className="px-3 text-center text-sm font-black uppercase text-text-primary">
+                    {displayName}
+                  </span>
+                )}
               </div>
+            </div>
+          </div>
+        </section>
 
-              <h2 className="mt-5 text-xl font-black uppercase text-text-primary">
-                {search
-                  ? "No Products Found"
-                  : "No Products Available"}
+        <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
+          <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-primary">
+                {displayName}
+              </p>
+
+              <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary sm:text-3xl">
+                Products
               </h2>
 
-              <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
-                {search
-                  ? `No products match "${search}".`
-                  : `There are currently no products available from ${displayName}.`}
+              <p className="mt-2 text-sm text-text-secondary">
+                Showing{" "}
+                {filteredProducts.length}{" "}
+                of {total} products
               </p>
+            </div>
+
+            <div className="relative w-full lg:max-w-sm">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
+
+              <input
+                type="search"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search products..."
+                className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-10 text-sm font-medium text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
 
               {search && (
                 <button
@@ -865,63 +977,105 @@ export default function BrandsPage({
                   onClick={() =>
                     setSearch("")
                   }
-                  className="mt-6 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-muted hover:text-primary"
+                  aria-label="Clear search"
                 >
-                  Clear Search
+                  ×
                 </button>
               )}
             </div>
-          )}
+          </div>
 
-        {/* Products Grid */}
-        {filteredProducts.length > 0 && (
-          <>
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-text-secondary">
-                Page {serverPage} of{" "}
-                {totalPages}
-              </p>
+          {brandLoading &&
+            brandData && (
+              <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-xs font-bold text-text-secondary">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Loading products...
+              </div>
+            )}
 
-              {search && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSearch("")
-                  }
-                  className="text-xs font-black uppercase tracking-wide text-primary hover:underline"
-                >
-                  Clear Search
-                </button>
-              )}
-            </div>
+          {filteredProducts.length === 0 &&
+            !brandLoading && (
+              <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+                  <PackageOpen className="h-7 w-7 text-text-secondary" />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-              {filteredProducts.map(
-                (product, index) => (
-                  <ProductCard
-                    key={
-                      product?.id ||
-                      product?._id ||
-                      product?.slug ||
-                      `product-${index}`
+                <h2 className="mt-5 text-xl font-black uppercase text-text-primary">
+                  {search
+                    ? "No Products Found"
+                    : "No Products Available"}
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
+                  {search
+                    ? `No products match "${search}".`
+                    : `There are currently no products available from ${displayName}.`}
+                </p>
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
                     }
-                    product={product}
-                  />
-                )
-              )}
-            </div>
+                    className="mt-6 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            )}
 
-            <Pagination
-              currentPage={serverPage}
-              totalPages={totalPages}
-              onPageChange={
-                handlePageChange
-              }
-              loading={brandLoading}
-            />
-          </>
-        )}
-      </section>
-    </main>
+          {filteredProducts.length > 0 && (
+            <>
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-text-secondary">
+                  Page {serverPage} of{" "}
+                  {totalPages}
+                </p>
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    className="text-xs font-black uppercase tracking-wide text-primary hover:underline"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+                {filteredProducts.map(
+                  (product, index) => (
+                    <ProductCard
+                      key={
+                        product?.id ||
+                        product?._id ||
+                        product?.slug ||
+                        `product-${index}`
+                      }
+                      product={product}
+                    />
+                  )
+                )}
+              </div>
+
+              <Pagination
+                currentPage={serverPage}
+                totalPages={totalPages}
+                onPageChange={
+                  handlePageChange
+                }
+                loading={brandLoading}
+              />
+            </>
+          )}
+        </section>
+      </main>
+    </>
   );
 }

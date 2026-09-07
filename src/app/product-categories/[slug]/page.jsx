@@ -1,12 +1,10 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ArrowLeft,
-  ArrowRight,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -28,31 +26,6 @@ const createSlug = (value = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const getImage = (item) => {
-  const image =
-    item?.image ||
-    item?.featuredimg ||
-    item?.featuredImage ||
-    item?.thumbnail ||
-    item?.logo ||
-    item?.images?.[0];
-
-  if (typeof image === "string" && image.trim()) {
-    return image;
-  }
-
-  if (image && typeof image === "object") {
-    return (
-      image?.url ||
-      image?.src ||
-      image?.image ||
-      image?.imageUrl 
-    );
-  }
-
-  return ;
-};
-
 const normalizeCategoryResponse = (response) => {
   if (!response) {
     return null;
@@ -71,8 +44,8 @@ const normalizeCategoryResponse = (response) => {
   const category = Array.isArray(source)
     ? source[0]
     : Array.isArray(source?.categories)
-    ? source.categories[0]
-    : source;
+      ? source.categories[0]
+      : source;
 
   if (!category || typeof category !== "object") {
     return null;
@@ -123,12 +96,12 @@ const normalizeCategories = (source) => {
   const apiCategories = Array.isArray(source)
     ? source
     : Array.isArray(source?.categories)
-    ? source.categories
-    : Array.isArray(source?.data)
-    ? source.data
-    : Array.isArray(source?.data?.categories)
-    ? source.data.categories
-    : [];
+      ? source.categories
+      : Array.isArray(source?.data)
+        ? source.data
+        : Array.isArray(source?.data?.categories)
+          ? source.data.categories
+          : [];
 
   return apiCategories
     .filter(Boolean)
@@ -299,10 +272,7 @@ export default function ProductCategoryPage({ params }) {
           return;
         }
 
-        console.error(
-          "getCategoryBySlug:",
-          error
-        );
+        console.error("getCategoryBySlug:", error);
 
         setCategoryData(null);
 
@@ -325,31 +295,22 @@ export default function ProductCategoryPage({ params }) {
     };
   }, [slug]);
 
-  const categories = useMemo(() => {
-    const source =
-      productCateogry ??
-      productCategory;
+  const categories = normalizeCategories(
+    productCateogry ?? productCategory
+  );
 
-    return normalizeCategories(source);
-  }, [productCateogry, productCategory]);
+  const normalizedSlug = String(slug || "")
+    .toLowerCase()
+    .trim();
 
-  const fallbackCategory = useMemo(() => {
-    if (!slug || categories.length === 0) {
-      return null;
-    }
-
-    const normalizedSlug = String(slug)
-      .toLowerCase()
-      .trim();
-
-    return (
-      categories.find(
-        (item) =>
-          String(item.slug).toLowerCase() ===
-          normalizedSlug
-      ) || null
-    );
-  }, [categories, slug]);
+  const fallbackCategory =
+    slug && categories.length > 0
+      ? categories.find(
+          (item) =>
+            String(item.slug).toLowerCase() ===
+            normalizedSlug
+        ) || null
+      : null;
 
   const category = categoryData || fallbackCategory;
 
@@ -379,29 +340,19 @@ export default function ProductCategoryPage({ params }) {
     );
   }, [dispatch, categoryId, currentPage]);
 
-  const products = useMemo(() => {
-    if (Array.isArray(productList)) {
-      return productList;
-    }
+  let products = [];
 
-    if (Array.isArray(productList?.products)) {
-      return productList.products;
-    }
-
-    if (Array.isArray(productList?.data)) {
-      return productList.data;
-    }
-
-    if (
-      Array.isArray(
-        productList?.data?.products
-      )
-    ) {
-      return productList.data.products;
-    }
-
-    return [];
-  }, [productList]);
+  if (Array.isArray(productList)) {
+    products = productList;
+  } else if (Array.isArray(productList?.products)) {
+    products = productList.products;
+  } else if (Array.isArray(productList?.data)) {
+    products = productList.data;
+  } else if (
+    Array.isArray(productList?.data?.products)
+  ) {
+    products = productList.data.products;
+  }
 
   const totalProducts =
     productList?.total ??
@@ -411,33 +362,25 @@ export default function ProductCategoryPage({ params }) {
     products.length;
 
   const totalPages =
-    productList?.totalPages ??
-    Math.ceil(totalProducts / PAGE_SIZE) ??
+    Number(productList?.totalPages) ||
+    Math.ceil(
+      Number(totalProducts) / PAGE_SIZE
+    ) ||
     1;
 
   const serverPage =
     productList?.page ??
     currentPage;
 
-  const otherCategories = useMemo(() => {
-    const currentSlug = String(slug || "")
-      .toLowerCase()
-      .trim();
+  const otherCategories = categories.filter(
+    (item) =>
+      item.slug &&
+      String(item.slug).toLowerCase() !== normalizedSlug
+  );
 
-    return categories.filter(
-      (item) =>
-        item.slug &&
-        String(item.slug).toLowerCase() !== currentSlug
-    );
-  }, [categories, slug]);
-
-  const pageNumbers = useMemo(
-    () =>
-      getPageNumbers(
-        serverPage,
-        Number(totalPages) || 1
-      ),
-    [serverPage, totalPages]
+  const pageNumbers = getPageNumbers(
+    Number(serverPage) || currentPage,
+    Number(totalPages) || 1
   );
 
   const handlePageChange = (page) => {
@@ -517,7 +460,6 @@ export default function ProductCategoryPage({ params }) {
 
   return (
     <main className="min-h-screen bg-surface-muted">
-
       <section className="relative overflow-hidden border-b border-border bg-black">
         {category?.image && (
           <div

@@ -222,7 +222,7 @@ function OrderItem({
     ? order.items
     : [];
 
-  const canCancel =order?.status !== "pending";
+  const canCancel =order?.displayStage !== "pending";
 
   const shippingAddress =
     order?.address || {
@@ -259,11 +259,11 @@ function OrderItem({
 
                 <span
                   className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${getStatusClass(
-                    order?.status
+                    order?.displayStage
                   )}`}
                 >
                   {formatStatus(
-                    order?.displayStage || order?.status
+                    order?.displayStage
                   )}
                 </span>
               </div>

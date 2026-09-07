@@ -3,11 +3,10 @@
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Star } from "lucide-react";
-
-const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
+import { Heart, ShoppingBag, Star } from "lucide-react";
 
 export default function ProductCard({ product }) {
+
   const {
     toggleWishlist,
     isInWishlist,
@@ -62,7 +61,7 @@ export default function ProductCard({ product }) {
       }
     }
 
-    return PLACEHOLDER_IMAGE;
+    return "";
   })();
 
   const {
@@ -235,7 +234,9 @@ export default function ProductCard({ product }) {
       : "0";
 
   const productHref = productSlug
-    ? `/product/${productSlug}`
+    ? `/product/${encodeURIComponent(
+        productSlug
+      )}`
     : "/products";
 
   const handleWishlist = (event) => {
@@ -326,19 +327,6 @@ export default function ProductCard({ product }) {
           sm:w-10
         "
       >
-        <Heart
-          className="
-            h-4
-            w-4
-            sm:h-5
-            sm:w-5
-          "
-          fill={
-            wishlistActive
-              ? "currentColor"
-              : "none"
-          }
-        />
       </button>
 
       <Link
@@ -354,35 +342,40 @@ export default function ProductCard({ product }) {
             sm:h-[250px]
           "
         >
-          <Image
-            src={imageSrc}
-            alt={productName}
-            fill
-            sizes="
-              (max-width: 640px) 50vw,
-              (max-width: 1024px) 33vw,
-              310px
-            "
-            className="
-              object-contain
-              p-2
-              transition-transform
-              duration-500
-              ease-out
-              group-hover:scale-[1.04]
-              sm:p-4
-            "
-            onError={(event) => {
-              if (
-                !event.currentTarget.src.includes(
-                  PLACEHOLDER_IMAGE
-                )
-              ) {
-                event.currentTarget.src =
-                  PLACEHOLDER_IMAGE;
-              }
-            }}
-          />
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={productName}
+              fill
+              sizes="
+                (max-width: 640px) 50vw,
+                (max-width: 1024px) 33vw,
+                310px
+              "
+              className="
+                object-contain
+                p-2
+                transition-transform
+                duration-500
+                ease-out
+                group-hover:scale-[1.04]
+                sm:p-4
+              "
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ShoppingBag
+                className="
+                  h-10
+                  w-10
+                  text-text-muted
+                  sm:h-14
+                  sm:w-14
+                "
+                strokeWidth={1.25}
+              />
+            </div>
+          )}
         </div>
       </Link>
 

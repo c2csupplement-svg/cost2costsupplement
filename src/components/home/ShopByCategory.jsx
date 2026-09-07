@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowUpRight } from "lucide-react";
 
@@ -24,11 +24,9 @@ function CategoryCard({ category }) {
         border-border
         bg-card
         p-4
-
         sm:h-[190px]
         sm:rounded-2xl
         sm:p-5
-
         lg:h-[210px]
         lg:p-6
       "
@@ -65,32 +63,12 @@ function CategoryCard({ category }) {
                 leading-tight
                 tracking-tight
                 text-white
-
                 sm:text-base
-
                 lg:text-lg
               "
             >
               {category.title}
             </h3>
-
-            {/* {category.description && (
-              <p
-                className="
-                  mt-1
-                  line-clamp-2
-                  text-[10px]
-                  leading-4
-                  text-white/70
-
-                  sm:mt-2
-                  sm:text-xs
-                  sm:leading-5
-                "
-              >
-                {category.description}
-              </p>
-            )} */}
           </div>
 
           <div
@@ -106,7 +84,6 @@ function CategoryCard({ category }) {
               border-white/30
               bg-black/20
               text-white
-
               sm:h-9
               sm:w-9
             "
@@ -124,12 +101,7 @@ function CategoryCard({ category }) {
 export default function ShopByCategory() {
   const dispatch = useDispatch();
 
-  const {
-    productCateogry,
-    loading,
-    loaded,
-    error,
-  } = useSelector(
+  const { productCateogry, loading, loaded, error } = useSelector(
     (state) => state.productAd || {}
   );
 
@@ -139,52 +111,45 @@ export default function ShopByCategory() {
     }
   }, [dispatch, loaded, loading]);
 
-  const categories = useMemo(() => {
-    const apiCategories = Array.isArray(productCateogry)
-      ? productCateogry
-      : Array.isArray(productCateogry?.categories)
+  const apiCategories = Array.isArray(productCateogry)
+    ? productCateogry
+    : Array.isArray(productCateogry?.categories)
       ? productCateogry.categories
       : Array.isArray(productCateogry?.data)
-      ? productCateogry.data
-      : Array.isArray(productCateogry?.data?.categories)
-      ? productCateogry.data.categories
-      : [];
+        ? productCateogry.data
+        : Array.isArray(productCateogry?.data?.categories)
+          ? productCateogry.data.categories
+          : [];
 
-    return apiCategories
-      .filter(Boolean)
-      .map((category) => {
-        const slug =
-          category?.slug ||
-          category?.name
-            ?.toLowerCase()
-            ?.trim()
-            ?.replace(/[^a-z0-9]+/g, "-")
-            ?.replace(/^-+|-+$/g, "");
+  const categories = apiCategories
+    .filter(Boolean)
+    .map((category) => {
+      const slug =
+        category?.slug ||
+        category?.name
+          ?.toLowerCase()
+          ?.trim()
+          ?.replace(/[^a-z0-9]+/g, "-")
+          ?.replace(/^-+|-+$/g, "");
 
-        return {
-          id:
-            category?.id ||
-            slug ||
-            Math.random(),
-          title:
-            category?.name ||
-            category?.title ||
-            "Unnamed Category",
-          description:
-            category?.description || "",
-          slug: slug || "",
-          href: `/product-categories/${slug}`,
-          image:
-            category?.image ||
-            category?.featuredimg ||
-            category?.featuredImage ||
-            category?.thumbnail ||
-            null,
-          children:
-            category?.children || [],
-        };
-      });
-  }, [productCateogry]);
+      return {
+        id: category?.id || slug || Math.random(),
+        title:
+          category?.name ||
+          category?.title ||
+          "Unnamed Category",
+        description: category?.description || "",
+        slug: slug || "",
+        href: `/product-categories/${slug}`,
+        image:
+          category?.image ||
+          category?.featuredimg ||
+          category?.featuredImage ||
+          category?.thumbnail ||
+          null,
+        children: category?.children || [],
+      };
+    });
 
   return (
     <section className="relative overflow-hidden bg-surface-muted py-8 sm:py-12 lg:py-14">
@@ -209,9 +174,7 @@ export default function ShopByCategory() {
                 leading-none
                 tracking-[-0.03em]
                 text-text-primary
-
                 sm:text-4xl
-
                 lg:text-5xl
               "
             >
@@ -220,7 +183,7 @@ export default function ShopByCategory() {
           </div>
 
           <Link
-            href="/products"
+            href="/product-categories"
             className="
               group
               hidden
@@ -237,12 +200,10 @@ export default function ShopByCategory() {
               uppercase
               tracking-wide
               text-text-primary
-
               sm:inline-flex
             "
           >
             View All
-
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -253,10 +214,8 @@ export default function ShopByCategory() {
               grid
               grid-cols-2
               gap-3
-
               sm:grid-cols-3
               sm:gap-4
-
               lg:grid-cols-4
               lg:gap-5
             "
@@ -271,12 +230,9 @@ export default function ShopByCategory() {
                   border
                   border-border
                   bg-card
-
                   sm:h-[190px]
                   sm:rounded-2xl
-
                   lg:h-[210px]
-
                   ${index >= 4 ? "hidden sm:block" : ""}
                   ${index >= 6 ? "sm:hidden lg:block" : ""}
                 `}
@@ -293,67 +249,46 @@ export default function ShopByCategory() {
           </div>
         )}
 
-        {!loading &&
-          !error &&
-          categories.length === 0 && (
-            <div className="rounded-xl border border-border bg-card px-5 py-6 text-center">
-              <p className="text-sm text-text-secondary">
-                No categories available right now.
-              </p>
-            </div>
-          )}
+        {!loading && !error && categories.length === 0 && (
+          <div className="rounded-xl border border-border bg-card px-5 py-6 text-center">
+            <p className="text-sm text-text-secondary">
+              No categories available right now.
+            </p>
+          </div>
+        )}
 
-        {!loading &&
-          !error &&
-          categories.length > 0 && (
-            <div
-              className="
-                grid
-                grid-cols-2
-                gap-3
+        {!loading && !error && categories.length > 0 && (
+          <div
+            className="
+              grid
+              grid-cols-2
+              gap-3
+              sm:grid-cols-3
+              sm:gap-4
+              lg:grid-cols-4
+              lg:gap-5
+            "
+          >
+            {categories.map((category, index) => {
+              const hiddenOnMobile = index >= 4;
+              const hiddenOnTablet = index >= 6;
+              const hiddenOnDesktop = index >= 8;
 
-                sm:grid-cols-3
-                sm:gap-4
-
-                lg:grid-cols-4
-                lg:gap-5
-              "
-            >
-              {categories.map((category, index) => {
-                const hiddenOnMobile =
-                  index >= 4;
-
-                const hiddenOnTablet =
-                  index >= 6;
-
-                const hiddenOnDesktop =
-                  index >= 8;
-
-                return (
-                  <div
-                    key={category.id}
-                    className={`
-                      ${hiddenOnMobile ? "hidden sm:block" : ""}
-                      ${
-                        hiddenOnTablet
-                          ? "sm:hidden lg:block"
-                          : ""
-                      }
-                      ${
-                        hiddenOnDesktop
-                          ? "lg:hidden"
-                          : ""
-                      }
-                    `}
-                  >
-                    <CategoryCard
-                      category={category}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+              return (
+                <div
+                  key={category.id}
+                  className={`
+                    ${hiddenOnMobile ? "hidden sm:block" : ""}
+                    ${hiddenOnTablet ? "sm:hidden lg:block" : ""}
+                    ${hiddenOnDesktop ? "lg:hidden" : ""}
+                  `}
+                >
+                  <CategoryCard category={category} />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="mt-6 sm:hidden">
           <Link

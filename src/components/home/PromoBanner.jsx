@@ -61,6 +61,14 @@ export default function PromoBanner() {
     banner?.alt ||
     "Special Offers";
 
+  const buttonText =
+    banner?.buttonText ||
+    "Shop Offers";
+
+  const bannerLink =
+    banner?.link ||
+    "/products";
+
   return (
     <section className="bg-background py-5 sm:py-8 lg:py-10">
       <div className="mx-auto w-full max-w-[1440px] px-3 sm:px-6 lg:px-10">
@@ -88,10 +96,10 @@ export default function PromoBanner() {
               alt={altText}
               className="
                 block
-                w-full
-               
-                sm:hidden
                 h-110
+                w-full
+                object-cover
+                sm:hidden
               "
             />
 
@@ -99,7 +107,7 @@ export default function PromoBanner() {
           </div>
 
           <Link
-            href="/products"
+            href={bannerLink}
             className="
               group/cta
               absolute
@@ -137,7 +145,7 @@ export default function PromoBanner() {
               lg:text-xs
             "
           >
-            Shop Offers
+            {buttonText}
 
             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1 sm:h-4 sm:w-4" />
           </Link>

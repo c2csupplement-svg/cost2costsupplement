@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
 import {
   ShoppingCart,
   Heart,
@@ -13,10 +14,9 @@ import {
   SearchIcon,
   Loader2,
 } from "lucide-react";
-import { useShop } from "@/context/ShopContext";
 import { getProductSearchApi } from "@/apiService/api";
-
-const PLACEHOLDER_IMAGE = "/placeholder-product.svg";
+import { fetchCartItems } from "@/redux/features/cart/cartActions";
+import { getWishItem } from "@/redux/features/wish/wishAction";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -24,8 +24,39 @@ const navItems = [
   { label: "Whyc2c", href: "/why-cost2cost" },
   { label: "Blog", href: "/blogs" },
   { label: "Contact Us", href: "/contact" },
-  { label: "User", href: "/account" },
 ];
+
+function getArrayFromState(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value?.items)) {
+    return value.items;
+  }
+
+  if (Array.isArray(value?.data)) {
+    return value.data;
+  }
+
+  if (Array.isArray(value?.products)) {
+    return value.products;
+  }
+
+  if (Array.isArray(value?.wishItems)) {
+    return value.wishItems;
+  }
+
+  if (Array.isArray(value?.cartItems)) {
+    return value.cartItems;
+  }
+
+  if (Array.isArray(value?.results)) {
+    return value.results;
+  }
+
+  return [];
+}
 
 function normalizeProducts(response) {
   const data = response?.data ?? response;
@@ -67,14 +98,14 @@ function getProductImage(product) {
     product?.images?.[0];
 
   if (!image) {
-    return PLACEHOLDER_IMAGE;
+    return "";
   }
 
   if (typeof image === "string") {
     const value = image.trim();
 
     if (!value) {
-      return PLACEHOLDER_IMAGE;
+      return "";
     }
 
     const markdownMatch = value.match(
@@ -90,30 +121,11 @@ function getProductImage(product) {
       image?.src ||
       image?.image ||
       image?.imageUrl ||
-      PLACEHOLDER_IMAGE
+      ""
     );
   }
 
-  return PLACEHOLDER_IMAGE;
-}
-
-function getProductPrice(product) {
-  const price =
-    product?.salePrice ??
-    product?.discountedPrice ??
-    product?.price ??
-    product?.priceRange?.min ??
-    0;
-
-  const number = Number(price);
-
-  if (!Number.isFinite(number)) {
-    return "0";
-  }
-
-  return new Intl.NumberFormat("en-IN").format(
-    number
-  );
+  return "";
 }
 
 function getProductSlug(product) {
@@ -129,24 +141,34 @@ function getProductSlug(product) {
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch();
 
-  const { cartCount, wishlistCount } = useShop();
+  const {products: cartState} = useSelector((state) => state.product);
+  const     {wishItems : wishState} = useSelector((state) => state.wish);
+
+
+  const cartItems = getArrayFromState(
+    cartState?.cart?.items
+  );
+
+  const wishlistCount = wishState?.total || 0
+
+  const cartCount = cartItems.reduce(
+    (total, item) =>
+      total + (Number(item?.quantity) || 0),
+    0
+  );
 
   const [menuOpen, setMenuOpen] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
-
   const [
     debouncedSearchQuery,
     setDebouncedSearchQuery,
   ] = useState("");
-
   const [searchResults, setSearchResults] =
     useState([]);
-
   const [searchLoading, setSearchLoading] =
     useState(false);
-
   const [searchOpen, setSearchOpen] =
     useState(false);
 
@@ -157,6 +179,11 @@ export default function Header() {
     href === "/"
       ? pathname === "/"
       : pathname?.startsWith(href);
+
+  useEffect(() => {
+    dispatch(fetchCartItems());
+    dispatch(getWishItem());
+  }, [dispatch]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -425,7 +452,7 @@ export default function Header() {
               />
             </Link>
 
-            <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-4">
+            <div className="ml-auto flex items-center gap-3 sm:gap-5">
               <div
                 ref={desktopSearchRef}
                 className="relative hidden sm:block"
@@ -434,7 +461,7 @@ export default function Header() {
                   onSubmit={handleSearchSubmit}
                   className="relative"
                 >
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
 
                   <input
                     type="search"
@@ -442,7 +469,7 @@ export default function Header() {
                     onChange={handleSearchChange}
                     onFocus={handleSearchFocus}
                     placeholder="Search products..."
-                    className="h-10 w-[220px] rounded-full border border-border bg-white pl-10 pr-4 text-xs font-semibold text-text-primary outline-none transition-all duration-300 placeholder:text-text-muted focus:w-[280px] focus:border-primary"
+                    className="h-12 w-[275px] rounded-full border border-border bg-white pl-12 pr-5 text-sm font-semibold text-text-primary outline-none transition-colors focus:border-primary lg:w-[320px]"
                   />
                 </form>
 
@@ -451,35 +478,49 @@ export default function Header() {
                     results={searchResults}
                     loading={searchLoading}
                     query={searchQuery}
-                    onProductClick={handleProductClick}
+                    onProductClick={
+                      handleProductClick
+                    }
                   />
                 )}
               </div>
 
               <Link
                 href="/wishlist"
-                aria-label="Wishlist"
+                aria-label={`Wishlist${
+                  wishlistCount
+                    ? `, ${wishlistCount} items`
+                    : ""
+                }`}
                 className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-6 w-6" />
 
                 {wishlistCount > 0 && (
-                  <span className="absolute right-0 top-0 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">
-                    {wishlistCount}
+                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+                    {wishlistCount > 99
+                      ? "99+"
+                      : wishlistCount}
                   </span>
                 )}
               </Link>
 
               <Link
                 href="/cart"
-                aria-label="Cart"
+                aria-label={`Cart${
+                  cartCount
+                    ? `, ${cartCount} items`
+                    : ""
+                }`}
                 className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
               >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-6 w-6" />
 
                 {cartCount > 0 && (
-                  <span className="absolute right-0 top-0 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">
-                    {cartCount}
+                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+                    {cartCount > 99
+                      ? "99+"
+                      : cartCount}
                   </span>
                 )}
               </Link>
@@ -487,9 +528,9 @@ export default function Header() {
               <Link
                 href="/account"
                 aria-label="Account"
-                className="hidden h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white sm:flex"
+                className="relative flex h-11 w-8 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
               >
-                <User className="h-5 w-5" />
+                <User className="h-6 w-6" />
               </Link>
             </div>
           </div>
@@ -536,7 +577,7 @@ export default function Header() {
             className="absolute inset-0 animate-menu-fade bg-black/45 backdrop-blur-xl"
           />
 
-          <div className="absolute inset-0 flex flex-col animate-menu-scale bg-white/90 backdrop-blur-2xl">
+          <div className="absolute inset-0 flex animate-menu-scale flex-col bg-white/90 backdrop-blur-2xl">
             <div className="flex h-[76px] shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-3">
                 <span className="h-[2px] w-7 bg-primary" />
@@ -638,73 +679,65 @@ function SearchDropdown({
             </p>
           </div>
 
-          {results.slice(0, 8).map((product, index) => {
-            const slug = getProductSlug(product);
-            const image = getProductImage(product);
-            const price = getProductPrice(product);
+          {results.slice(0, 8).map(
+            (product, index) => {
+              const slug =
+                getProductSlug(product);
 
-            const productKey =
-              product?.id ??
-              product?.productId ??
-              product?._id ??
-              slug ??
-              index;
+              const image =
+                getProductImage(product);
 
-            return (
-              <button
-                key={productKey}
-                type="button"
-                onClick={() =>
-                  onProductClick(product)
-                }
-                disabled={!slug}
-                className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors duration-200 hover:bg-[#F7F7F7] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E5E5E5] bg-white">
-                  <img
-                    src={image}
-                    alt={
-                      product?.name ||
-                      "Product"
-                    }
-                    className="h-full w-full object-contain p-1.5"
-                    onError={(event) => {
-                      if (
-                        event.currentTarget.src.includes(
-                          PLACEHOLDER_IMAGE
-                        )
-                      ) {
-                        return;
-                      }
+              const productKey =
+                product?.id ??
+                product?.productId ??
+                product?._id ??
+                slug ??
+                index;
 
-                      event.currentTarget.src =
-                        PLACEHOLDER_IMAGE;
-                    }}
-                  />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-black uppercase text-[#111111]">
-                    {product?.name ||
-                      product?.title ||
-                      "Product"}
-                  </p>
-
-                  {product?.brand?.name && (
-                    <p className="mt-0.5 truncate text-[10px] text-[#737373]">
-                      {product.brand.name}
-                    </p>
+              return (
+                <button
+                  key={productKey}
+                  type="button"
+                  onClick={() =>
+                    onProductClick(product)
+                  }
+                  disabled={!slug}
+                  className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors duration-200 hover:bg-[#F7F7F7] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {image ? (
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E5E5E5] bg-white">
+                      <img
+                        src={image}
+                        alt={
+                          product?.name ||
+                          "Product"
+                        }
+                        className="h-full w-full object-contain p-1.5"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-14 w-14 shrink-0 rounded-lg border border-[#E5E5E5] bg-[#F7F7F7]" />
                   )}
 
-                  <p className="mt-1 text-xs font-black text-[#E52323]">
-                    ₹{price}
-                  </p>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-black uppercase text-[#111111]">
+                      {product?.name ||
+                        product?.title ||
+                        "Product"}
+                    </p>
 
-                <ArrowUpRight className="h-4 w-4 shrink-0 text-[#A3A3A3]" />
-              </button>
-            );
-          })}
+                    {product?.brand?.name && (
+                      <p className="mt-0.5 truncate text-[10px] text-[#737373]">
+                        {product.brand.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-[#A3A3A3]" />
+                </button>
+              );
+            }
+          )}
         </div>
       )}
 

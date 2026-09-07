@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowUpRight, Search } from "lucide-react";
 
@@ -77,9 +77,7 @@ export default function ProductCategoriesPage() {
 
   const [search, setSearch] = useState("");
 
-  const productAdState = useSelector(
-    (state) => state.productAd
-  );
+  const productAdState = useSelector((state) => state.productAd);
 
   const {
     productCateogry,
@@ -94,81 +92,70 @@ export default function ProductCategoriesPage() {
     }
   }, [dispatch, loaded, loading]);
 
-  const categories = useMemo(() => {
-    const source = productCateogry;
+  const source = productCateogry;
 
-    let apiCategories = [];
+  let apiCategories = [];
 
-    if (Array.isArray(source)) {
-      apiCategories = source;
-    } else if (Array.isArray(source?.categories)) {
-      apiCategories = source.categories;
-    } else if (Array.isArray(source?.data)) {
-      apiCategories = source.data;
-    } else if (Array.isArray(source?.data?.categories)) {
-      apiCategories = source.data.categories;
-    }
+  if (Array.isArray(source)) {
+    apiCategories = source;
+  } else if (Array.isArray(source?.categories)) {
+    apiCategories = source.categories;
+  } else if (Array.isArray(source?.data)) {
+    apiCategories = source.data;
+  } else if (Array.isArray(source?.data?.categories)) {
+    apiCategories = source.data.categories;
+  }
 
-    return apiCategories
-      .filter(Boolean)
-      .map((category, index) => {
-        const name =
-          category?.name ||
-          category?.title ||
-          category?.categoryName ||
-          "Unnamed Category";
+  const categories = apiCategories
+    .filter(Boolean)
+    .map((category, index) => {
+      const name =
+        category?.name ||
+        category?.title ||
+        category?.categoryName ||
+        "Unnamed Category";
 
-        const slug =
-          category?.slug ||
-          createSlug(name);
+      const slug =
+        category?.slug ||
+        createSlug(name);
 
-        return {
-          id:
-            category?.id ||
-            category?.categoryId ||
-            category?._id ||
-            slug ||
-            index,
-          title: name,
-          slug,
-          description:
-            category?.description ||
-            category?.shortDescription ||
-            "",
-          image:
-            category?.image ||
-            category?.featuredimg ||
-            category?.featuredImage ||
-            category?.thumbnail ||
-            category?.imageUrl ||
-            null,
-          productCount:
-            category?.productCount ??
-            category?.productsCount ??
-            category?.count ??
-            null,
-        };
-      });
-  }, [productCateogry]);
-
-  const filteredCategories = useMemo(() => {
-    const value = search.trim().toLowerCase();
-
-    if (!value) {
-      return categories;
-    }
-
-    return categories.filter((category) => {
-      return (
-        category.title
-          .toLowerCase()
-          .includes(value) ||
-        category.description
-          .toLowerCase()
-          .includes(value)
-      );
+      return {
+        id:
+          category?.id ||
+          category?.categoryId ||
+          category?._id ||
+          slug ||
+          index,
+        title: name,
+        slug,
+        description:
+          category?.description ||
+          category?.shortDescription ||
+          "",
+        image:
+          category?.image ||
+          category?.featuredimg ||
+          category?.featuredImage ||
+          category?.thumbnail ||
+          category?.imageUrl ||
+          null,
+        productCount:
+          category?.productCount ??
+          category?.productsCount ??
+          category?.count ??
+          null,
+      };
     });
-  }, [categories, search]);
+
+  const value = search.trim().toLowerCase();
+
+  const filteredCategories = value
+    ? categories.filter(
+        (category) =>
+          category.title.toLowerCase().includes(value) ||
+          category.description.toLowerCase().includes(value)
+      )
+    : categories;
 
   return (
     <main className="min-h-screen bg-surface-muted py-12 sm:py-16 lg:py-20">

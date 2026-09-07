@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllBlogs } from "@/redux/features/blogs/blogAction";
 import Image from "next/image";
@@ -23,7 +23,8 @@ export default function BlogsPage() {
     loaded,
   } = useSelector((state) => state.blog || {});
 
-  const [selectedCategory, setSelectedCategory] = useState("All Articles");
+  const [selectedCategory, setSelectedCategory] =
+    useState("All Articles");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -35,21 +36,15 @@ export default function BlogsPage() {
 
   const blogsData = blog?.data ?? blog ?? {};
 
-  const posts = useMemo(() => {
-    if (Array.isArray(blogsData)) {
-      return blogsData;
-    }
+  let posts = [];
 
-    if (Array.isArray(blogsData?.blogs)) {
-      return blogsData.blogs;
-    }
-
-    if (Array.isArray(blogsData?.data)) {
-      return blogsData.data;
-    }
-
-    return [];
-  }, [blogsData]);
+  if (Array.isArray(blogsData)) {
+    posts = blogsData;
+  } else if (Array.isArray(blogsData?.blogs)) {
+    posts = blogsData.blogs;
+  } else if (Array.isArray(blogsData?.data)) {
+    posts = blogsData.data;
+  }
 
   const totalPages = Math.max(
     1,
@@ -67,35 +62,36 @@ export default function BlogsPage() {
     });
   };
 
-  const categories = useMemo(() => {
-    const apiCategories = [
-      ...new Set(
-        posts
-          .map((post) => post?.category)
-          .filter(Boolean)
-      ),
-    ];
+  const categories = [
+    "All Articles",
+    ...new Set(
+      posts
+        .map((post) => post?.category)
+        .filter(Boolean)
+    ),
+  ];
 
-    return ["All Articles", ...apiCategories];
-  }, [posts]);
+  const query = searchQuery.toLowerCase().trim();
 
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
-      const matchesCategory =
-        selectedCategory === "All Articles" ||
-        post?.category === selectedCategory;
+  const filteredPosts = posts.filter((post) => {
+    const matchesCategory =
+      selectedCategory === "All Articles" ||
+      post?.category === selectedCategory;
 
-      const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !query ||
+      (post?.title || "")
+        .toLowerCase()
+        .includes(query) ||
+      (post?.excerpt || "")
+        .toLowerCase()
+        .includes(query) ||
+      (post?.category || "")
+        .toLowerCase()
+        .includes(query);
 
-      const matchesSearch =
-        !query ||
-        (post?.title || "").toLowerCase().includes(query) ||
-        (post?.excerpt || "").toLowerCase().includes(query) ||
-        (post?.category || "").toLowerCase().includes(query);
-
-      return matchesCategory && matchesSearch;
-    });
-  }, [posts, selectedCategory, searchQuery]);
+    return matchesCategory && matchesSearch;
+  });
 
   const featuredPost = posts[0];
 
@@ -173,9 +169,10 @@ export default function BlogsPage() {
           </h1>
 
           <p className="mt-5 max-w-2xl font-oxanium text-sm leading-7 text-text-secondary sm:text-base">
-            Practical guides, supplement education, training insights and
-            evidence-informed nutrition advice to help you make better
-            decisions for your health and performance.
+            Practical guides, supplement education, training
+            insights and evidence-informed nutrition advice to
+            help you make better decisions for your health and
+            performance.
           </p>
         </div>
       </div>
@@ -190,7 +187,10 @@ export default function BlogsPage() {
               {featuredPost.featuredImage && (
                 <Image
                   src={featuredPost.featuredImage}
-                  alt={featuredPost.title || "Featured article"}
+                  alt={
+                    featuredPost.title ||
+                    "Featured article"
+                  }
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover transition duration-700 group-hover:scale-105"
@@ -261,23 +261,11 @@ export default function BlogsPage() {
                         setSelectedCategory(category);
                         setCurrentPage(1);
                       }}
-                      className={`
-                        rounded-full
-                        border
-                        px-4
-                        py-2.5
-                        font-oxanium
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wide
-                        transition-all
-                        ${
-                          active
-                            ? "border-primary bg-primary text-white shadow-[0_5px_15px_rgba(229,35,35,0.15)]"
-                            : "border-border bg-card text-text-secondary hover:border-primary hover:text-primary"
-                        }
-                      `}
+                      className={`rounded-full border px-4 py-2.5 font-oxanium text-xs font-semibold uppercase tracking-wide transition-all ${
+                        active
+                          ? "border-primary bg-primary text-white shadow-[0_5px_15px_rgba(229,35,35,0.15)]"
+                          : "border-border bg-card text-text-secondary hover:border-primary hover:text-primary"
+                      }`}
                     >
                       {category}
                     </button>
@@ -351,7 +339,12 @@ export default function BlogsPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredPosts.map((post, index) => (
               <BlogCard
-                key={post.id || post._id || post.slug || index}
+                key={
+                  post.id ||
+                  post._id ||
+                  post.slug ||
+                  index
+                }
                 post={post}
               />
             ))}
@@ -389,7 +382,9 @@ export default function BlogsPage() {
             <div className="mt-12 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-8">
               <button
                 type="button"
-                onClick={() => goToPage(currentPage - 1)}
+                onClick={() =>
+                  goToPage(currentPage - 1)
+                }
                 disabled={currentPage === 1}
                 className="flex h-10 items-center justify-center rounded-md border border-border bg-card px-4 font-oxanium text-sm text-text-secondary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -404,24 +399,11 @@ export default function BlogsPage() {
                   key={page}
                   type="button"
                   onClick={() => goToPage(page)}
-                  className={`
-                    flex
-                    h-10
-                    w-10
-                    items-center
-                    justify-center
-                    rounded-md
-                    border
-                    font-oxanium
-                    text-sm
-                    font-bold
-                    transition
-                    ${
-                      currentPage === page
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-card text-text-secondary hover:border-primary hover:text-primary"
-                    }
-                  `}
+                  className={`flex h-10 w-10 items-center justify-center rounded-md border font-oxanium text-sm font-bold transition ${
+                    currentPage === page
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-card text-text-secondary hover:border-primary hover:text-primary"
+                  }`}
                 >
                   {page}
                 </button>
@@ -429,8 +411,12 @@ export default function BlogsPage() {
 
               <button
                 type="button"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={() =>
+                  goToPage(currentPage + 1)
+                }
+                disabled={
+                  currentPage === totalPages
+                }
                 className="flex h-10 items-center justify-center rounded-md border border-border bg-card px-4 font-oxanium text-sm text-text-secondary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
