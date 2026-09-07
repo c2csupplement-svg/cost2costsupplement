@@ -101,7 +101,7 @@ export default function LoginPage() {
       <div className="mx-auto grid min-h-screen max-w-[1450px] grid-cols-1 lg:grid-cols-2">
         <div className="relative hidden min-h-screen overflow-hidden lg:block">
           <img
-            src="https://www.instagram.com/p/DVNzKFukwYD/?stkn=ZXhmZHhscGZ3dzJq"
+            src="/images/login.webp"
             alt="Cost2Cost Supplement"
             className="absolute inset-0 h-full w-full object-cover"
           />

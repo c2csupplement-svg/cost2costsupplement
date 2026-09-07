@@ -1596,344 +1596,325 @@ function CheckoutContent() {
     );
   };
 
-  const startPayment = async () => {
-    if (!selectedAddressId) {
-      toast.error(
-        "Please select a delivery address."
-      );
-      return;
+const startPayment = async () => {
+  if (!selectedAddressId) {
+    toast.error("Please select a delivery address.");
+    return;
+  }
+
+  if (isBuyNow && !buyNowItem) {
+    toast.error("Buy Now item is missing.");
+    return;
+  }
+
+  if (!isBuyNow && !cart.length) {
+    toast.error("Your checkout is empty.");
+    return;
+  }
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    setPaymentLoading(true);
+
+    let response;
+
+    if (isBuyNow) {
+      response = await buyNowApi({
+        productId: buyNowItem?.productId,
+        variantId: buyNowItem?.variantId ?? null,
+        quantity: Number(buyNowItem?.quantity || 1),
+        addressId: Number(selectedAddressId),
+        paymentMethod: paymentMode,
+        couponCode: appliedCoupon?.code || null,
+        couponId: appliedCoupon?.id || null,
+        couponDiscount: Number(appliedCouponDiscount || 0),
+      });
+    } else {
+      response = await createRazorpayOrderApi({
+        addressId: Number(selectedAddressId),
+        paymentMethod: paymentMode,
+      });
     }
 
-    if (
-      isBuyNow &&
-      !buyNowItem
-    ) {
-      toast.error(
-        "Buy Now item is missing."
-      );
-      return;
+    const data = response?.data ?? response;
+
+    console.log("Checkout API response:", data);
+
+    if (!data) {
+      throw new Error("No response received from checkout API.");
     }
 
-    if (
-      !isBuyNow &&
-      !cart.length
-    ) {
-      toast.error(
-        "Your checkout is empty."
+    if (data?.success === false) {
+      throw new Error(
+        data?.message || "Unable to create order."
       );
-      return;
     }
 
-    try {
-      setPaymentLoading(true);
-
-      let response;
-
-      if (isBuyNow) {
-        response =
-          await buyNowApi({
-            productId:
-              buyNowItem?.productId,
-
-            variantId:
-              buyNowItem?.variantId,
-
-            quantity:
-              Number(
-                buyNowItem?.quantity ||
-                  1
-              ),
-
-            addressId:
-              selectedAddressId,
-
-            paymentMethod:
-              paymentMode,
-
-            couponCode:
-              appliedCoupon?.code ||
-              null,
-
-            couponId:
-              appliedCoupon?.id ||
-              null,
-
-            couponDiscount:
-              Number(
-                appliedCouponDiscount ||
-                  0
-              ),
-          });
-      } else {
-        response =
-          await createRazorpayOrderApi({
-            addressId:
-              selectedAddressId,
-
-            paymentMethod:
-              paymentMode,
-          });
-      }
-
-      const data =
-        response?.data ??
-        response;
-
-      console.log(
-        "Checkout API response:",
-        data
-      );
-
-      if (
-        data?.success === false
-      ) {
-        throw new Error(
-          data?.message ||
-            "Unable to create order."
-        );
-      }
-
-      if (
+    const isCOD = Boolean(
+      data?.isCOD ??
+        data?.order?.isCOD ??
+        data?.data?.isCOD ??
         paymentMode === "COD"
-      ) {
-        if (isBuyNow) {
-          sessionStorage.removeItem(
-            "buyNowCheckout"
-          );
-        }
+    );
 
-        toast.success(
-          "Order placed successfully."
-        );
+    const razorpayOrderId =
+      data?.razorpayOrderId ||
+      data?.order?.razorpayOrderId ||
+      data?.data?.razorpayOrderId;
 
-        if (!isBuyNow) {
-          await dispatch(
-            fetchCartItemsCheckOut()
-          );
-        }
+    const razorpayCurrency =
+      data?.currency ||
+      data?.order?.currency ||
+      data?.data?.currency ||
+      "INR";
 
-        router.push("/cart");
-        return;
-      }
+    const razorpayKey =
+      data?.key ||
+      data?.order?.key ||
+      data?.data?.key ||
+      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
-      const razorpayOrderId =
-        data?.razorpayOrderId ||
-        data?.order?.razorpayOrderId ||
-        data?.data?.razorpayOrderId;
+    const advanceAmount = Number(
+      data?.advanceAmount ??
+        data?.order?.advanceAmount ??
+        data?.data?.advanceAmount ??
+        0
+    );
 
-      const razorpayAmount =
-        data?.amount ||
-        data?.order?.amount ||
-        data?.data?.amount;
+    const rawAmount = Number(
+      data?.amount ??
+        data?.order?.amount ??
+        data?.data?.amount ??
+        0
+    );
 
-      const razorpayCurrency =
-        data?.currency ||
-        data?.order?.currency ||
-        data?.data?.currency ||
-        "INR";
+    const orderNumber =
+      data?.orderNumber ||
+      data?.order?.orderNumber ||
+      data?.data?.orderNumber ||
+      "";
 
-      const razorpayKey =
-        data?.key ||
-        data?.order?.key ||
-        data?.data?.key ||
-        process.env
-          .NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const remainingAmount = Number(
+      data?.remainingAmount ??
+        data?.order?.remainingAmount ??
+        data?.data?.remainingAmount ??
+        0
+    );
 
-      if (!razorpayOrderId) {
+    if (!razorpayOrderId) {
+      throw new Error("Razorpay order ID is missing.");
+    }
+
+    if (!razorpayKey) {
+      throw new Error("Razorpay key is missing.");
+    }
+
+    let razorpayAmount;
+
+    if (isCOD) {
+      if (!advanceAmount || advanceAmount <= 0) {
         throw new Error(
-          "Razorpay order ID is missing."
+          "COD advance amount is missing."
         );
       }
 
-      if (!razorpayAmount) {
-        throw new Error(
-          "Razorpay amount is missing."
-        );
+      razorpayAmount = Math.round(
+        advanceAmount * 100
+      );
+    } else {
+      if (!rawAmount || rawAmount <= 0) {
+        throw new Error("Razorpay amount is missing.");
       }
 
-      if (!razorpayKey) {
-        throw new Error(
-          "Razorpay key is missing."
-        );
-      }
+      razorpayAmount = Math.round(rawAmount);
+    }
 
-      await loadRazorpay();
+    await loadRazorpay();
 
-      if (
-        typeof window ===
-          "undefined" ||
-        !window.Razorpay
-      ) {
-        throw new Error(
-          "Razorpay Checkout could not be loaded."
-        );
-      }
+    if (!window.Razorpay) {
+      throw new Error(
+        "Razorpay Checkout could not be loaded."
+      );
+    }
 
-      const options = {
-        key: razorpayKey,
+    const options = {
+      key: razorpayKey,
+      amount: razorpayAmount,
+      currency: razorpayCurrency,
+      name: "Cost2Cost",
+      description: isCOD
+        ? `COD Advance Payment${orderNumber ? ` - ${orderNumber}` : ""}`
+        : isBuyNow
+        ? "Buy Now Order"
+        : "Order Payment",
+      order_id: razorpayOrderId,
 
-        amount:
-          Number(
-            razorpayAmount
-          ),
+      prefill: {
+        name: selectedAddress?.fullName || "",
+        email: selectedAddress?.email || "",
+        contact: selectedAddress?.mobile || "",
+      },
 
-        currency:
-          razorpayCurrency,
+      notes: {
+        payment_method: isCOD ? "COD" : "PREPAID",
+        order_number: orderNumber,
+        address_id: String(selectedAddressId),
+        advance_amount: isCOD
+          ? String(advanceAmount)
+          : String(rawAmount / 100),
+        remaining_amount: isCOD
+          ? String(remainingAmount)
+          : "0",
+      },
 
-        name: "Cost2Cost",
+      theme: {
+        color: "#111111",
+      },
 
-        description:
-          isBuyNow
-            ? "Buy Now Order"
-            : "Order Payment",
+      handler: async (paymentResponse) => {
+        try {
+          setPaymentLoading(true);
 
-        order_id:
-          razorpayOrderId,
+          const verifyPayload = {
+            razorpay_order_id:
+              paymentResponse?.razorpay_order_id,
+            razorpay_payment_id:
+              paymentResponse?.razorpay_payment_id,
+            razorpay_signature:
+              paymentResponse?.razorpay_signature,
+            addressId: Number(selectedAddressId),
+          };
 
-        prefill: {
-          name:
-            selectedAddress?.fullName ||
-            "",
+          const verifyResponse =
+            await verifyPaymentApi(verifyPayload);
 
-          email:
-            selectedAddress?.email ||
-            "",
+          const verifyData =
+            verifyResponse?.data ?? verifyResponse;
 
-          contact:
-            selectedAddress?.mobile ||
-            "",
-        },
-
-        theme: {
-          color: "#111111",
-        },
-
-        handler:
-          async (
-            paymentResponse
-          ) => {
-            try {
-              const verifyResponse =
-                await verifyPaymentApi(
-                  paymentResponse
-                );
-
-              const verifyData =
-                verifyResponse?.data ??
-                verifyResponse;
-
-              if (
-                verifyData?.success ===
-                false
-              ) {
-                throw new Error(
-                  verifyData?.message ||
-                    "Payment verification failed."
-                );
-              }
-
-              if (isBuyNow) {
-                sessionStorage.removeItem(
-                  "buyNowCheckout"
-                );
-              }
-
-              if (!isBuyNow) {
-                await dispatch(
-                  fetchCartItemsCheckOut()
-                );
-              }
-
-              toast.success(
-                "Payment successful. Order placed."
-              );
-
-              router.push(
-                "/cart"
-              );
-            } catch (error) {
-              console.error(
-                "Payment verification error:",
-                error
-              );
-
-              toast.error(
-                error?.response?.data
-                  ?.message ||
-                  error?.message ||
-                  "Payment verification failed."
-              );
-            } finally {
-              if (
-                mountedRef.current
-              ) {
-                setPaymentLoading(
-                  false
-                );
-              }
-            }
-          },
-
-        modal: {
-          ondismiss: () => {
-            if (
-              mountedRef.current
-            ) {
-              setPaymentLoading(
-                false
-              );
-            }
-          },
-        },
-      };
-
-      const razorpay =
-        new window.Razorpay(
-          options
-        );
-
-      razorpay.on(
-        "payment.failed",
-        (paymentError) => {
-          console.error(
-            "Razorpay payment failed:",
-            paymentError
-          );
-
-          toast.error(
-            paymentError?.error
-              ?.description ||
-              "Payment failed."
+          console.log(
+            "Payment verification response:",
+            verifyData
           );
 
           if (
-            mountedRef.current
+            !verifyData ||
+            verifyData?.success === false
           ) {
-            setPaymentLoading(
-              false
+            throw new Error(
+              verifyData?.message ||
+                "Payment verification failed."
             );
           }
+
+          if (isBuyNow) {
+            sessionStorage.removeItem(
+              "buyNowCheckout"
+            );
+          }
+
+          if (!isBuyNow) {
+            await dispatch(
+              fetchCartItemsCheckOut()
+            );
+
+            await dispatch(
+              fetchCartItems()
+            );
+          }
+
+          if (isCOD) {
+            toast.success(
+              `COD order confirmed. Advance paid ₹${advanceAmount.toLocaleString(
+                "en-IN",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )}. Remaining ₹${remainingAmount.toLocaleString(
+                "en-IN",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )} will be payable on delivery.`
+            );
+          } else {
+            toast.success(
+              "Payment successful. Order placed."
+            );
+          }
+
+          router.push("/cart");
+        } catch (error) {
+          console.error(
+            "Payment verification error:",
+            error
+          );
+
+          toast.error(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Payment verification failed."
+          );
+        } finally {
+          if (mountedRef.current) {
+            setPaymentLoading(false);
+          }
         }
-      );
+      },
 
-      razorpay.open();
-    } catch (error) {
-      console.error(
-        "Checkout payment error:",
-        error?.response?.data ||
-          error
-      );
+      modal: {
+        ondismiss: () => {
+          if (mountedRef.current) {
+            setPaymentLoading(false);
+          }
+        },
+      },
+    };
 
-      toast.error(
-        error?.response?.data
-          ?.message ||
-          error?.message ||
-          "Unable to process checkout."
-      );
+    const razorpay =
+      new window.Razorpay(options);
 
+    razorpay.on(
+      "payment.failed",
+      (paymentError) => {
+        console.error(
+          "Razorpay payment failed:",
+          paymentError
+        );
+
+        toast.error(
+          paymentError?.error?.description ||
+            "Payment failed."
+        );
+
+        if (mountedRef.current) {
+          setPaymentLoading(false);
+        }
+      }
+    );
+
+    razorpay.open();
+  } catch (error) {
+    console.error(
+      "Checkout payment error:",
+      error?.response?.data || error
+    );
+
+    toast.error(
+      error?.response?.data?.message ||
+        error?.message ||
+        "Unable to process checkout."
+    );
+
+    if (mountedRef.current) {
       setPaymentLoading(false);
     }
-  };
+  }
+};
 
   const visibleAddresses =
     showAllAddresses
@@ -2548,16 +2529,16 @@ function CheckoutContent() {
                         <Truck className="h-5 w-5" />
                       </div>
 
-                      <div>
-                        <h3 className="text-xs font-bold sm:text-sm">
-                          Cash on Delivery
-                        </h3>
+                     <div>
+  <h3 className="text-xs font-bold sm:text-sm">
+    Cash on Delivery
+  </h3>
 
-                        <p className="mt-1 text-[10px] text-text-muted">
-                          Pay when your
-                          order arrives
-                        </p>
-                      </div>
+  <p className="mt-1 text-[10px] leading-relaxed text-text-muted">
+    A 17% advance payment is required to confirm your order. The remaining
+    amount can be paid conveniently when your order arrives.
+  </p>
+</div>
                     </div>
 
                     <span

@@ -195,7 +195,7 @@ export default function RegisterPage() {
       <div className="mx-auto grid min-h-screen max-w-[1450px] grid-cols-1 lg:grid-cols-2">
         <div className="relative hidden min-h-screen overflow-hidden lg:block">
           <img
-            src="https://www.cost2costsupplement.com/storage/other-banners/login-img-1.png"
+            src="/images/login.webp"
             alt="Cost2Cost Supplement"
             className="absolute inset-0 h-full w-full object-cover"
           />

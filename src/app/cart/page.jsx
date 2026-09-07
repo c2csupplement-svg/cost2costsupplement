@@ -58,9 +58,6 @@ function getItemPrice(item) {
   return Number(price) || 0;
 }
 
-/**
- * Get original/MRP price of a cart item.
- */
 function getItemOriginalPrice(item) {
   const currentPrice = getItemPrice(item);
 
@@ -137,9 +134,6 @@ function getItemImage(item) {
   return "";
 }
 
-/**
- * Get variant attributes.
- */
 function getVariantAttributes(item) {
   const attributes =
     item?.variant?.attributes ??
@@ -160,7 +154,11 @@ function getVariantAttributes(item) {
 }
 
 function getVariantDetails(item) {
+
+
   const variant = item?.variant ?? {};
+
+  const variantId = item.variantId;
 
   const attributes =
     getVariantAttributes(item);
@@ -204,9 +202,11 @@ function getVariantDetails(item) {
     details.push({
       name,
       value,
-      unit,
+      unit
     });
   });
+
+  details.push({variantId: variantId})
 
   if (
     size &&
@@ -576,9 +576,9 @@ export default function CartPage() {
           deleteCartItem(itemId)
         );
 
-        toast.success(
-          "Item removed from cart."
-        );
+        // toast.success(
+        //   "Item removed from cart."
+        // );
       } else {
         await dispatch(
           updateItemQuantity(
@@ -625,9 +625,9 @@ export default function CartPage() {
         fetchCartItems()
       );
 
-      toast.success(
-        "Item removed from cart."
-      );
+      // toast.success(
+      //   "Item removed from cart."
+      // );
     } catch (error) {
       console.error(
         "Remove cart item:",
@@ -1477,31 +1477,37 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-4 py-3 shadow-2xl backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4">
+      <div
+  className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-2xl backdrop-blur-xl sm:px-4 lg:hidden"
+  style={{
+    paddingBottom:
+      "calc(0.75rem + env(safe-area-inset-bottom))",
+  }}
+>
+  <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 sm:gap-4">
 
-          <div className="min-w-0">
-            <p className="oxanium text-[9px] font-bold uppercase tracking-[0.18em] text-text-muted">
-              Total
-            </p>
+    <div className="min-w-0">
+      <p className="oxanium text-[9px] font-bold uppercase tracking-[0.18em] text-text-muted">
+        Total
+      </p>
 
-            <p className="oxanium mt-0.5 truncate text-lg font-bold text-text-primary">
-              {formatPrice(
-                finalTotal
-              )}
-            </p>
-          </div>
+      <p className="oxanium mt-0.5 truncate text-base font-bold text-text-primary sm:text-lg">
+        {formatPrice(
+          finalTotal
+        )}
+      </p>
+    </div>
 
-          <Link
-            href="/checkout"
-            className="oxanium group flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover"
-          >
-            Checkout
+    <Link
+      href="/checkout"
+      className="oxanium group flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover sm:px-5"
+    >
+      Checkout
 
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
-      </div>
+      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+    </Link>
+  </div>
+</div>
 
 
 
@@ -2001,6 +2007,17 @@ function CartItem({
   onIncrease,
   onRemove,
 }) {
+  const dispatch = useDispatch();
+
+  const [showRemoveModal, setShowRemoveModal] =
+    useState(false);
+
+  const [movingToWishlist, setMovingToWishlist] =
+    useState(false);
+
+  const [deleting, setDeleting] =
+    useState(false);
+
   const product =
     item?.product ??
     {};
@@ -2009,14 +2026,12 @@ function CartItem({
     item?.variant ??
     {};
 
-
   const name =
     product?.name ??
     item?.name ??
     product?.title ??
     item?.title ??
     "Product";
-
 
   const slug =
     product?.slug ??
@@ -2026,53 +2041,33 @@ function CartItem({
   const image =
     getItemImage(item);
 
-
   const price =
     getItemPrice(item);
 
-
   const originalPrice =
-    getItemOriginalPrice(
-      item
-    );
-
+    getItemOriginalPrice(item);
 
   const discountPercent =
     originalPrice > price
       ? Math.round(
-          ((originalPrice -
-            price) /
+          ((originalPrice - price) /
             originalPrice) *
             100
         )
       : 0;
 
-
-
   const quantity =
-    Number(
-      item?.quantity
-    ) || 0;
-
+    Number(item?.quantity) || 0;
 
   const subtotal =
     price * quantity;
 
   const productHref = slug
-    ? `/product/${encodeURIComponent(
-        slug
-      )}`
+    ? `/product/${encodeURIComponent(slug)}`
     : "/products";
 
-
   const variantDetails =
-    getVariantDetails(
-      item
-    );
-
-  /*
-   * Stock information.
-   */
+    getVariantDetails(item);
 
   const stockQuantity =
     Number(
@@ -2088,8 +2083,7 @@ function CartItem({
 
   const inStock =
     stockStatus
-      ? stockStatus ===
-        "in_stock"
+      ? stockStatus === "in_stock"
       : stockQuantity > 0;
 
   const lowStock =
@@ -2097,32 +2091,253 @@ function CartItem({
     stockQuantity > 0 &&
     stockQuantity <= 5;
 
+  const productId =
+    product?.id ??
+    product?._id ??
+    item?.productId ??
+    item?.product_id;
+
+  // NOTE: previously this read `variantDetails[1].variantId`, which
+  // does not exist on the shape returned by getVariantDetails() and
+  // will throw when fewer than 2 details are present. Using the
+  // item's own variant id instead.
+  const variantId =
+    item?.variantId ??
+    variant?.id ??
+    variant?._id ??
+    null;
+
+  const handleMoveToWishlist = async (productId, variantId) => {
+
+      if (
+        !productId ||
+        movingToWishlist ||
+        deleting
+      ) {
+        return;
+      }
+
+      try {
+        setMovingToWishlist(true);
+
+        const result =
+          await dispatch(
+            toggleItem(productId, variantId)
+          );
+
+        if (
+          result?.error ||
+          result?.meta?.requestStatus ===
+            "rejected"
+        ) {
+          throw new Error(
+            result?.payload ||
+              result?.error?.message ||
+              "Unable to move item to wishlist."
+          );
+        }
+
+        await onRemove();
+
+        setShowRemoveModal(false);
+
+        // toast.success(
+        //   "Item moved to wishlist."
+        // );
+      } catch (error) {
+        console.error(
+          "Move to wishlist:",
+          error
+        );
+
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Unable to move item to wishlist."
+        );
+      } finally {
+        setMovingToWishlist(false);
+      }
+    };
+
+  const handleDelete =
+    async () => {
+      if (
+        deleting ||
+        movingToWishlist
+      ) {
+        return;
+      }
+
+      try {
+        setDeleting(true);
+
+        await onRemove();
+
+        setShowRemoveModal(false);
+      } catch (error) {
+        console.error(
+          "Delete cart item:",
+          error
+        );
+      } finally {
+        setDeleting(false);
+      }
+    };
+
   return (
-    <div className="group p-4 transition-colors hover:bg-surface/20 sm:p-6">
+    <>
+      <div className="group p-3 transition-colors hover:bg-surface/20 sm:p-4 lg:p-6">
 
-      {/* ===============================================================
-          DESKTOP ITEM
-      ================================================================ */}
+        {/* Desktop / large tablet: table-style row.
+            Switched from md: to lg: and from fixed px columns to fr
+            units so the row doesn't get cramped on ~768-1023px
+            tablets and scales proportionally on very wide screens. */}
+        <div className="hidden items-center gap-4 lg:grid lg:grid-cols-[3fr_1fr_1.1fr_1fr_0.4fr]">
 
-      <div className="hidden grid-cols-[minmax(300px,1fr)_120px_140px_120px_44px] items-center gap-4 md:grid">
+          <div className="flex min-w-0 items-center gap-4">
 
-        {/* Product */}
+            <Link
+              href={productHref}
+              className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-white transition group-hover:border-primary/30"
+            >
+              {image ? (
+                <Image
+                  src={image}
+                  alt={name}
+                  fill
+                  sizes="96px"
+                  className="object-contain p-2 transition duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <ShoppingBag className="h-7 w-7 text-text-muted" />
+                </div>
+              )}
 
-        <div className="flex min-w-0 items-center gap-4">
+              {discountPercent > 0 && (
+                <span className="oxanium absolute left-1.5 top-1.5 rounded-md bg-primary px-1.5 py-1 text-[8px] font-black text-white shadow-md">
+                  -{discountPercent}%
+                </span>
+              )}
+            </Link>
+
+            <div className="min-w-0">
+
+              <Link
+                href={productHref}
+                className="oxanium line-clamp-2 text-sm font-bold leading-5 text-text-primary transition hover:text-primary"
+              >
+                {name}
+              </Link>
+
+              {variantDetails.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {variantDetails.map(
+                    (
+                      detail,
+                      index
+                    ) => (
+                      <span
+                        key={`${detail.name}-${detail.value}-${index}`}
+                        className="oxanium rounded-md bg-surface px-2 py-1 text-[9px] font-medium text-text-secondary"
+                      >
+                        {detail.name}:{" "}
+                        {detail.value}
+                        {detail.unit
+                          ? ` ${detail.unit}`
+                          : ""}
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+
+              {stockStatus && (
+                <span
+                  className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
+                    !inStock
+                      ? "bg-red-500/10 text-red-600"
+                      : lowStock
+                      ? "bg-amber-500/10 text-amber-600"
+                      : "bg-green-500/10 text-green-600"
+                  }`}
+                >
+                  {!inStock
+                    ? "Out of stock"
+                    : lowStock
+                    ? `Only ${stockQuantity} left`
+                    : "In stock"}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="text-center">
+
+            <span className="oxanium text-sm font-semibold text-text-primary">
+              {formatPrice(price)}
+            </span>
+
+            {originalPrice > price && (
+              <span className="oxanium mt-1 block text-[10px] text-text-muted line-through">
+                {formatPrice(
+                  originalPrice
+                )}
+              </span>
+            )}
+          </div>
+
+          <QuantityControl
+            quantity={quantity}
+            onDecrease={onDecrease}
+            onIncrease={onIncrease}
+            max={
+              stockQuantity ||
+              undefined
+            }
+          />
+
+          <span className="oxanium text-right text-sm font-black text-text-primary">
+            {formatPrice(subtotal)}
+          </span>
+
+          <div className="flex justify-end">
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowRemoveModal(true)
+              }
+              disabled={
+                movingToWishlist ||
+                deleting
+              }
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-text-muted transition-all duration-200 hover:border-red-400/30 hover:bg-red-500/5 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Remove item"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+
+          </div>
+        </div>
+
+        {/* Mobile / tablet: stacked card. Now covers up to lg
+            (previously only below md), and the thumbnail shrinks
+            a bit on the narrowest phones so text has room. */}
+        <div className="flex gap-3 lg:hidden">
 
           <Link
-            href={
-              productHref
-            }
-            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-white transition group-hover:border-primary/30"
+            href={productHref}
+            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border bg-white sm:h-24 sm:w-24"
           >
             {image ? (
               <Image
                 src={image}
                 alt={name}
                 fill
-                sizes="96px"
-                className="object-contain p-2 transition duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 80px, 96px"
+                className="object-contain p-2"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-secondary">
@@ -2130,29 +2345,42 @@ function CartItem({
               </div>
             )}
 
-            {discountPercent >
-              0 && (
-              <span className="oxanium absolute left-1.5 top-1.5 rounded-md bg-primary px-1.5 py-1 text-[8px] font-black text-white shadow-md">
+            {discountPercent > 0 && (
+              <span className="oxanium absolute left-1 top-1 rounded-md bg-primary px-1.5 py-0.5 text-[7px] font-black text-white">
                 -{discountPercent}%
               </span>
             )}
           </Link>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
 
-            <Link
-              href={
-                productHref
-              }
-              className="oxanium line-clamp-2 text-sm font-bold leading-5 text-text-primary transition hover:text-primary"
-            >
-              {name}
-            </Link>
+            <div className="flex items-start justify-between gap-2">
 
-            {/* Variant details */}
+              <Link
+                href={productHref}
+                className="oxanium line-clamp-2 pr-1 text-xs font-bold leading-5 text-text-primary sm:text-sm"
+              >
+                {name}
+              </Link>
 
-            {variantDetails.length >
-              0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setShowRemoveModal(true)
+                }
+                disabled={
+                  movingToWishlist ||
+                  deleting
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Remove item"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+
+            </div>
+
+            {variantDetails.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {variantDetails.map(
                   (
@@ -2161,27 +2389,35 @@ function CartItem({
                   ) => (
                     <span
                       key={`${detail.name}-${detail.value}-${index}`}
-                      className="oxanium rounded-md border border-border bg-surface px-2 py-1 text-[9px] font-medium text-text-secondary"
+                      className="oxanium rounded-md bg-surface px-1.5 py-1 text-[8px] text-text-secondary"
                     >
                       {detail.name}:{" "}
-                      {
-                        detail.value
-                      }
-
-                      {detail.unit
-                        ? ` ${detail.unit}`
-                        : ""}
+                      {detail.value}
                     </span>
                   )
                 )}
               </div>
             )}
 
-            {/* Stock */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+
+              <span className="oxanium text-sm font-black text-text-primary">
+                {formatPrice(price)}
+              </span>
+
+              {originalPrice > price && (
+                <span className="oxanium text-[9px] text-text-muted line-through">
+                  {formatPrice(
+                    originalPrice
+                  )}
+                </span>
+              )}
+
+            </div>
 
             {stockStatus && (
               <span
-                className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
+                className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[8px] font-bold ${
                   !inStock
                     ? "bg-red-500/10 text-red-600"
                     : lowStock
@@ -2196,225 +2432,238 @@ function CartItem({
                   : "In stock"}
               </span>
             )}
-          </div>
-        </div>
 
-        {/* Price */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
 
-        <div className="text-center">
+              <QuantityControl
+                quantity={quantity}
+                onDecrease={onDecrease}
+                onIncrease={onIncrease}
+                max={
+                  stockQuantity ||
+                  undefined
+                }
+              />
 
-          <div className="oxanium text-sm font-bold text-text-primary">
-            {formatPrice(
-              price
-            )}
-          </div>
+              <span className="oxanium text-sm font-black text-text-primary">
+                {formatPrice(subtotal)}
+              </span>
 
-          {originalPrice >
-            price && (
-            <div className="oxanium mt-1 text-[10px] text-text-muted line-through">
-              {formatPrice(
-                originalPrice
-              )}
             </div>
-          )}
+          </div>
         </div>
-
-        {/* Quantity */}
-
-        <QuantityControl
-          quantity={
-            quantity
-          }
-          onDecrease={
-            onDecrease
-          }
-          onIncrease={
-            onIncrease
-          }
-          max={
-            stockQuantity ||
-            undefined
-          }
-        />
-
-        {/* Subtotal */}
-
-        <span className="oxanium text-right text-sm font-black">
-          {formatPrice(
-            subtotal
-          )}
-        </span>
-
-        {/* Remove */}
-
-        <button
-          type="button"
-          onClick={
-            onRemove
-          }
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition hover:bg-red-500/10 hover:text-red-500"
-          aria-label={`Remove ${name}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
       </div>
 
-      {/* ===============================================================
-          MOBILE ITEM
-      ================================================================ */}
-
-      <div className="flex gap-3 md:hidden">
-
-        <Link
-          href={
-            productHref
-          }
-          className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-white"
+      {showRemoveModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          onClick={(event) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              !movingToWishlist &&
+              !deleting
+            ) {
+              setShowRemoveModal(false);
+            }
+          }}
         >
-          {image ? (
-            <Image
-              src={image}
-              alt={name}
-              fill
-              sizes="96px"
-              className="object-contain p-2"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-secondary">
-              <ShoppingBag className="h-7 w-7 text-text-muted" />
-            </div>
-          )}
-
-          {discountPercent >
-            0 && (
-            <span className="oxanium absolute left-1 top-1 rounded-md bg-primary px-1.5 py-0.5 text-[8px] font-black text-white">
-              -{discountPercent}%
-            </span>
-          )}
-        </Link>
-
-        <div className="min-w-0 flex-1">
-
-          <div className="flex items-start justify-between gap-2">
-
-            <Link
-              href={
-                productHref
-              }
-              className="oxanium line-clamp-2 pr-1 text-xs font-bold leading-5 text-text-primary"
-            >
-              {name}
-            </Link>
+          <div
+            className="relative w-full max-w-[480px] overflow-hidden rounded-[26px] border border-white/10 bg-[#111315] shadow-[0_30px_100px_rgba(0,0,0,0.65)]"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
 
             <button
               type="button"
-              onClick={
-                onRemove
+              onClick={() =>
+                !movingToWishlist &&
+                !deleting &&
+                setShowRemoveModal(false)
               }
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-red-500/10 hover:text-red-500"
-              aria-label={`Remove ${name}`}
+              disabled={
+                movingToWishlist ||
+                deleting
+              }
+              className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:bg-white/[0.09] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
-          </div>
 
-          {/* Variant */}
+            <div className="px-5 pb-7 pt-8 sm:px-7 sm:pb-8 sm:pt-9">
 
-          {variantDetails.length >
-            0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {variantDetails.map(
-                (
-                  detail,
-                  index
-                ) => (
-                  <span
-                    key={`${detail.name}-${detail.value}-${index}`}
-                    className="oxanium rounded-md bg-surface px-1.5 py-1 text-[9px] text-text-secondary"
-                  >
-                    {detail.name}:{" "}
-                    {
-                      detail.value
-                    }
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10">
+                <Trash2
+                  className="h-6 w-6 text-cyan-400"
+                  strokeWidth={1.8}
+                />
+              </div>
 
-                    {detail.unit
-                      ? ` ${detail.unit}`
-                      : ""}
+              <div className="mt-5 text-center">
+
+                <h2 className="text-[22px] font-black tracking-tight text-white sm:text-[25px] lg:text-[28px]">
+                  Remove Item?
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-[390px] text-sm leading-6 text-white/50 sm:text-[15px]">
+                  Would you like to save this item
+                  for later or remove it
+                  permanently?
+                </p>
+
+              </div>
+
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+
+                <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl bg-white">
+
+                  {image ? (
+                    <Image
+                      src={image}
+                      alt={name}
+                      fill
+                      sizes="68px"
+                      className="object-contain p-1.5"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <ShoppingBag className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="min-w-0 flex-1">
+
+                  <p className="line-clamp-2 text-sm font-bold leading-5 text-white">
+                    {name}
+                  </p>
+
+                  {variantDetails.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
+                      {variantDetails
+                        .slice(0, 2)
+                        .map(
+                          (
+                            detail,
+                            index
+                          ) => (
+                            <span
+                              key={`${detail.name}-${detail.value}-${index}`}
+                              className="text-[10px] text-white/40"
+                            >
+                              {detail.name}:{" "}
+                              {detail.value}
+                            </span>
+                          )
+                        )}
+                    </div>
+                  )}
+
+                  <p className="mt-1 text-sm font-black text-cyan-400">
+                    {formatPrice(price)}
+                  </p>
+
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleMoveToWishlist(
+                      productId,
+                      variantId
+                    )
+                  }
+                  disabled={
+                    movingToWishlist ||
+                    deleting ||
+                    !productId
+                  }
+                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.07] px-4 text-left transition-all duration-200 hover:border-cyan-400/50 hover:bg-cyan-400/[0.13] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10">
+                    <Heart
+                      className="h-5 w-5 text-cyan-400 transition-transform group-hover:scale-110"
+                      strokeWidth={1.8}
+                    />
                   </span>
-                )
-              )}
+
+                  <span className="min-w-0">
+
+                    <span className="block text-sm font-black text-cyan-400">
+                      {movingToWishlist
+                        ? "Moving..."
+                        : "Move to Wishlist"}
+                    </span>
+
+                    <span className="mt-1 block text-[10px] text-white/35">
+                      Save this item for later
+                    </span>
+
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={
+                    deleting ||
+                    movingToWishlist
+                  }
+                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-orange-400/20 bg-orange-400/[0.06] px-4 text-left transition-all duration-200 hover:border-orange-400/40 hover:bg-orange-400/[0.11] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-400/10">
+                    <Trash2
+                      className="h-5 w-5 text-orange-400 transition-transform group-hover:scale-110"
+                      strokeWidth={1.8}
+                    />
+                  </span>
+
+                  <span className="min-w-0">
+
+                    <span className="block text-sm font-black text-orange-400">
+                      {deleting
+                        ? "Deleting..."
+                        : "Delete"}
+                    </span>
+
+                    <span className="mt-1 block text-[10px] text-white/35">
+                      Remove from cart
+                    </span>
+
+                  </span>
+                </button>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowRemoveModal(false)
+                }
+                disabled={
+                  movingToWishlist ||
+                  deleting
+                }
+                className="mx-auto mt-5 block text-sm font-semibold text-white/40 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Cancel
+              </button>
+
             </div>
-          )}
-
-          {/* Price */}
-
-          <div className="mt-2 flex items-center gap-2">
-
-            <span className="oxanium text-sm font-black text-text-primary">
-              {formatPrice(
-                price
-              )}
-            </span>
-
-            {originalPrice >
-              price && (
-              <span className="oxanium text-[10px] text-text-muted line-through">
-                {formatPrice(
-                  originalPrice
-                )}
-              </span>
-            )}
-          </div>
-
-          {/* Stock */}
-
-          {stockStatus && (
-            <span
-              className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
-                !inStock
-                  ? "bg-red-500/10 text-red-600"
-                  : lowStock
-                  ? "bg-amber-500/10 text-amber-600"
-                  : "bg-green-500/10 text-green-600"
-              }`}
-            >
-              {!inStock
-                ? "Out of stock"
-                : lowStock
-                ? `Only ${stockQuantity} left`
-                : "In stock"}
-            </span>
-          )}
-
-          {/* Quantity + subtotal */}
-
-          <div className="mt-3 flex items-center justify-between gap-3">
-
-            <QuantityControl
-              quantity={
-                quantity
-              }
-              onDecrease={
-                onDecrease
-              }
-              onIncrease={
-                onIncrease
-              }
-              max={
-                stockQuantity ||
-                undefined
-              }
-            />
-
-            <span className="oxanium text-sm font-black text-text-primary">
-              {formatPrice(
-                subtotal
-              )}
-            </span>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
