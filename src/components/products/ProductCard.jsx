@@ -490,54 +490,87 @@ export default function ProductCard({ product }) {
             sm:mt-4
           "
         >
-          <div className="min-w-0">
-            <div className="flex items-baseline gap-1 sm:gap-2">
-              <span
-                className="
-                  whitespace-nowrap
-                  text-[14px]
-                  font-black
-                  tracking-tight
-                  text-text-primary
-                  sm:text-xl
-                "
-              >
-                ₹{formattedPrice}
-              </span>
+          <div className="mt-2 flex w-full items-end justify-between gap-3 sm:mt-4">
+  <div className="min-w-0">
+    <div className="flex items-baseline gap-1 sm:gap-2">
+      <span
+        className="
+          whitespace-nowrap
+          text-[14px]
+          font-black
+          tracking-tight
+          text-text-primary
+          sm:text-xl
+        "
+      >
+        ₹{formattedPrice}
+      </span>
 
-              {originalPrice > price && (
-                <span
-                  className="
-                    hidden
-                    text-xs
-                    font-medium
-                    text-text-muted
-                    line-through
-                    sm:inline
-                  "
-                >
-                  ₹{formattedOriginalPrice}
-                </span>
-              )}
-            </div>
+      {originalPrice > price && (
+        <span
+          className="
+            hidden
+            text-xs
+            font-medium
+            text-text-muted
+            line-through
+            sm:inline
+          "
+        >
+          ₹{formattedOriginalPrice}
+        </span>
+      )}
+    </div>
 
-            {discount > 0 && (
-              <p
-                className="
-                  mt-0.5
-                  text-[6px]
-                  font-bold
-                  uppercase
-                  tracking-wide
-                  text-primary
-                  sm:mt-1
-                  sm:text-[9px]
-                "
-              >
-                Save {discount}%
-              </p>
-            )}
-          </div>
+    {discount > 0 && (
+      <p
+        className="
+          mt-0.5
+          text-[6px]
+          font-bold
+          uppercase
+          tracking-wide
+          text-primary
+          sm:mt-1
+          sm:text-[9px]
+        "
+      >
+        Save {discount}%
+      </p>
+    )}
+  </div>
+
+  <Link
+    href={productHref}
+    className="
+      shrink-0
+      rounded-lg
+      border
+      border-primary/30
+      bg-primary/5
+      px-3
+      py-2
+      text-[8px]
+      font-black
+      uppercase
+      tracking-[0.12em]
+      text-primary
+      transition-all
+      duration-200
+      hover:border-primary
+      hover:bg-primary
+      hover:text-white
+      hover:shadow-sm
+      active:scale-95
+      sm:rounded-xl
+      sm:px-4
+      sm:py-2.5
+      sm:text-[10px]
+    "
+  >
+    View
+  </Link>
+</div>
         </div>
       </div>
     </article>
