@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import {
   Swiper,
@@ -30,6 +31,8 @@ export default function Hero() {
   } = useSelector(
     (state) => state.banners || {}
   );
+
+  console.log(bannerList)
 
   const [activeSlide, setActiveSlide] =
     useState(0);
@@ -153,29 +156,30 @@ export default function Hero() {
               key={slide?.id}
             >
               <div className="relative w-full overflow-hidden">
-                <picture className="block w-full">
-                  <source
-                    media="(max-width: 639px)"
-                    srcSet={mobileImage}
-                  />
+                <Link href={`${slide?.link}`}>
+                  <picture className="block w-full">
+                    <source
+                      media="(max-width: 639px)"
+                      srcSet={mobileImage}
+                    />
 
-                  <img
-                    src={desktopImage}
-                    alt={
-                      slide?.title ||
-                      `Cost2Cost banner ${
-                        slide?.id || ""
-                      }`
-                    }
-                    className="
+                    <img
+                      src={desktopImage}
+                      alt={
+                        slide?.title ||
+                        `Cost2Cost banner ${slide?.id || ""
+                        }`
+                      }
+                      className="
                       block
                       h-auto
                       w-full
                       object-contain
                       object-center
                     "
-                  />
-                </picture>
+                    />
+                  </picture>
+                </Link>
               </div>
             </SwiperSlide>
           );
