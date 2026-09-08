@@ -14,6 +14,11 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ShieldCheck,
+  Truck,
+  Headphones,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -92,7 +97,9 @@ export default function RegisterPage() {
     }
 
     if (!form.terms) {
-      setError("Please agree to the Terms and Privacy Policy.");
+      setError(
+        "Please agree to the Terms and Privacy Policy."
+      );
       return;
     }
 
@@ -120,8 +127,8 @@ export default function RegisterPage() {
       if (!data?.success) {
         setError(
           data?.message ||
-            data?.error ||
-            "Registration failed. Please try again."
+          data?.error ||
+          "Registration failed. Please try again."
         );
         return;
       }
@@ -138,7 +145,7 @@ export default function RegisterPage() {
 
       setSuccess(
         data?.message ||
-          "Account created successfully. Please login."
+        "Account created successfully. Please login."
       );
 
       setForm({
@@ -190,302 +197,510 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white px-0 py-0">
+    <main className="min-h-screen bg-[#f5f5f5]">
+      <div className="mx-auto min-h-screen max-w-[1500px]">
+        <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[42%_58%]">
 
-      <div className="mx-auto grid min-h-screen max-w-[1450px] grid-cols-1 lg:grid-cols-2">
-        <div className="relative hidden min-h-screen overflow-hidden lg:block">
-          <img
-            src="/images/login.webp"
-            alt="Cost2Cost Supplement"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          {/* DESKTOP PROMOTIONAL SECTION */}
+          <section className="relative hidden overflow-hidden bg-[#111] lg:flex">
+            <img
+              src="/images/login.webp"
+              alt="Cost2Cost Supplement"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
 
-          <div className="absolute inset-0 bg-black/5" />
-        </div>
+            <div className="absolute inset-0 bg-black/45" />
 
-        <div className="flex min-h-screen items-start justify-center bg-[#f8f9fa] px-6 py-10 sm:px-10 lg:px-16 xl:px-20">
-          <div className="w-full max-w-[590px]">
-            <div className="mb-10 flex items-start gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-white">
-                <UserRoundPlus
-                  size={29}
-                  strokeWidth={1.8}
-                  className="text-[#171717]"
-                />
+            <div className="relative z-10 flex min-h-screen w-full flex-col justify-between p-8 xl:p-12 2xl:p-16">
+
+              <div>
+                <div className="inline-flex rounded-xl bg-white px-5 py-3 shadow-lg">
+                  <img
+                    src="/images/c2c-logo-black.png"
+                    alt="Cost2Cost Supplement"
+                    className="h-auto w-[150px] object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="max-w-[500px]">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
+                  Cost2Cost Supplement
+                </p>
+
+                <h2 className="text-4xl font-black uppercase leading-[1.05] text-white xl:text-5xl 2xl:text-6xl">
+                  Fuel Your{" "}
+                  <span className="text-[#E52323]">
+                    Goals
+                  </span>
+                </h2>
+
+                <div className="mt-8 space-y-5">
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
+                      <ShieldCheck
+                        size={22}
+                        className="text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        100% Authentic Products
+                      </p>
+
+                      <p className="mt-1 text-xs text-white/65">
+                        Genuine supplements you can trust
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
+                      <Truck
+                        size={22}
+                        className="text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        Fast & Secure Delivery
+                      </p>
+
+                      <p className="mt-1 text-xs text-white/65">
+                        Safe delivery right to your doorstep
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
+                      <Headphones
+                        size={22}
+                        className="text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        Dedicated Customer Support
+                      </p>
+
+                      <p className="mt-1 text-xs text-white/65">
+                        We are here whenever you need us
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
               <div>
-                <h1 className="text-2xl font-bold text-[#0b0b0b] sm:text-3xl">
-                  Register an account
-                </h1>
+                <p className="text-2xl font-semibold italic text-white/90 xl:text-3xl">
+                  Stronger.
+                  <br />
+                  Healthier.
+                  <br />
+                  Happier.
+                </p>
 
-                <p className="mt-4 max-w-[500px] text-base leading-7 text-[#666]">
-                  Your personal data will be used to support your
-                  experience throughout this website, to manage access
-                  to your account.
+                <div className="mt-4 h-1 w-20 rounded-full bg-[#E52323]" />
+              </div>
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-2 min-h-screen items-center justify-center bg-white px-4 py-6 sm:px-6 sm:py-8 md:px-10 lg:px-12 xl:px-16">
+
+            <div className="w-full max-w-[570px]">
+
+              <div className="mb-5 flex justify-center lg:hidden">
+                <div className="rounded-xl border border-[#eeeeee] bg-white px-6 py-3 shadow-sm">
+                  <img
+                    src="/images/c2c-logo-black.png"
+                    alt="Cost2Cost Supplement"
+                    className="h-auto w-[145px] object-contain sm:w-[165px]"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#e8e8e8] bg-white p-5 shadow-[0_8px_35px_rgba(0,0,0,0.06)] sm:p-7 md:p-9 lg:border-0 lg:p-0 lg:shadow-none">
+
+                <div className="text-center">
+
+                  <div className="mx-auto mb-4 hidden h-14 w-14 items-center justify-center rounded-xl bg-[#f6f6f6] sm:flex lg:hidden">
+                    <UserRoundPlus
+                      size={25}
+                      strokeWidth={1.8}
+                      className="text-[#222]"
+                    />
+                  </div>
+
+                  <h1 className="text-2xl font-bold tracking-tight text-[#111] sm:text-3xl md:text-[34px]">
+                    Register an account
+                  </h1>
+
+                  {/* <p className="mx-auto mt-3 max-w-[500px] text-sm leading-6 text-[#777] sm:text-[15px]">
+                    Create your Cost2Cost account to manage your
+                    orders, personal information, and shopping
+                    experience.
+                  </p> */}
+                </div>
+
+                <div className="my-7 flex items-center gap-4 sm:my-8">
+                  <div className="h-px flex-1 bg-[#dedede]" />
+
+                  <span className="whitespace-nowrap text-xs font-medium text-[#777] sm:text-sm">
+                    Register with Account Credentials
+                  </span>
+
+                  <div className="h-px flex-1 bg-[#dedede]" />
+                </div>
+
+                {error && (
+                  <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-[#D91C1C]">
+                    <AlertCircle
+                      size={19}
+                      className="mt-0.5 shrink-0"
+                    />
+
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {success && (
+                  <div className="mb-5 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3.5 text-sm text-green-700">
+                    <CheckCircle2
+                      size={19}
+                      className="mt-0.5 shrink-0"
+                    />
+
+                    <span>{success}</span>
+                  </div>
+                )}
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4 sm:space-y-5"
+                >
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#333] sm:text-[15px]">
+                      Full name{" "}
+                      <span className="text-[#E52323]">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="relative">
+                      <User
+                        size={20}
+                        strokeWidth={1.7}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+                      />
+
+                      <input
+                        name="name"
+                        type="text"
+                        value={form.name}
+                        onChange={handleChange}
+                        placeholder="Your full name"
+                        required
+                        autoComplete="name"
+                        className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-4 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#333] sm:text-[15px]">
+                      Email{" "}
+                      <span className="text-[#E52323]">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="relative">
+                      <Mail
+                        size={20}
+                        strokeWidth={1.7}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+                      />
+
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="Your email address"
+                        required
+                        autoComplete="email"
+                        className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-4 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
+                      />
+                    </div>
+                  </div>
+
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#333] sm:text-[15px]">
+                      Phone{" "}
+                      <span className="text-[#E52323]">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="relative">
+                      <Phone
+                        size={20}
+                        strokeWidth={1.7}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+                      />
+
+                      <input
+                        name="phone"
+                        type="tel"
+                        value={form.phone}
+                        onChange={handleChange}
+                        placeholder="Phone number"
+                        required
+                        autoComplete="tel"
+                        inputMode="tel"
+                        className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-4 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* PASSWORD */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#333] sm:text-[15px]">
+                      Password{" "}
+                      <span className="text-[#E52323]">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="relative">
+                      <Lock
+                        size={20}
+                        strokeWidth={1.7}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+                      />
+
+                      <input
+                        name="password"
+                        type={
+                          showPassword
+                            ? "text"
+                            : "password"
+                        }
+                        value={form.password}
+                        onChange={handleChange}
+                        placeholder="Password"
+                        required
+                        minLength={6}
+                        autoComplete="new-password"
+                        className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-12 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassword(
+                            (current) => !current
+                          )
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666] transition hover:text-[#E52323]"
+                        aria-label={
+                          showPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CONFIRM PASSWORD */}
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#333] sm:text-[15px]">
+                      Confirm password{" "}
+                      <span className="text-[#E52323]">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="relative">
+                      <Lock
+                        size={20}
+                        strokeWidth={1.7}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]"
+                      />
+
+                      <input
+                        name="confirmPassword"
+                        type={
+                          showConfirmPassword
+                            ? "text"
+                            : "password"
+                        }
+                        value={form.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="Confirm your password"
+                        required
+                        minLength={6}
+                        autoComplete="new-password"
+                        className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-12 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(
+                            (current) => !current
+                          )
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666] transition hover:text-[#E52323]"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password confirmation"
+                            : "Show password confirmation"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* TERMS */}
+                  <label className="flex cursor-pointer items-start gap-2 pt-1 text-sm leading-5 text-[#444]">
+                    <input
+                      name="terms"
+                      type="checkbox"
+                      checked={form.terms}
+                      onChange={handleChange}
+                      className="mt-0.5 h-[17px] w-[17px] shrink-0 cursor-pointer accent-[#E52323]"
+                    />
+
+                    <span>
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        className="font-medium text-[#222] underline underline-offset-2 transition hover:text-[#E52323]"
+                      >
+                        Terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href="/privacy-policy"
+                        className="font-medium text-[#222] underline underline-offset-2 transition hover:text-[#E52323]"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </span>
+                  </label>
+
+                  {/* REGISTER BUTTON */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="group flex h-[56px] w-full items-center justify-center gap-2 rounded-xl bg-[#292929] px-5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#E52323] hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:h-[60px] sm:text-base"
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Creating account...
+                      </>
+                    ) : (
+                      <>
+                        Register
+                        <ArrowRight
+                          size={20}
+                          className="transition-transform duration-200 group-hover:translate-x-1"
+                        />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-[#666] sm:mt-7 sm:text-[15px]">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-semibold text-[#222] underline underline-offset-2 transition hover:text-[#E52323]"
+                  >
+                    Login now
+                  </Link>
                 </p>
               </div>
             </div>
 
-            <div className="mb-10 flex items-center gap-4">
-              <div className="h-px flex-1 bg-[#ddd]" />
+            <div className="w-full max-w-[570px] mb-6 overflow-hidden rounded-2xl bg-[#171717] shadow-sm lg:hidden">
+              <div className="relative px-5 py-5 sm:px-7 sm:py-6">
+
+                <div className="relative z-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-white/70">
+                    Cost2Cost Supplement
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-black uppercase leading-none text-white sm:text-3xl">
+                    Fuel Your{" "}
+                    <span className="text-[#E52323]">
+                      Goals
+                    </span>
+                  </h2>
+
+                  <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-4">
+
+                    <div className="flex flex-col items-center text-center">
+                      <ShieldCheck
+                        size={20}
+                        className="mb-1 text-white"
+                      />
+
+                      <span className="text-[9px] leading-tight text-white/80 sm:text-[10px]">
+                        100% Authentic
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col items-center text-center">
+                      <Truck
+                        size={20}
+                        className="mb-1 text-white"
+                      />
+
+                      <span className="text-[9px] leading-tight text-white/80 sm:text-[10px]">
+                        Fast & Secure
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col items-center text-center">
+                      <Headphones
+                        size={20}
+                        className="mb-1 text-white"
+                      />
+
+                      <span className="text-[9px] leading-tight text-white/80 sm:text-[10px]">
+                        Customer Support
+                      </span>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="absolute right-[-25px] top-[-50px] h-40 w-40 rounded-full bg-[#E52323]/20 blur-3xl" />
+              </div>
             </div>
-
-            <p className="mb-8 text-center text-sm text-[#555]">
-              Register with Account Credentials
-            </p>
-
-            {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[#E52323]">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {success}
-              </div>
-            )}
-
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5"
-            >
-              <div>
-                <label className="mb-2 block text-base text-[#444]">
-                  Full name{" "}
-                  <span className="text-[#E52323]">*</span>
-                </label>
-
-                <div className="relative">
-                  <User
-                    size={21}
-                    strokeWidth={1.7}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]"
-                  />
-
-                  <input
-                    name="name"
-                    type="text"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Your full name"
-                    required
-                    autoComplete="name"
-                    className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-base text-[#444]">
-                  Email{" "}
-                  <span className="text-[#E52323]">*</span>
-                </label>
-
-                <div className="relative">
-                  <Mail
-                    size={21}
-                    strokeWidth={1.7}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]"
-                  />
-
-                  <input
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="Your email address"
-                    required
-                    autoComplete="email"
-                    className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-base text-[#444]">
-                  Phone{" "}
-                  <span className="text-[#E52323]">*</span>
-                </label>
-
-                <div className="relative">
-                  <Phone
-                    size={21}
-                    strokeWidth={1.7}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]"
-                  />
-
-                  <input
-                    name="phone"
-                    type="tel"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="Phone number"
-                    required
-                    autoComplete="tel"
-                    inputMode="tel"
-                    className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-4 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-base text-[#444]">
-                  Password{" "}
-                  <span className="text-[#E52323]">*</span>
-                </label>
-
-                <div className="relative">
-                  <Lock
-                    size={21}
-                    strokeWidth={1.7}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]"
-                  />
-
-                  <input
-                    name="password"
-                    type={
-                      showPassword ? "text" : "password"
-                    }
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Password"
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                    className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-14 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowPassword((current) => !current)
-                    }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#555] hover:text-black"
-                    aria-label={
-                      showPassword
-                        ? "Hide password"
-                        : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff size={21} />
-                    ) : (
-                      <Eye size={21} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-base text-[#444]">
-                  Password confirmation{" "}
-                  <span className="text-[#E52323]">*</span>
-                </label>
-
-                <div className="relative">
-                  <Lock
-                    size={21}
-                    strokeWidth={1.7}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]"
-                  />
-
-                  <input
-                    name="confirmPassword"
-                    type={
-                      showConfirmPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Password confirmation"
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                    className="h-[54px] w-full rounded-xl border border-[#e4dcff] bg-white pl-14 pr-14 text-base outline-none transition focus:border-[#E52323] focus:ring-1 focus:ring-[#E52323]"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowConfirmPassword(
-                        (current) => !current
-                      )
-                    }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#555] hover:text-black"
-                    aria-label={
-                      showConfirmPassword
-                        ? "Hide password confirmation"
-                        : "Show password confirmation"
-                    }
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={21} />
-                    ) : (
-                      <Eye size={21} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-start gap-2 pt-1 text-sm text-[#444]">
-                <input
-                  name="terms"
-                  type="checkbox"
-                  checked={form.terms}
-                  onChange={handleChange}
-                  className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#222]"
-                />
-
-                <span>
-                  I agree to the{" "}
-                  <Link
-                    href="/terms"
-                    className="underline hover:text-[#E52323]"
-                  >
-                    Terms
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/privacy-policy"
-                    className="underline hover:text-[#E52323]"
-                  >
-                    Privacy Policy
-                  </Link>
-                </span>
-              </label>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group mt-1 flex h-[62px] w-full items-center justify-center gap-2 rounded-xl border border-[#E52323] bg-[#292929] text-base font-medium text-white transition hover:bg-[#E52323] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isLoading ? (
-                  "Registering..."
-                ) : (
-                  <>
-                    Register
-                    <ArrowRight
-                      size={20}
-                      className="transition-transform group-hover:translate-x-1"
-                    />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-base text-[#555]">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-[#222] underline underline-offset-2 hover:text-[#E52323]"
-              >
-                Login now
-              </Link>
-            </p>
-          </div>
+          </section>
         </div>
       </div>
     </main>

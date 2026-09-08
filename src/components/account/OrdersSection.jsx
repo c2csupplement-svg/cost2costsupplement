@@ -109,43 +109,116 @@ const getStatusClass = (status) => {
 };
 
 const getItemImage = (item) => {
-  return (
-    item?.image ||
-    item?.productImage ||
-    item?.thumbnail ||
-    item?.product?.image ||
-    item?.product?.featuredImage ||
-    item?.product?.images?.[0] ||
-    "/placeholder-product.svg"
-  );
+  return (item?.product?.featuredimg || item?.product?.varitant?.image);
 };
 
 const getItemName = (item) => {
-  return (
-    item?.productName ||
-    item?.name ||
-    item?.product?.name ||
-    "Product"
-  );
+  return (item?.productName)
 };
 
 const getItemQuantity = (item) => {
-  return Number(
-    item?.quantity ||
-      item?.qty ||
-      1
-  );
+  return Number(item?.quantity);
 };
 
 const getItemPrice = (item) => {
-  return Number(
-    item?.price ||
-      item?.unitPrice ||
-      item?.sellingPrice ||
-      item?.product?.price ||
-      0
-  );
+  return Number(item?.priceAtPurchase);
 };
+
+const stageOrder = [
+  "pending",
+  "placed",
+  "confirmed",
+  "ready_to_ship",
+  "on_the_way",
+  "delivered",
+];
+
+const stageLabels = {
+  pending: "Payment Pending",
+  placed: "Order Placed",
+  confirmed: "Order Confirmed",
+  ready_to_ship: "Ready to Ship",
+  on_the_way: "On the Way",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+function OrderProgress({ status }) {
+  const normalizedStatus = String(status || "pending")
+    .toLowerCase()
+    .trim();
+
+  if (normalizedStatus === "cancelled") {
+    return (
+      <div className="rounded-xl border border-red-200 bg-white px-4 py-5 sm:px-6">
+        <div className="flex items-center justify-center gap-2 text-sm font-semibold text-red-600">
+          <XCircle className="h-5 w-5" />
+          Order Cancelled
+        </div>
+      </div>
+    );
+  }
+
+  const currentIndex = Math.max(
+    stageOrder.indexOf(normalizedStatus),
+    0
+  );
+
+  return (
+    <div className="rounded-xl border border-[#e8e8e8] bg-white px-3 py-5 sm:px-6 sm:py-6">
+      <div className="relative">
+
+        <div className="absolute left-[8.33%] right-[8.33%] top-[8px] h-[3px] rounded-full bg-[#e5e5e5]" />
+
+        <div
+          className="absolute left-[8.33%] top-[8px] h-[3px] rounded-full bg-[#E52323] transition-all duration-500"
+          style={{
+            width:
+              currentIndex === 0
+                ? "0%"
+                : `calc(${(currentIndex / (stageOrder.length - 1)) * 83.34}% - 0px)`,
+          }}
+        />
+
+        <div className="relative grid grid-cols-6">
+          {stageOrder.map((stage, index) => {
+            const isCompleted = index < currentIndex;
+            const isCurrent = index === currentIndex;
+
+            return (
+              <div
+                key={stage}
+                className="flex min-w-0 flex-col items-center"
+              >
+                <div
+                  className={`relative z-10 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[2px] transition-all duration-300 ${isCompleted || isCurrent
+                      ? "border-[#E52323] bg-[#E52323]"
+                      : "border-[#777] bg-white"
+                    }`}
+                >
+                  {isCompleted && (
+                    <div className="h-[5px] w-[5px] rounded-full bg-white" />
+                  )}
+                </div>
+
+                <span
+                  className={`mt-3 px-1 text-center text-[9px] font-semibold leading-tight sm:text-[10px] md:text-[11px] ${isCurrent
+                      ? "text-[#E52323]"
+                      : isCompleted
+                        ? "text-[#333]"
+                        : "text-[#777]"
+                    }`}
+                >
+                  {stageLabels[stage]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function OrdersSkeleton() {
   return (
@@ -222,7 +295,7 @@ function OrderItem({
     ? order.items
     : [];
 
-  const canCancel =order?.displayStage !== "pending";
+  const canCancel = order?.displayStage !== "pending";
 
   const shippingAddress =
     order?.address || {
@@ -283,9 +356,8 @@ function OrderItem({
           </div>
 
           <ChevronRight
-            className={`mt-1 h-5 w-5 shrink-0 text-text-secondary transition-transform ${
-              expanded ? "rotate-90" : ""
-            }`}
+            className={`mt-1 h-5 w-5 shrink-0 text-text-secondary transition-transform ${expanded ? "rotate-90" : ""
+              }`}
           />
         </div>
 
@@ -392,22 +464,22 @@ function OrderItem({
                           {(item?.variant?.flavour ||
                             item?.variant?.flavor ||
                             item?.variant?.size) && (
-                            <div className="mt-1 flex flex-wrap gap-2 text-xs text-text-secondary">
-                              {(item?.variant?.flavour ||
-                                item?.variant?.flavor) && (
-                                <span>
-                                  {item?.variant?.flavour ||
-                                    item?.variant?.flavor}
-                                </span>
-                              )}
+                              <div className="mt-1 flex flex-wrap gap-2 text-xs text-text-secondary">
+                                {(item?.variant?.flavour ||
+                                  item?.variant?.flavor) && (
+                                    <span>
+                                      {item?.variant?.flavour ||
+                                        item?.variant?.flavor}
+                                    </span>
+                                  )}
 
-                              {item?.variant?.size && (
-                                <span>
-                                  {item.variant.size}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                                {item?.variant?.size && (
+                                  <span>
+                                    {item.variant.size}
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                             <span className="text-text-secondary">
@@ -440,6 +512,8 @@ function OrderItem({
                 )}
               </div>
             </section>
+
+            <OrderProgress status={order?.displayStage} />
 
             <section className="grid gap-4 lg:grid-cols-2">
               <div className="rounded-xl border border-border p-4">
@@ -536,18 +610,6 @@ function OrderItem({
                       </span>
                     </div>
                   )}
-
-                  {/* {order?.razorpayOrderId && (
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="text-text-secondary">
-                        Razorpay Order
-                      </span>
-
-                      <span className="max-w-[220px] break-all text-right text-xs font-medium text-text-primary">
-                        {order.razorpayOrderId}
-                      </span>
-                    </div>
-                  )} */}
                 </div>
               </div>
             </section>
@@ -562,25 +624,6 @@ function OrderItem({
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <p className="text-xs text-text-secondary">
-                    Courier
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-text-primary">
-                    {order?.courierName || "Not assigned"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-text-secondary">
-                    AWB Code
-                  </p>
-
-                  <p className="mt-1 break-all text-sm font-semibold text-text-primary">
-                    {order?.awbCode || "Not available"}
-                  </p>
-                </div>
 
                 <div>
                   <p className="text-xs text-text-secondary">
@@ -590,7 +633,7 @@ function OrderItem({
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {formatStatus(
                       order?.shipmentStatus ||
-                        "not_shipped"
+                      "not_shipped"
                     )}
                   </p>
                 </div>
@@ -665,33 +708,35 @@ function OrderItem({
                   </div>
                 </div>
 
-                {Number(order?.advanceAmount || 0) > 0 && (
-                  <div className="flex justify-between gap-4">
-                    <span className="text-text-secondary">
-                      Advance Paid
-                    </span>
+                {order?.paymentStatus !== "pending" && <div>
+                  {Number(order?.advanceAmount || 0) > 0 && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-text-secondary">
+                        Advance Paid
+                      </span>
 
-                    <span className="font-medium text-text-primary">
-                      {formatCurrency(
-                        order?.advanceAmount
-                      )}
-                    </span>
-                  </div>
-                )}
+                      <span className="font-medium text-text-primary">
+                        {formatCurrency(
+                          order?.advanceAmount
+                        )}
+                      </span>
+                    </div>
+                  )}
 
-                {Number(order?.remainingAmount || 0) > 0 && (
-                  <div className="flex justify-between gap-4">
-                    <span className="text-text-secondary">
-                      Remaining
-                    </span>
+                  {Number(order?.remainingAmount || 0) > 0 && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-text-secondary">
+                        Remaining
+                      </span>
 
-                    <span className="font-bold text-primary">
-                      {formatCurrency(
-                        order?.remainingAmount
-                      )}
-                    </span>
-                  </div>
-                )}
+                      <span className="font-bold text-primary">
+                        {formatCurrency(
+                          order?.remainingAmount
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>}
               </div>
             </section>
 

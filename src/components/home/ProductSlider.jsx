@@ -212,7 +212,7 @@ export default function ProductSlider({
           </div>
 
           <Link
-            href="/products"
+            href={`/products?search=${eyebrow}`}
             className="
               group
               hidden

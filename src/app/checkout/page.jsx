@@ -1,55 +1,22 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  Check,
-  ChevronDown,
-  Crosshair,
-  CreditCard,
-  Home,
-  Lock,
-  MapPin,
-  Minus,
-  Pencil,
-  Plus,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
-  Tag,
-  Truck,
-  X,
+  ArrowLeft, ArrowRight, Building2, Check, ChevronDown, Crosshair, CreditCard, Home, Lock,
+  MapPin, Minus, Pencil, Plus, ShieldCheck, ShoppingBag, Sparkles, Tag, Truck, X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 
-import {
-  createRazorpayOrderApi,
-  buyNowApi,
-  verifyPaymentApi,
-  couponApi,
-  removeCouponApi,
-  appplyCouponApi,
-} from "@/apiService/api";
+import { createRazorpayOrderApi, buyNowApi, verifyPaymentApi, couponApi, removeCouponApi, appplyCouponApi } from "@/apiService/api";
 
-import {
-  fetchCartItems,
-  updateItemQuantity,
-  deleteCartItem,
-  fetchCartItemsCheckOut,
-} from "@/redux/features/cart/cartActions";
+import { fetchCartItems, updateItemQuantity, deleteCartItem, fetchCartItemsCheckOut, } from "@/redux/features/cart/cartActions";
 
-import {
-  getAddress,
-  createAddress,
-  updateAddress,
-} from "@/redux/features/address/addressAction";
+import { getAddress, createAddress, updateAddress, } from "@/redux/features/address/addressAction";
 
 const emptyAddress = {
   addressType: "Home",
@@ -104,10 +71,10 @@ function getItemPrice(item) {
 
   return Number(
     item?.price ??
-      item?.unitPrice ??
-      variant?.price ??
-      product?.price ??
-      0
+    item?.unitPrice ??
+    variant?.price ??
+    product?.price ??
+    0
   );
 }
 
@@ -124,9 +91,9 @@ function calculateCouponDiscount(coupon, subtotal) {
 
   const discountValue = Number(
     coupon?.discountValue ??
-      coupon?.discount ??
-      coupon?.discountAmount ??
-      0
+    coupon?.discount ??
+    coupon?.discountAmount ??
+    0
   );
 
   let discount = 0;
@@ -139,9 +106,9 @@ function calculateCouponDiscount(coupon, subtotal) {
 
     const maxDiscount = Number(
       coupon?.maxDiscount ??
-        coupon?.maximumDiscount ??
-        coupon?.maxDiscountAmount ??
-        0
+      coupon?.maximumDiscount ??
+      coupon?.maxDiscountAmount ??
+      0
     );
 
     if (maxDiscount > 0) {
@@ -161,9 +128,9 @@ function getCouponDescription(coupon) {
 
   const value = Number(
     coupon?.discountValue ??
-      coupon?.discount ??
-      coupon?.discountAmount ??
-      0
+    coupon?.discount ??
+    coupon?.discountAmount ??
+    0
   );
 
   if (
@@ -211,6 +178,9 @@ export default function CheckoutPage() {
 function CheckoutContent() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const isBuyNowRoute = searchParams.get("buyNow") === "true";
 
   const debounceRef = useRef(null);
   const mountedRef = useRef(true);
@@ -280,10 +250,7 @@ function CheckoutContent() {
 
   const cartStateProducts = cartState?.products;
 
-  const cartData =
-    cartStateProducts?.cart ??
-    cartStateProducts ??
-    {};
+  const cartData = cartStateProducts?.cart;
 
   const rawItems =
     cartData?.cart?.items ??
@@ -317,8 +284,7 @@ function CheckoutContent() {
   useEffect(() => {
     mountedRef.current = true;
 
-    const token =
-      localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     if (!token) {
       router.push("/login");
@@ -327,68 +293,55 @@ function CheckoutContent() {
 
     dispatch(getAddress());
 
-    const saved =
-      sessionStorage.getItem(
-        "buyNowCheckout"
-      );
+    if (isBuyNowRoute) {
+      const saved = sessionStorage.getItem("buyNowCheckout");
 
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
 
-        if (
-          parsed?.productId &&
-          parsed?.quantity
-        ) {
-          setIsBuyNow(true);
+          if (parsed?.productId && parsed?.quantity) {
+            setIsBuyNow(true);
 
-          setBuyNowItem({
-            id: `buy-now-${parsed.productId}-${parsed.variantId ?? "default"}`,
-            productId: parsed.productId,
-            variantId:
-              parsed.variantId ?? null,
-            quantity:
-              Number(parsed.quantity) || 1,
-            name:
-              parsed.name ??
-              parsed.title ??
-              "Product",
-            price:
-              Number(
-                parsed.price ??
-                  parsed.unitPrice ??
-                  0
-              ),
-            image:
-              parsed.image ?? null,
-            variant:
-              parsed.variant ?? null,
-            product:
-              parsed.product ?? {},
-          });
+            setBuyNowItem({
+              id: `buy-now-${parsed.productId}-${parsed.variantId ?? "default"}`,
+              productId: parsed.productId,
+              variantId: parsed.variantId ?? null,
+              quantity: Number(parsed.quantity) || 1,
+              name: parsed.name ?? parsed.title ?? "Product",
+              price: Number(parsed.price ?? parsed.unitPrice ?? 0),
+              image: parsed.image ?? null,
+              variant: parsed.variant ?? null,
+              product: parsed.product ?? {},
+            });
+          } else {
+            // URL says buy-now but data is malformed — bail to cart
+            sessionStorage.removeItem("buyNowCheckout");
+            setIsBuyNow(false);
+            router.replace("/checkout");
+          }
+        } catch (error) {
+          console.error("Buy Now session error:", error);
+          sessionStorage.removeItem("buyNowCheckout");
+          setIsBuyNow(false);
+          router.replace("/checkout");
         }
-      } catch (error) {
-        console.error(
-          "Buy Now session error:",
-          error
-        );
-
-        sessionStorage.removeItem(
-          "buyNowCheckout"
-        );
+      } else {
+        setIsBuyNow(false);
+        router.replace("/checkout");
       }
     } else {
+      sessionStorage.removeItem("buyNowCheckout");
+      setIsBuyNow(false);
+      setBuyNowItem(null);
       dispatch(fetchCartItems());
     }
 
     return () => {
       mountedRef.current = false;
-
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [dispatch, router]);
+  }, [dispatch, router, isBuyNowRoute]);
 
   useEffect(() => {
     if (isBuyNow) {
@@ -446,8 +399,8 @@ function CheckoutContent() {
           couponDiscount:
             Number(
               appliedCouponDiscount ||
-                parsed?.couponDiscount ||
-                0
+              parsed?.couponDiscount ||
+              0
             ),
         })
       );
@@ -617,7 +570,7 @@ function CheckoutContent() {
 
     document.body.appendChild(script);
 
-    return () => {};
+    return () => { };
   }, []);
 
   useEffect(() => {
@@ -666,26 +619,26 @@ function CheckoutContent() {
   const apiTotalAmount = isBuyNow
     ? null
     : Number(
-        cartData?.totalAmount ?? NaN
-      );
+      cartData?.totalAmount ?? NaN
+    );
 
   const apiFinalAmount = isBuyNow
     ? null
     : Number(
-        cartData?.finalAmount ?? NaN
-      );
+      cartData?.finalAmount ?? NaN
+    );
 
   const apiCouponDiscount = isBuyNow
     ? 0
     : Number(
-        cartData?.discountAmount ?? 0
-      );
+      cartData?.discountAmount ?? 0
+    );
 
   const cartSubtotal =
     Number.isFinite(
       apiTotalAmount
     ) &&
-    apiTotalAmount >= 0
+      apiTotalAmount >= 0
       ? apiTotalAmount
       : calculatedCartTotal;
 
@@ -693,25 +646,25 @@ function CheckoutContent() {
     isBuyNow
       ? appliedCouponDiscount
       : apiCouponDiscount > 0
-      ? apiCouponDiscount
-      : appliedCouponDiscount;
+        ? apiCouponDiscount
+        : appliedCouponDiscount;
 
   const discountedTotal =
     isBuyNow
       ? Math.max(
-          0,
-          cartSubtotal -
-            finalCouponDiscount
-        )
+        0,
+        cartSubtotal -
+        finalCouponDiscount
+      )
       : Number.isFinite(
-          apiFinalAmount
-        ) &&
+        apiFinalAmount
+      ) &&
         apiFinalAmount >= 0
-      ? apiFinalAmount
-      : Math.max(
+        ? apiFinalAmount
+        : Math.max(
           0,
           cartSubtotal -
-            finalCouponDiscount
+          finalCouponDiscount
         );
 
   const codCharge =
@@ -878,7 +831,7 @@ function CheckoutContent() {
         if (response?.error) {
           throw new Error(
             response.error?.message ||
-              "Unable to save address."
+            "Unable to save address."
           );
         }
 
@@ -902,7 +855,7 @@ function CheckoutContent() {
 
         toast.error(
           error?.message ||
-            "Unable to save address."
+          "Unable to save address."
         );
       } finally {
         setSavingAddress(false);
@@ -933,7 +886,7 @@ function CheckoutContent() {
 
       if (
         result?.Status ===
-          "Success" &&
+        "Success" &&
         result?.PostOffice?.length
       ) {
         const office =
@@ -1092,9 +1045,9 @@ function CheckoutContent() {
           (previous) =>
             previous
               ? {
-                  ...previous,
-                  quantity,
-                }
+                ...previous,
+                quantity,
+              }
               : previous
         );
 
@@ -1188,8 +1141,8 @@ function CheckoutContent() {
     async (coupon) => {
       const code = String(
         coupon?.code ||
-          coupon?.couponCode ||
-          ""
+        coupon?.couponCode ||
+        ""
       )
         .trim()
         .toUpperCase();
@@ -1204,9 +1157,9 @@ function CheckoutContent() {
       const minimumCartValue =
         Number(
           coupon?.minCartValue ??
-            coupon?.minimumCartValue ??
-            coupon?.minOrderValue ??
-            0
+          coupon?.minimumCartValue ??
+          coupon?.minOrderValue ??
+          0
         );
 
       if (
@@ -1229,36 +1182,20 @@ function CheckoutContent() {
 
         if (!isBuyNow) {
           const response =
-            await appplyCouponApi(
-              code
-            );
+            await appplyCouponApi(code);
 
-          const data =
-            response?.data ??
-            response;
+          const data = response?.data;
 
-          if (
-            data?.success === false
-          ) {
+          if (data?.success === false) {
             throw new Error(
               data?.message ||
-                "Unable to apply coupon."
+              "Unable to apply coupon."
             );
           }
 
-          const serverCouponCode =
-            data?.couponCode ||
-            data?.coupon?.code ||
-            data?.appliedCoupon?.code ||
-            code;
+          const serverCouponCode = data?.couponCode
 
-          const serverDiscount =
-            Number(
-              data?.discountAmount ??
-                data?.discount ??
-                data?.couponDiscount ??
-                0
-            );
+          const serverDiscount = Number(data?.discountAmount);
 
           setAppliedCoupon({
             ...coupon,
@@ -1280,7 +1217,7 @@ function CheckoutContent() {
           );
 
           await dispatch(
-            fetchCartItems()
+            fetchCartItemsCheckOut()
           );
 
           setShowCouponModal(false);
@@ -1291,8 +1228,8 @@ function CheckoutContent() {
               description:
                 serverDiscount > 0
                   ? `You saved ${formatPrice(
-                      serverDiscount
-                    )}.`
+                    serverDiscount
+                  )}.`
                   : "Coupon applied successfully.",
             }
           );
@@ -1396,8 +1333,8 @@ function CheckoutContent() {
           (item) =>
             String(
               item?.code ||
-                item?.couponCode ||
-                ""
+              item?.couponCode ||
+              ""
             ).toUpperCase() === code
         );
 
@@ -1446,7 +1383,7 @@ function CheckoutContent() {
           ) {
             throw new Error(
               data?.message ||
-                "Unable to remove coupon."
+              "Unable to remove coupon."
             );
           }
 
@@ -1490,8 +1427,8 @@ function CheckoutContent() {
         toast.error(
           error?.response?.data
             ?.message ||
-            error?.message ||
-            "Unable to remove coupon."
+          error?.message ||
+          "Unable to remove coupon."
         );
       } finally {
         setCouponLoading(false);
@@ -1596,325 +1533,325 @@ function CheckoutContent() {
     );
   };
 
-const startPayment = async () => {
-  if (!selectedAddressId) {
-    toast.error("Please select a delivery address.");
-    return;
-  }
-
-  if (isBuyNow && !buyNowItem) {
-    toast.error("Buy Now item is missing.");
-    return;
-  }
-
-  if (!isBuyNow && !cart.length) {
-    toast.error("Your checkout is empty.");
-    return;
-  }
-
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    setPaymentLoading(true);
-
-    let response;
-
-    if (isBuyNow) {
-      response = await buyNowApi({
-        productId: buyNowItem?.productId,
-        variantId: buyNowItem?.variantId ?? null,
-        quantity: Number(buyNowItem?.quantity || 1),
-        addressId: Number(selectedAddressId),
-        paymentMethod: paymentMode,
-        couponCode: appliedCoupon?.code || null,
-        couponId: appliedCoupon?.id || null,
-        couponDiscount: Number(appliedCouponDiscount || 0),
-      });
-    } else {
-      response = await createRazorpayOrderApi({
-        addressId: Number(selectedAddressId),
-        paymentMethod: paymentMode,
-      });
+  const startPayment = async () => {
+    if (!selectedAddressId) {
+      toast.error("Please select a delivery address.");
+      return;
     }
 
-    const data = response?.data ?? response;
-
-    console.log("Checkout API response:", data);
-
-    if (!data) {
-      throw new Error("No response received from checkout API.");
+    if (isBuyNow && !buyNowItem) {
+      toast.error("Buy Now item is missing.");
+      return;
     }
 
-    if (data?.success === false) {
-      throw new Error(
-        data?.message || "Unable to create order."
-      );
+    if (!isBuyNow && !cart.length) {
+      toast.error("Your checkout is empty.");
+      return;
     }
 
-    const isCOD = Boolean(
-      data?.isCOD ??
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      setPaymentLoading(true);
+
+      let response;
+
+      if (isBuyNow) {
+        response = await buyNowApi({
+          productId: buyNowItem?.productId,
+          variantId: buyNowItem?.variantId ?? null,
+          quantity: Number(buyNowItem?.quantity || 1),
+          addressId: Number(selectedAddressId),
+          paymentMethod: paymentMode,
+          couponCode: appliedCoupon?.code || null,
+          couponId: appliedCoupon?.id || null,
+          couponDiscount: Number(appliedCouponDiscount || 0),
+        });
+      } else {
+        response = await createRazorpayOrderApi({
+          addressId: Number(selectedAddressId),
+          paymentMethod: paymentMode,
+        });
+      }
+
+      const data = response?.data ?? response;
+
+      console.log("Checkout API response:", data);
+
+      if (!data) {
+        throw new Error("No response received from checkout API.");
+      }
+
+      if (data?.success === false) {
+        throw new Error(
+          data?.message || "Unable to create order."
+        );
+      }
+
+      const isCOD = Boolean(
+        data?.isCOD ??
         data?.order?.isCOD ??
         data?.data?.isCOD ??
         paymentMode === "COD"
-    );
+      );
 
-    const razorpayOrderId =
-      data?.razorpayOrderId ||
-      data?.order?.razorpayOrderId ||
-      data?.data?.razorpayOrderId;
+      const razorpayOrderId =
+        data?.razorpayOrderId ||
+        data?.order?.razorpayOrderId ||
+        data?.data?.razorpayOrderId;
 
-    const razorpayCurrency =
-      data?.currency ||
-      data?.order?.currency ||
-      data?.data?.currency ||
-      "INR";
+      const razorpayCurrency =
+        data?.currency ||
+        data?.order?.currency ||
+        data?.data?.currency ||
+        "INR";
 
-    const razorpayKey =
-      data?.key ||
-      data?.order?.key ||
-      data?.data?.key ||
-      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const razorpayKey =
+        data?.key ||
+        data?.order?.key ||
+        data?.data?.key ||
+        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
-    const advanceAmount = Number(
-      data?.advanceAmount ??
+      const advanceAmount = Number(
+        data?.advanceAmount ??
         data?.order?.advanceAmount ??
         data?.data?.advanceAmount ??
         0
-    );
+      );
 
-    const rawAmount = Number(
-      data?.amount ??
+      const rawAmount = Number(
+        data?.amount ??
         data?.order?.amount ??
         data?.data?.amount ??
         0
-    );
+      );
 
-    const orderNumber =
-      data?.orderNumber ||
-      data?.order?.orderNumber ||
-      data?.data?.orderNumber ||
-      "";
+      const orderNumber =
+        data?.orderNumber ||
+        data?.order?.orderNumber ||
+        data?.data?.orderNumber ||
+        "";
 
-    const remainingAmount = Number(
-      data?.remainingAmount ??
+      const remainingAmount = Number(
+        data?.remainingAmount ??
         data?.order?.remainingAmount ??
         data?.data?.remainingAmount ??
         0
-    );
+      );
 
-    if (!razorpayOrderId) {
-      throw new Error("Razorpay order ID is missing.");
-    }
+      if (!razorpayOrderId) {
+        throw new Error("Razorpay order ID is missing.");
+      }
 
-    if (!razorpayKey) {
-      throw new Error("Razorpay key is missing.");
-    }
+      if (!razorpayKey) {
+        throw new Error("Razorpay key is missing.");
+      }
 
-    let razorpayAmount;
+      let razorpayAmount;
 
-    if (isCOD) {
-      if (!advanceAmount || advanceAmount <= 0) {
+      if (isCOD) {
+        if (!advanceAmount || advanceAmount <= 0) {
+          throw new Error(
+            "COD advance amount is missing."
+          );
+        }
+
+        razorpayAmount = Math.round(
+          advanceAmount * 100
+        );
+      } else {
+        if (!rawAmount || rawAmount <= 0) {
+          throw new Error("Razorpay amount is missing.");
+        }
+
+        razorpayAmount = Math.round(rawAmount);
+      }
+
+      await loadRazorpay();
+
+      if (!window.Razorpay) {
         throw new Error(
-          "COD advance amount is missing."
+          "Razorpay Checkout could not be loaded."
         );
       }
 
-      razorpayAmount = Math.round(
-        advanceAmount * 100
-      );
-    } else {
-      if (!rawAmount || rawAmount <= 0) {
-        throw new Error("Razorpay amount is missing.");
-      }
+      const options = {
+        key: razorpayKey,
+        amount: razorpayAmount,
+        currency: razorpayCurrency,
+        name: "Cost2Cost",
+        description: isCOD
+          ? `COD Advance Payment${orderNumber ? ` - ${orderNumber}` : ""}`
+          : isBuyNow
+            ? "Buy Now Order"
+            : "Order Payment",
+        order_id: razorpayOrderId,
 
-      razorpayAmount = Math.round(rawAmount);
-    }
+        prefill: {
+          name: selectedAddress?.fullName || "",
+          email: selectedAddress?.email || "",
+          contact: selectedAddress?.mobile || "",
+        },
 
-    await loadRazorpay();
+        notes: {
+          payment_method: isCOD ? "COD" : "PREPAID",
+          order_number: orderNumber,
+          address_id: String(selectedAddressId),
+          advance_amount: isCOD
+            ? String(advanceAmount)
+            : String(rawAmount / 100),
+          remaining_amount: isCOD
+            ? String(remainingAmount)
+            : "0",
+        },
 
-    if (!window.Razorpay) {
-      throw new Error(
-        "Razorpay Checkout could not be loaded."
-      );
-    }
+        theme: {
+          color: "#111111",
+        },
 
-    const options = {
-      key: razorpayKey,
-      amount: razorpayAmount,
-      currency: razorpayCurrency,
-      name: "Cost2Cost",
-      description: isCOD
-        ? `COD Advance Payment${orderNumber ? ` - ${orderNumber}` : ""}`
-        : isBuyNow
-        ? "Buy Now Order"
-        : "Order Payment",
-      order_id: razorpayOrderId,
+        handler: async (paymentResponse) => {
+          try {
+            setPaymentLoading(true);
 
-      prefill: {
-        name: selectedAddress?.fullName || "",
-        email: selectedAddress?.email || "",
-        contact: selectedAddress?.mobile || "",
-      },
+            const verifyPayload = {
+              razorpay_order_id:
+                paymentResponse?.razorpay_order_id,
+              razorpay_payment_id:
+                paymentResponse?.razorpay_payment_id,
+              razorpay_signature:
+                paymentResponse?.razorpay_signature,
+              addressId: Number(selectedAddressId),
+            };
 
-      notes: {
-        payment_method: isCOD ? "COD" : "PREPAID",
-        order_number: orderNumber,
-        address_id: String(selectedAddressId),
-        advance_amount: isCOD
-          ? String(advanceAmount)
-          : String(rawAmount / 100),
-        remaining_amount: isCOD
-          ? String(remainingAmount)
-          : "0",
-      },
+            const verifyResponse =
+              await verifyPaymentApi(verifyPayload);
 
-      theme: {
-        color: "#111111",
-      },
+            const verifyData =
+              verifyResponse?.data ?? verifyResponse;
 
-      handler: async (paymentResponse) => {
-        try {
-          setPaymentLoading(true);
+            console.log(
+              "Payment verification response:",
+              verifyData
+            );
 
-          const verifyPayload = {
-            razorpay_order_id:
-              paymentResponse?.razorpay_order_id,
-            razorpay_payment_id:
-              paymentResponse?.razorpay_payment_id,
-            razorpay_signature:
-              paymentResponse?.razorpay_signature,
-            addressId: Number(selectedAddressId),
-          };
-
-          const verifyResponse =
-            await verifyPaymentApi(verifyPayload);
-
-          const verifyData =
-            verifyResponse?.data ?? verifyResponse;
-
-          console.log(
-            "Payment verification response:",
-            verifyData
-          );
-
-          if (
-            !verifyData ||
-            verifyData?.success === false
-          ) {
-            throw new Error(
-              verifyData?.message ||
+            if (
+              !verifyData ||
+              verifyData?.success === false
+            ) {
+              throw new Error(
+                verifyData?.message ||
                 "Payment verification failed."
+              );
+            }
+
+            if (isBuyNow) {
+              sessionStorage.removeItem(
+                "buyNowCheckout"
+              );
+            }
+
+            if (!isBuyNow) {
+              await dispatch(
+                fetchCartItemsCheckOut()
+              );
+
+              await dispatch(
+                fetchCartItems()
+              );
+            }
+
+            if (isCOD) {
+              toast.success(
+                `COD order confirmed. Advance paid ₹${advanceAmount.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}. Remaining ₹${remainingAmount.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )} will be payable on delivery.`
+              );
+            } else {
+              toast.success(
+                "Payment successful. Order placed."
+              );
+            }
+
+            router.push("/cart");
+          } catch (error) {
+            console.error(
+              "Payment verification error:",
+              error
             );
+
+            toast.error(
+              error?.response?.data?.message ||
+              error?.message ||
+              "Payment verification failed."
+            );
+          } finally {
+            if (mountedRef.current) {
+              setPaymentLoading(false);
+            }
           }
+        },
 
-          if (isBuyNow) {
-            sessionStorage.removeItem(
-              "buyNowCheckout"
-            );
-          }
+        modal: {
+          ondismiss: () => {
+            if (mountedRef.current) {
+              setPaymentLoading(false);
+            }
+          },
+        },
+      };
 
-          if (!isBuyNow) {
-            await dispatch(
-              fetchCartItemsCheckOut()
-            );
+      const razorpay =
+        new window.Razorpay(options);
 
-            await dispatch(
-              fetchCartItems()
-            );
-          }
-
-          if (isCOD) {
-            toast.success(
-              `COD order confirmed. Advance paid ₹${advanceAmount.toLocaleString(
-                "en-IN",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
-              )}. Remaining ₹${remainingAmount.toLocaleString(
-                "en-IN",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
-              )} will be payable on delivery.`
-            );
-          } else {
-            toast.success(
-              "Payment successful. Order placed."
-            );
-          }
-
-          router.push("/cart");
-        } catch (error) {
+      razorpay.on(
+        "payment.failed",
+        (paymentError) => {
           console.error(
-            "Payment verification error:",
-            error
+            "Razorpay payment failed:",
+            paymentError
           );
 
           toast.error(
-            error?.response?.data?.message ||
-              error?.message ||
-              "Payment verification failed."
-          );
-        } finally {
-          if (mountedRef.current) {
-            setPaymentLoading(false);
-          }
-        }
-      },
-
-      modal: {
-        ondismiss: () => {
-          if (mountedRef.current) {
-            setPaymentLoading(false);
-          }
-        },
-      },
-    };
-
-    const razorpay =
-      new window.Razorpay(options);
-
-    razorpay.on(
-      "payment.failed",
-      (paymentError) => {
-        console.error(
-          "Razorpay payment failed:",
-          paymentError
-        );
-
-        toast.error(
-          paymentError?.error?.description ||
+            paymentError?.error?.description ||
             "Payment failed."
-        );
+          );
 
-        if (mountedRef.current) {
-          setPaymentLoading(false);
+          if (mountedRef.current) {
+            setPaymentLoading(false);
+          }
         }
-      }
-    );
+      );
 
-    razorpay.open();
-  } catch (error) {
-    console.error(
-      "Checkout payment error:",
-      error?.response?.data || error
-    );
+      razorpay.open();
+    } catch (error) {
+      console.error(
+        "Checkout payment error:",
+        error?.response?.data || error
+      );
 
-    toast.error(
-      error?.response?.data?.message ||
+      toast.error(
+        error?.response?.data?.message ||
         error?.message ||
         "Unable to process checkout."
-    );
+      );
 
-    if (mountedRef.current) {
-      setPaymentLoading(false);
+      if (mountedRef.current) {
+        setPaymentLoading(false);
+      }
     }
-  }
-};
+  };
 
   const visibleAddresses =
     showAllAddresses
@@ -2276,23 +2213,21 @@ const startPayment = async () => {
                                   address?.id
                                 )
                               }
-                              className={`relative w-full rounded-2xl border p-4 text-left transition ${
-                                active
-                                  ? "border-primary bg-primary/[0.035] shadow-sm"
-                                  : "border-border bg-background hover:border-primary/40"
-                              }`}
+                              className={`relative w-full rounded-2xl border p-4 text-left transition ${active
+                                ? "border-primary bg-primary/[0.035] shadow-sm"
+                                : "border-border bg-background hover:border-primary/40"
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex min-w-0 items-center gap-3">
                                   <div
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                                      active
-                                        ? "bg-primary text-white"
-                                        : "bg-surface text-text-muted"
-                                    }`}
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${active
+                                      ? "bg-primary text-white"
+                                      : "bg-surface text-text-muted"
+                                      }`}
                                   >
                                     {address?.addressType ===
-                                    "Work" ? (
+                                      "Work" ? (
                                       <Building2 className="h-4 w-4" />
                                     ) : (
                                       <Home className="h-4 w-4" />
@@ -2323,11 +2258,10 @@ const startPayment = async () => {
                                 </div>
 
                                 <span
-                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                                    active
-                                      ? "border-primary bg-primary"
-                                      : "border-border"
-                                  }`}
+                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${active
+                                    ? "border-primary bg-primary"
+                                    : "border-border"
+                                    }`}
                                 >
                                   {active && (
                                     <Check className="h-3 w-3 text-white" />
@@ -2386,24 +2320,23 @@ const startPayment = async () => {
 
                     {addresses.length >
                       2 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowAllAddresses(
-                            (previous) =>
-                              !previous
-                          )
-                        }
-                        className="text-xs font-bold text-primary"
-                      >
-                        {showAllAddresses
-                          ? "Show less"
-                          : `View ${
-                              addresses.length -
-                              2
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowAllAddresses(
+                              (previous) =>
+                                !previous
+                            )
+                          }
+                          className="text-xs font-bold text-primary"
+                        >
+                          {showAllAddresses
+                            ? "Show less"
+                            : `View ${addresses.length -
+                            2
                             } more addresses`}
-                      </button>
-                    )}
+                        </button>
+                      )}
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border p-8 text-center">
@@ -2425,141 +2358,121 @@ const startPayment = async () => {
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <div className="border-b border-border p-4 sm:p-6">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
                     2
                   </span>
 
                   <div>
-                    <h2 className="text-sm font-bold sm:text-base">
-                      Payment method
-                    </h2>
-
+                    <h2 className="text-sm font-bold sm:text-base">Payment method</h2>
                     <p className="mt-0.5 text-[10px] text-text-muted sm:text-xs">
-                      Choose how you'd like
-                      to pay.
+                      Choose how you'd like to pay.
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+                {/* Prepaid */}
                 <button
                   type="button"
-                  onClick={() =>
-                    setPaymentMode(
-                      "PREPAID"
-                    )
-                  }
-                  className={`rounded-2xl border p-4 text-left transition sm:p-5 ${
-                    paymentMode ===
-                    "PREPAID"
-                      ? "border-primary bg-primary/[0.035] shadow-sm"
-                      : "border-border bg-background hover:border-primary/40"
-                  }`}
+                  onClick={() => setPaymentMode("PREPAID")}
+                  aria-pressed={paymentMode === "PREPAID"}
+                  className={`group relative flex flex-col rounded-2xl border p-4 text-left transition sm:p-5 ${paymentMode === "PREPAID"
+                      ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
+                      : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
+                    }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                          paymentMode ===
-                          "PREPAID"
-                            ? "bg-primary text-white"
-                            : "bg-surface text-text-muted"
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${paymentMode === "PREPAID"
+                          ? "bg-primary text-white"
+                          : "bg-surface text-text-muted"
                         }`}
-                      >
-                        <CreditCard className="h-5 w-5" />
-                      </div>
-
-                      <div>
-                        <h3 className="text-xs font-bold sm:text-sm">
-                          Prepaid
-                        </h3>
-
-                        <p className="mt-1 text-[10px] text-text-muted">
-                          UPI, cards &
-                          net banking
-                        </p>
-                      </div>
+                    >
+                      <CreditCard className="h-5 w-5" />
                     </div>
 
-                    <span
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                        paymentMode ===
-                        "PREPAID"
-                          ? "border-primary bg-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {paymentMode ===
-                        "PREPAID" && (
-                        <Check className="h-3 w-3 text-white" />
-                      )}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-xs font-bold sm:text-sm">Prepaid</h3>
+
+                        <span
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${paymentMode === "PREPAID"
+                              ? "border-primary bg-primary"
+                              : "border-border"
+                            }`}
+                        >
+                          {paymentMode === "PREPAID" && (
+                            <Check className="h-3 w-3 text-white" />
+                          )}
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-[10px] leading-4 text-text-muted sm:text-xs">
+                        UPI, cards & net banking
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2 text-[9px] font-semibold text-green-600">
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                  <div className="mt-4 flex items-center gap-1.5 text-[9px] font-semibold text-green-600 sm:text-[10px]">
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                     Secure online payment
                   </div>
                 </button>
 
+                {/* Cash on Delivery */}
                 <button
                   type="button"
-                  onClick={() =>
-                    setPaymentMode(
-                      "COD"
-                    )
-                  }
-                  className={`rounded-2xl border p-4 text-left transition sm:p-5 ${
-                    paymentMode === "COD"
-                      ? "border-primary bg-primary/[0.035] shadow-sm"
-                      : "border-border bg-background hover:border-primary/40"
-                  }`}
+                  onClick={() => setPaymentMode("COD")}
+                  aria-pressed={paymentMode === "COD"}
+                  className={`group relative flex flex-col rounded-2xl border p-4 text-left transition sm:p-5 ${paymentMode === "COD"
+                      ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
+                      : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
+                    }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                          paymentMode ===
-                          "COD"
-                            ? "bg-primary text-white"
-                            : "bg-surface text-text-muted"
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${paymentMode === "COD"
+                          ? "bg-primary text-white"
+                          : "bg-surface text-text-muted"
                         }`}
-                      >
-                        <Truck className="h-5 w-5" />
-                      </div>
-
-                     <div>
-  <h3 className="text-xs font-bold sm:text-sm">
-    Cash on Delivery
-  </h3>
-
-  <p className="mt-1 text-[10px] leading-relaxed text-text-muted">
-    A 17% advance payment is required to confirm your order. The remaining
-    amount can be paid conveniently when your order arrives.
-  </p>
-</div>
+                    >
+                      <Truck className="h-5 w-5" />
                     </div>
 
-                    <span
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                        paymentMode ===
-                        "COD"
-                          ? "border-primary bg-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {paymentMode ===
-                        "COD" && (
-                        <Check className="h-3 w-3 text-white" />
-                      )}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-xs font-bold sm:text-sm">
+                          Cash on Delivery
+                        </h3>
+
+                        <span
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${paymentMode === "COD"
+                              ? "border-primary bg-primary"
+                              : "border-border"
+                            }`}
+                        >
+                          {paymentMode === "COD" && (
+                            <Check className="h-3 w-3 text-white" />
+                          )}
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-[10px] leading-4 text-text-muted sm:text-xs">
+                        Pay the rest when it arrives
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2 text-[9px] font-semibold text-text-muted">
-                    <Truck className="h-3.5 w-3.5" />
-                    ₹49 COD handling
-                    charge
+                  <div className="mt-3 rounded-lg bg-amber-500/10 px-2.5 py-1.5">
+                    <p className="text-[9px] font-semibold leading-4 text-amber-700 sm:text-[10px]">
+                      17% advance required to confirm · remaining paid on delivery
+                    </p>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-1.5 text-[9px] font-semibold text-text-muted sm:text-[10px]">
+                    <Truck className="h-3.5 w-3.5 shrink-0" />
+                    ₹49 COD handling charge
                   </div>
                 </button>
               </div>
@@ -2753,11 +2666,10 @@ const startPayment = async () => {
                 </div>
 
                 <ChevronDown
-                  className={`h-4 w-4 text-text-muted transition lg:hidden ${
-                    mobileSummaryOpen
-                      ? "rotate-180"
-                      : ""
-                  }`}
+                  className={`h-4 w-4 text-text-muted transition lg:hidden ${mobileSummaryOpen
+                    ? "rotate-180"
+                    : ""
+                    }`}
                 />
               </button>
 
@@ -2825,34 +2737,34 @@ const startPayment = async () => {
 
                     {finalCouponDiscount >
                       0 && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-green-600">
-                          Coupon discount
-                        </span>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-green-600">
+                            Coupon discount
+                          </span>
 
-                        <span className="font-semibold text-green-600">
-                          -
-                          {formatPrice(
-                            finalCouponDiscount
-                          )}
-                        </span>
-                      </div>
-                    )}
+                          <span className="font-semibold text-green-600">
+                            -
+                            {formatPrice(
+                              finalCouponDiscount
+                            )}
+                          </span>
+                        </div>
+                      )}
 
                     {paymentMode ===
                       "COD" && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-text-muted">
-                          COD handling
-                        </span>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-muted">
+                            COD handling
+                          </span>
 
-                        <span className="font-semibold">
-                          {formatPrice(
-                            codCharge
-                          )}
-                        </span>
-                      </div>
-                    )}
+                          <span className="font-semibold">
+                            {formatPrice(
+                              codCharge
+                            )}
+                          </span>
+                        </div>
+                      )}
 
                     <div className="flex items-end justify-between gap-4 border-t border-border pt-4">
                       <div>
@@ -2914,7 +2826,7 @@ const startPayment = async () => {
                     ) : (
                       <>
                         {paymentMode ===
-                        "COD"
+                          "COD"
                           ? "Place order"
                           : "Pay now"}
 
@@ -2962,7 +2874,7 @@ const startPayment = async () => {
             ) : (
               <>
                 {paymentMode ===
-                "COD"
+                  "COD"
                   ? "Place order"
                   : "Pay now"}
 
@@ -3015,11 +2927,10 @@ function InputField({
         name={name}
         value={value || ""}
         onChange={onChange}
-        className={`w-full rounded-xl border ${
-          error
-            ? "border-red-500"
-            : "border-border"
-        } bg-background px-4 py-3 text-xs outline-none focus:border-primary`}
+        className={`w-full rounded-xl border ${error
+          ? "border-red-500"
+          : "border-border"
+          } bg-background px-4 py-3 text-xs outline-none focus:border-primary`}
       />
 
       {error && (
@@ -3186,21 +3097,21 @@ function CheckoutCartItem({
 
             {!String(
               item?.id ??
-                item?.cartItemId ??
-                ""
+              item?.cartItemId ??
+              ""
             ).startsWith(
               "buy-now-"
             ) && (
-              <button
-                type="button"
-                onClick={() =>
-                  onRemove(item)
-                }
-                className="text-[9px] font-bold uppercase text-red-500"
-              >
-                Remove
-              </button>
-            )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    onRemove(item)
+                  }
+                  className="text-[9px] font-bold uppercase text-red-500"
+                >
+                  Remove
+                </button>
+              )}
           </div>
         </div>
       </div>
@@ -3280,9 +3191,9 @@ function CouponModal({
                   const minimumCartValue =
                     Number(
                       coupon?.minCartValue ??
-                        coupon?.minimumCartValue ??
-                        coupon?.minOrderValue ??
-                        0
+                      coupon?.minimumCartValue ??
+                      coupon?.minOrderValue ??
+                      0
                     );
 
                   const eligible =
@@ -3325,12 +3236,12 @@ function CouponModal({
 
                           {!eligible &&
                             minimumCartValue >
-                              0 && (
+                            0 && (
                               <p className="mt-2 text-[9px] text-red-500">
                                 Add{" "}
                                 {formatPrice(
                                   minimumCartValue -
-                                    cartTotal
+                                  cartTotal
                                 )}{" "}
                                 more to unlock
                               </p>

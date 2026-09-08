@@ -29,6 +29,7 @@ import {
   updateItemQuantity,
   deleteCartItem,
   clearCart,
+  fetchCartItemsCheckOut
 } from "@/redux/features/cart/cartActions";
 
 import {
@@ -688,8 +689,10 @@ export default function CartPage() {
       }
     };
 
-  const handleApplyCoupon =
-    async (coupon) => {
+  const handleApplyCoupon =async (coupon) => {
+
+    console.log(coupon)
+
       if (!coupon) {
         setCouponError(
           "Invalid coupon code."
@@ -706,9 +709,7 @@ export default function CartPage() {
         setCouponLoading(true);
         setCouponError("");
 
-        const code =
-          coupon?.code ||
-          coupon?.couponCode;
+        const code =coupon?.code
 
         if (!code) {
           throw new Error(
@@ -716,18 +717,11 @@ export default function CartPage() {
           );
         }
 
-        /*
-         * Send coupon code to backend.
-         */
 
-        const response =
-          await appplyCouponApi(
-            code
-          );
+        const response =await appplyCouponApi( code);
 
         const data =
-          response?.data ??
-          response;
+          response?.data
 
         if (!data?.success) {
           throw new Error(
@@ -736,20 +730,11 @@ export default function CartPage() {
           );
         }
 
-        const serverCouponCode =
-          data?.couponCode ||
-          data?.coupon?.code ||
-          data?.appliedCoupon
-            ?.code ||
-          code;
+        const serverCouponCode = data?.couponCode;
 
-        const serverDiscount =
-          Number(
-            data?.discountAmount ??
-              data?.discount ??
-              data?.couponDiscount ??
-              0
-          );
+
+        const serverDiscount =Number(data?.discountAmount);
+
         const nextCoupon = {
           ...coupon,
           ...(data?.coupon ||
@@ -774,8 +759,10 @@ export default function CartPage() {
 
         setCouponError("");
 
+
+        //test
         await dispatch(
-          fetchCartItems()
+          fetchCartItemsCheckOut()
         );
 
         toast.success(
@@ -895,7 +882,7 @@ export default function CartPage() {
 
 
         await dispatch(
-          fetchCartItems()
+          fetchCartItemsCheckOut()
         );
 
         setAppliedCoupon(null);
@@ -992,10 +979,6 @@ export default function CartPage() {
     <main className="min-h-screen bg-background pb-28 text-text-primary lg:pb-10">
       <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
 
-        {/* ---------------------------------------------------------------
-            PAGE HEADER
-        ---------------------------------------------------------------- */}
-
         <div className="mb-6 flex flex-col gap-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -1019,7 +1002,6 @@ export default function CartPage() {
             </p>
           </div>
 
-          {/* Secure shopping badge */}
 
           <div className="hidden rounded-xl border border-border bg-card px-4 py-3 sm:block">
             <div className="flex items-center gap-3">
@@ -1071,25 +1053,12 @@ export default function CartPage() {
           </button>
         </div>
 
-        {/* ---------------------------------------------------------------
-            CONTENT GRID
-        ---------------------------------------------------------------- */}
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start lg:gap-8">
-
-          {/* =============================================================
-              LEFT SIDE
-          ============================================================= */}
-
           <section className="min-w-0">
-
-            {/* -----------------------------------------------------------
-                CART ITEMS
-            ------------------------------------------------------------ */}
 
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
-              {/* Desktop table heading */}
 
               <div className="hidden grid-cols-[minmax(300px,1fr)_120px_140px_120px_44px] items-center gap-4 border-b border-border bg-surface/70 px-6 py-4 md:grid">
 
@@ -1111,8 +1080,6 @@ export default function CartPage() {
 
                 <span />
               </div>
-
-              {/* Cart item list */}
 
               <div className="divide-y divide-border">
                 {cart.map(
@@ -1160,10 +1127,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* -----------------------------------------------------------
-                TRUST ITEMS
-            ------------------------------------------------------------ */}
-
             <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <TrustItem
                 icon={Truck}
@@ -1180,10 +1143,6 @@ export default function CartPage() {
                 label="Secure checkout"
               />
             </div>
-
-            {/* ===========================================================
-                COUPON SECTION
-            ============================================================ */}
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
@@ -1212,13 +1171,7 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Coupon body */}
-
               <div className="p-5 sm:p-6">
-
-                {/* =====================================================
-                    APPLIED COUPON
-                ====================================================== */}
 
                 {appliedCoupon ? (
                   <div className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.08] via-card to-card p-4 shadow-sm sm:p-5">
@@ -1408,69 +1361,31 @@ export default function CartPage() {
             </div>
           </section>
 
-          {/* =============================================================
-              DESKTOP ORDER SUMMARY
-          ============================================================= */}
 
           <aside className="hidden lg:sticky lg:top-24 lg:block">
             <OrderSummary
-              cartCount={
-                cartCount
-              }
-              cartTotal={
-                cartTotal
-              }
-              mrpSavings={
-                mrpSavings
-              }
-              appliedCoupon={
-                appliedCoupon
-              }
-              couponDiscount={
-                finalCouponDiscount
-              }
-              totalSavings={
-                totalSavings
-              }
-              finalTotal={
-                finalTotal
-              }
-              formatPrice={
-                formatPrice
-              }
+              cartCount={cartCount}
+              cartTotal={cartTotal}
+              mrpSavings={mrpSavings}
+              appliedCoupon={appliedCoupon}
+              couponDiscount={finalCouponDiscount}
+              totalSavings={totalSavings}
+              finalTotal={finalTotal}
+              formatPrice={formatPrice}
             />
           </aside>
 
-          {/* =============================================================
-              MOBILE ORDER SUMMARY
-          ============================================================= */}
 
           <div className="lg:hidden">
             <OrderSummary
-              cartCount={
-                cartCount
-              }
-              cartTotal={
-                cartTotal
-              }
-              mrpSavings={
-                mrpSavings
-              }
-              appliedCoupon={
-                appliedCoupon
-              }
-              couponDiscount={
-                finalCouponDiscount
-              }
-              totalSavings={
-                totalSavings
-              }
-              finalTotal={
-                finalTotal
-              }
-              formatPrice={
-                formatPrice
-              }
+              cartCount={cartCount}
+              cartTotal={cartTotal}
+              mrpSavings={mrpSavings}
+              appliedCoupon={appliedCoupon}
+              couponDiscount={finalCouponDiscount}
+              totalSavings={totalSavings}
+              finalTotal={finalTotal}
+              formatPrice={formatPrice}
               hideCheckoutButton
             />
           </div>
@@ -1512,30 +1427,14 @@ export default function CartPage() {
 
 
       <CouponModal
-        open={
-          showCouponModal
-        }
-        onClose={() =>
-          setShowCouponModal(
-            false
-          )
-        }
+        open={showCouponModal}
+        onClose={() =>setShowCouponModal(false)}
         coupons={coupons}
-        couponLoading={
-          couponLoading
-        }
-        cartTotal={
-          cartTotal
-        }
-        formatPrice={
-          formatPrice
-        }
-        getCouponDescription={
-          getCouponDescription
-        }
-        onApply={
-          handleApplyCoupon
-        }
+        couponLoading={couponLoading}
+        cartTotal={cartTotal}
+        formatPrice={formatPrice}
+        getCouponDescription={getCouponDescription}
+        onApply={handleApplyCoupon}
       />
     </main>
   );
@@ -2009,14 +1908,10 @@ function CartItem({
 }) {
   const dispatch = useDispatch();
 
-  const [showRemoveModal, setShowRemoveModal] =
-    useState(false);
-
-  const [movingToWishlist, setMovingToWishlist] =
-    useState(false);
-
-  const [deleting, setDeleting] =
-    useState(false);
+ const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [movingToWishlist, setMovingToWishlist] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [updatingQuantity, setUpdatingQuantity] = useState(false);
 
   const product =
     item?.product ??
@@ -2096,11 +1991,7 @@ function CartItem({
     product?._id ??
     item?.productId ??
     item?.product_id;
-
-  // NOTE: previously this read `variantDetails[1].variantId`, which
-  // does not exist on the shape returned by getVariantDetails() and
-  // will throw when fewer than 2 details are present. Using the
-  // item's own variant id instead.
+    
   const variantId =
     item?.variantId ??
     variant?.id ??
@@ -2456,7 +2347,7 @@ function CartItem({
 
       {showRemoveModal && (
         <div
-          className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md"
+          className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           onClick={(event) => {
@@ -2471,7 +2362,7 @@ function CartItem({
           }}
         >
           <div
-            className="relative w-full max-w-[480px] overflow-hidden rounded-[26px] border border-white/10 bg-[#111315] shadow-[0_30px_100px_rgba(0,0,0,0.65)]"
+            className="relative w-full max-w-[480px] overflow-hidden rounded-[26px] border border-black/5 bg-white shadow-[0_30px_100px_rgba(0,0,0,0.35)]"
             onClick={(event) =>
               event.stopPropagation()
             }
@@ -2488,7 +2379,7 @@ function CartItem({
                 movingToWishlist ||
                 deleting
               }
-              className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:bg-white/[0.09] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-black/[0.03] text-black/50 transition hover:border-black/20 hover:bg-black/[0.06] hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -2496,20 +2387,20 @@ function CartItem({
 
             <div className="px-5 pb-7 pt-8 sm:px-7 sm:pb-8 sm:pt-9">
 
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10">
+              {/* <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-50">
                 <Trash2
-                  className="h-6 w-6 text-cyan-400"
+                  className="h-6 w-6 text-cyan-600"
                   strokeWidth={1.8}
                 />
-              </div>
+              </div> */}
 
               <div className="mt-5 text-center">
 
-                <h2 className="text-[22px] font-black tracking-tight text-white sm:text-[25px] lg:text-[28px]">
+                <h2 className="text-[22px] font-black tracking-tight text-[#111315] sm:text-[25px] lg:text-[28px]">
                   Remove Item?
                 </h2>
 
-                <p className="mx-auto mt-2 max-w-[390px] text-sm leading-6 text-white/50 sm:text-[15px]">
+                <p className="mx-auto mt-2 max-w-[390px] text-sm leading-6 text-black/50 sm:text-[15px]">
                   Would you like to save this item
                   for later or remove it
                   permanently?
@@ -2517,9 +2408,9 @@ function CartItem({
 
               </div>
 
-              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-black/10 bg-black/[0.02] p-3">
 
-                <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl bg-white">
+                <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl border border-black/5 bg-white">
 
                   {image ? (
                     <Image
@@ -2539,7 +2430,7 @@ function CartItem({
 
                 <div className="min-w-0 flex-1">
 
-                  <p className="line-clamp-2 text-sm font-bold leading-5 text-white">
+                  <p className="line-clamp-2 text-sm font-bold leading-5 text-[#111315]">
                     {name}
                   </p>
 
@@ -2554,7 +2445,7 @@ function CartItem({
                           ) => (
                             <span
                               key={`${detail.name}-${detail.value}-${index}`}
-                              className="text-[10px] text-white/40"
+                              className="text-[10px] text-black/40"
                             >
                               {detail.name}:{" "}
                               {detail.value}
@@ -2564,7 +2455,7 @@ function CartItem({
                     </div>
                   )}
 
-                  <p className="mt-1 text-sm font-black text-cyan-400">
+                  <p className="mt-1 text-sm font-black text-cyan-600">
                     {formatPrice(price)}
                   </p>
 
@@ -2586,25 +2477,25 @@ function CartItem({
                     deleting ||
                     !productId
                   }
-                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.07] px-4 text-left transition-all duration-200 hover:border-cyan-400/50 hover:bg-cyan-400/[0.13] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-red-500/25 bg-red-50/70 px-4 text-left transition-all duration-200 hover:border-red-500/50 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
 
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-100">
                     <Heart
-                      className="h-5 w-5 text-cyan-400 transition-transform group-hover:scale-110"
+                      className="h-5 w-5 text-red-600 transition-transform group-hover:scale-110"
                       strokeWidth={1.8}
                     />
                   </span>
 
                   <span className="min-w-0">
 
-                    <span className="block text-sm font-black text-cyan-400">
+                    <span className="block text-sm font-black text-red-600">
                       {movingToWishlist
                         ? "Moving..."
                         : "Move to Wishlist"}
                     </span>
 
-                    <span className="mt-1 block text-[10px] text-white/35">
+                    <span className="mt-1 block text-[10px] text-black/40">
                       Save this item for later
                     </span>
 
@@ -2618,25 +2509,25 @@ function CartItem({
                     deleting ||
                     movingToWishlist
                   }
-                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-orange-400/20 bg-orange-400/[0.06] px-4 text-left transition-all duration-200 hover:border-orange-400/40 hover:bg-orange-400/[0.11] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-orange-500/20 bg-orange-50/70 px-4 text-left transition-all duration-200 hover:border-orange-500/40 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
 
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-400/10">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100">
                     <Trash2
-                      className="h-5 w-5 text-orange-400 transition-transform group-hover:scale-110"
+                      className="h-5 w-5 text-orange-600 transition-transform group-hover:scale-110"
                       strokeWidth={1.8}
                     />
                   </span>
 
                   <span className="min-w-0">
 
-                    <span className="block text-sm font-black text-orange-400">
+                    <span className="block text-sm font-black text-orange-600">
                       {deleting
                         ? "Deleting..."
                         : "Delete"}
                     </span>
 
-                    <span className="mt-1 block text-[10px] text-white/35">
+                    <span className="mt-1 block text-[10px] text-black/40">
                       Remove from cart
                     </span>
 
@@ -2654,7 +2545,7 @@ function CartItem({
                   movingToWishlist ||
                   deleting
                 }
-                className="mx-auto mt-5 block text-sm font-semibold text-white/40 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="mx-auto mt-5 block text-sm font-semibold text-black/40 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Cancel
               </button>

@@ -224,10 +224,7 @@ export default function Home() {
 
         {!isLoading && trendingProducts.length > 0 && (
           <ProductSlider
-            eyebrow={
-              productSections.trendingProducts?.eyebrow ||
-              "Trending"
-            }
+            eyebrow={"Trending"}
             title={
               productSections.trendingProducts?.title ||
               "Trending Products"
@@ -277,10 +274,7 @@ export default function Home() {
 
         {!isLoading && popularProducts.length > 0 && (
           <ProductSlider
-            eyebrow={
-              productSections.popularProducts?.eyebrow ||
-              "Popular"
-            }
+            eyebrow={"Popular"}
             title={
               productSections.popularProducts?.title ||
               "Popular Products"
@@ -296,10 +290,7 @@ export default function Home() {
 
         {!isLoading && topRatedProducts.length > 0 && (
           <ProductSlider
-            eyebrow={
-              productSections.topRated?.eyebrow ||
-              "Top Rated"
-            }
+            eyebrow={"Top Rated"}
             title={
               productSections.topRated?.title ||
               "Top Rated Products"
@@ -315,7 +306,7 @@ export default function Home() {
 
         {!isLoading && recentProducts.length > 0 && (
           <ProductSlider
-            eyebrow="Recently Added"
+            eyebrow="Recent"
             title="New Arrivals"
             description="Explore our latest products and supplements"
             products={recentProducts}

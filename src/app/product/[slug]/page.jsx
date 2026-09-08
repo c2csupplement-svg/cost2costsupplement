@@ -267,6 +267,7 @@ export default function ProductPage() {
   const [relatedProductsData, setRelatedProductsData] = useState([]);
   const [isRelatedLoading, setIsRelatedLoading] = useState(false);
   const [relatedError, setRelatedError] = useState("");
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const brands = normalizeBrands(
     productAdState?.brands
@@ -1050,6 +1051,7 @@ export default function ProductPage() {
       }
 
       try {
+        setWishlistLoading(true);
         await dispatch(
           toggleItem(
             product.id,
@@ -1067,6 +1069,9 @@ export default function ProductPage() {
           error
         );
       }
+      finally {
+    setWishlistLoading(false);
+  }
     };
 
   const increaseQuantity =
@@ -1879,26 +1884,30 @@ export default function ProductPage() {
                   </div>
 
                   <button
-                    type="button"
-                    onClick={
-                      handleWishlist
-                    }
-                    className={`flex h-14 w-full items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:flex-1 ${wishlistActive
-                      ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
-                      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
-                      }`}
-                  >
-                    <Heart
-                      className={`h-5 w-5 ${wishlistActive
-                        ? "fill-current"
-                        : ""
-                        }`}
-                    />
+  type="button"
+  onClick={handleWishlist}
+  disabled={wishlistLoading}
+  aria-busy={wishlistLoading}
+  className={`flex h-14 w-full items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:flex-1 disabled:cursor-not-allowed disabled:opacity-60 ${
+    wishlistActive
+      ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
+      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
+  }`}
+>
+  {wishlistLoading ? (
+    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+  ) : (
+    <Heart className={`h-5 w-5 ${wishlistActive ? "fill-current" : ""}`} />
+  )}
 
-                    {wishlistActive
-                      ? "Remove Wishlist"
-                      : "Add to Wishlist"}
-                  </button>
+  {wishlistLoading
+    ? wishlistActive
+      ? "Removing..."
+      : "Adding..."
+    : wishlistActive
+    ? "Remove Wishlist"
+    : "Add to Wishlist"}
+</button>
                 </div>
 
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row">
