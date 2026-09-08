@@ -691,7 +691,6 @@ export default function CartPage() {
 
   const handleApplyCoupon =async (coupon) => {
 
-    console.log(coupon)
 
       if (!coupon) {
         setCouponError(
@@ -943,7 +942,7 @@ export default function CartPage() {
             Shopping cart
           </p>
 
-          <h1 className="bebas mt-2 text-5xl uppercase tracking-wide sm:text-7xl">
+          <h1 className="bebas mt-2 text-4xl uppercase tracking-wide sm:text-7xl">
             Your cart is empty
           </h1>
 
@@ -989,7 +988,7 @@ export default function CartPage() {
               </p>
             </div>
 
-            <h1 className="bebas mt-2 text-5xl uppercase tracking-wide sm:text-6xl lg:text-7xl">
+            <h1 className="bebas mt-2 text-4xl uppercase tracking-wide sm:text-6xl lg:text-7xl">
               Your cart
             </h1>
 
@@ -1157,7 +1156,7 @@ export default function CartPage() {
                     </div>
 
                     <div>
-                      <h2 className="bebas text-2xl uppercase tracking-wide sm:text-3xl">
+                      <h2 className="bebas text-xl uppercase tracking-wide sm:text-3xl">
                         Save more on your order
                       </h2>
 
@@ -1200,11 +1199,6 @@ export default function CartPage() {
                             Applied
                           </span>
                         </div>
-
-                        {/* -------------------------------------------------
-                            IMPORTANT:
-                            Use discountAmount from backend.
-                        -------------------------------------------------- */}
 
                         <p className="oxanium mt-1 text-xs text-text-muted">
                           Coupon applied
@@ -1257,18 +1251,14 @@ export default function CartPage() {
                     </div>
                   </div>
                 ) : (
-                  <>
-                    {/* =================================================
-                        COUPON FORM
-                    ================================================== */}
-
+                  <>  
                     <form
                       onSubmit={
                         handleCouponSubmit
                       }
                       className="flex flex-col gap-2 sm:flex-row"
                     >
-                      <div className="flex h-13 min-w-0 flex-1 items-center rounded-xl border border-border bg-background px-4 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
+                      <div className="flex h-13 py-5 min-w-0 flex-1 items-center rounded-xl border border-border bg-background px-4 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
 
                         <Tag className="mr-3 h-4 w-4 shrink-0 text-text-muted" />
 
@@ -1307,8 +1297,6 @@ export default function CartPage() {
                       </button>
                     </form>
 
-                    {/* Coupon error */}
-
                     {couponError && (
                       <div className="mt-3 rounded-lg bg-red-500/10 px-3 py-2">
                         <p className="oxanium text-xs font-medium text-red-500">
@@ -1316,8 +1304,6 @@ export default function CartPage() {
                         </p>
                       </div>
                     )}
-
-                    {/* Available coupons button */}
 
                     <button
                       type="button"
@@ -1991,7 +1977,6 @@ function CartItem({
     product?._id ??
     item?.productId ??
     item?.product_id;
-    
   const variantId =
     item?.variantId ??
     variant?.id ??

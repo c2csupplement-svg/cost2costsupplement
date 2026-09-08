@@ -221,7 +221,7 @@ export default function ProductSlider({
               gap-2
               rounded-lg
               px-4
-              py-2.5
+              py-3
               text-[10px]
               font-black
               uppercase
@@ -230,11 +230,12 @@ export default function ProductSlider({
               transition-colors
               duration-300
               sm:flex
+              bg-red-600
             "
-            style={{
-              backgroundColor:
-                theme.accent,
-            }}
+            // style={{
+            //   backgroundColor:
+            //     theme.accent,
+            // }}
             onMouseEnter={(event) => {
               event.currentTarget.style.backgroundColor =
                 theme.accentDark;
@@ -373,7 +374,7 @@ export default function ProductSlider({
 
         <div className="mt-3 px-5 sm:hidden">
           <Link
-            href="/products"
+            href={`/products?search=${eyebrow}`}
             className="
               group
               inline-flex
@@ -383,18 +384,19 @@ export default function ProductSlider({
               font-black
               uppercase
               tracking-wide
+              text-red-600
             "
-            style={{
-              color:
-                theme.accentDark,
-            }}
+            // style={{
+            //   color:
+            //     theme.accentDark,
+            // }}
           >
             <span
-              className="border-b-2 pb-1"
-              style={{
-                borderColor:
-                  theme.accent,
-              }}
+              className="border-b-2 pb-1 text-red-600"
+              // style={{
+              //   borderColor:
+              //     theme.accent,
+              // }}
             >
               View All Products
             </span>
@@ -403,14 +405,16 @@ export default function ProductSlider({
               className="
                 h-4
                 w-4
+                mb-1
                 transition-transform
                 duration-300
                 group-hover:translate-x-1
+                text-red-600
               "
-              style={{
-                color:
-                  theme.accentDark,
-              }}
+              // style={{
+              //   color:
+              //     theme.accentDark,
+              // }}
             />
           </Link>
         </div>

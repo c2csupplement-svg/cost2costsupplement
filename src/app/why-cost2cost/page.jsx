@@ -97,13 +97,13 @@ export default function WhyCost2CostPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col bg-background text-left text-text-primary sm:ml-5">
-      <div className="w-full border-b border-border">
-        <div className="w-full px-5 py-4 sm:px-8 lg:px-10">
-          <div className="flex items-center justify-start gap-2 font-oxanium text-xs uppercase tracking-[0.14em]">
+    <main className="min-h-screen w-full bg-background text-text-primary">
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-[1440px] px-5 py-4 sm:px-8 lg:px-10">
+          <div className="flex items-center gap-2 font-oxanium text-xs uppercase tracking-[0.14em]">
             <Link
               href="/"
-              className="text-primary transition-colors hover:text-primary-hover"
+              className="text-primary transition hover:text-primary-hover"
             >
               Home
             </Link>
@@ -117,19 +117,19 @@ export default function WhyCost2CostPage() {
         </div>
       </div>
 
-      <section className="w-full px-5 py-8 text-left sm:px-8 lg:px-12 lg:py-10">
-        <div className="w-full text-left">
-          <div className="mb-12 w-full border-b border-border pb-10 text-left">
-            <p className="mb-3 text-left font-oxanium text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+      <section className="w-full">
+        <div className="mx-auto w-full max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 xl:px-12 lg:py-10">
+          <div className="mb-12 w-full border-b border-border pb-10">
+            <p className="mb-3 font-oxanium text-xs font-semibold uppercase tracking-[0.22em] text-primary">
               Cost2Cost Supplement
             </p>
 
-            <h1 className="text-left font-bebas text-4xl uppercase leading-none tracking-wide text-text-primary sm:text-6xl lg:text-7xl">
+            <h1 className="font-bebas text-4xl uppercase leading-none tracking-wide text-text-primary sm:text-6xl lg:text-7xl">
               Why Cost2Cost
               <span className="text-primary"> Supplements</span>
             </h1>
 
-            <p className="mt-6 max-w-5xl text-left font-oxanium text-sm leading-8 text-text-secondary sm:text-base">
+            <p className="mt-6 max-w-4xl font-oxanium text-sm leading-8 text-text-secondary sm:text-base">
               In traditional supplement distribution, prices increase at every
               step, manufacturer margin, distributor margin, marketing spend,
               influencer commissions, and retail markup. By the time a product
@@ -137,7 +137,7 @@ export default function WhyCost2CostPage() {
               than product quality.
             </p>
 
-            <p className="mt-5 text-left font-oxanium text-sm leading-8 text-text-secondary sm:text-base">
+            <p className="mt-5 font-oxanium text-sm leading-8 text-text-secondary sm:text-base">
               C2C removes unnecessary layers and focuses on{" "}
               <strong className="font-bold text-text-primary">
                 cost efficiency with accountability.
@@ -145,8 +145,8 @@ export default function WhyCost2CostPage() {
             </p>
           </div>
 
-          <div className="w-full text-left">
-            <h2 className="mb-8 text-left font-bebas text-4xl uppercase tracking-wide text-text-primary sm:text-5xl">
+          <div className="w-full">
+            <h2 className="mb-8 font-bebas text-4xl uppercase tracking-wide text-text-primary sm:text-5xl">
               Key Reasons to Choose Cost2Cost
             </h2>
 
@@ -195,10 +195,11 @@ export default function WhyCost2CostPage() {
         </div>
       </section>
 
-      <section className="min-h-screen bg-background text-text-primary">
-
-        <div className="border-b border-border">
-          <div className="mx-auto max-w-[1440px] px-5 pt-5 pb-10 sm:px-8 sm:pb-20 sm:pt-10 lg:px-10 lg:pb-20 lg:pb-10">
+      {/* FAQ Section */}
+      <section className="w-full min-h-screen bg-background text-text-primary">
+        {/* FAQ Header */}
+        <div className="w-full border-b border-border">
+          <div className="mx-auto w-full max-w-[1200px] px-5 pt-5 pb-10 sm:px-8 sm:pt-10 sm:pb-16 lg:px-10 xl:px-12 lg:pb-20">
             <div className="max-w-4xl">
               <div className="flex items-center gap-3">
                 <span className="h-[2px] w-10 bg-primary" />
@@ -222,8 +223,10 @@ export default function WhyCost2CostPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
-          <div className="grid gap-14 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-20">
+        {/* FAQ Content */}
+        <div className="mx-auto w-full max-w-[1200px] px-5 py-14 sm:px-8 lg:px-10 xl:px-12 lg:py-20">
+          <div className="grid gap-12 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-16">
+            {/* Sidebar */}
             <aside className="lg:sticky lg:top-28 lg:h-fit">
               <div className="border-l-2 border-primary pl-5">
                 <p className="font-bebas text-4xl tracking-wide text-text-primary">
@@ -261,6 +264,7 @@ export default function WhyCost2CostPage() {
                 </div>
               </div>
 
+              {/* Contact Card */}
               <div className="mt-10 border border-border bg-card p-5">
                 <MessageCircle className="h-6 w-6 text-primary" />
 
@@ -283,7 +287,8 @@ export default function WhyCost2CostPage() {
               </div>
             </aside>
 
-            <div>
+            {/* FAQ Questions */}
+            <div className="min-w-0">
               <div className="border-b border-border pb-6">
                 <p className="font-oxanium text-xs font-bold uppercase tracking-[0.2em] text-primary">
                   Find your answer
@@ -309,7 +314,7 @@ export default function WhyCost2CostPage() {
                         type="button"
                         onClick={() => toggleFaq(index)}
                         aria-expanded={isOpen}
-                        className="group flex w-full items-start gap-5 py-6 text-left sm:gap-8 sm:py-7"
+                        className="group flex w-full items-start gap-4 py-6 text-left sm:gap-6 sm:py-7"
                       >
                         <span
                           className={`mt-1 w-8 shrink-0 font-oxanium text-xs font-bold transition-colors ${
@@ -348,7 +353,7 @@ export default function WhyCost2CostPage() {
                         }`}
                       >
                         <div className="overflow-hidden">
-                          <div className="pb-8 pl-[52px] pr-2 sm:pl-[72px] sm:pr-16">
+                          <div className="pb-8 pl-12 pr-2 sm:pl-[68px] sm:pr-12">
                             <div className="border-l-2 border-primary pl-5">
                               <p className="max-w-3xl font-oxanium text-sm leading-7 text-text-secondary sm:text-[15px]">
                                 {faq.answer}
@@ -362,6 +367,7 @@ export default function WhyCost2CostPage() {
                 })}
               </div>
 
+              {/* Bottom CTA */}
               <div className="mt-14 border-t border-border pt-10">
                 <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
                   <div>
@@ -396,7 +402,10 @@ function Breadcrumb({ items }) {
   return (
     <div className="flex flex-wrap items-center gap-2 font-oxanium text-xs uppercase tracking-[0.14em]">
       {items.map((item, index) => (
-        <div key={`${item.label}-${index}`} className="flex items-center gap-2">
+        <div
+          key={`${item.label}-${index}`}
+          className="flex items-center gap-2"
+        >
           {item.href ? (
             <Link
               href={item.href}
@@ -419,18 +428,18 @@ function Breadcrumb({ items }) {
 
 function ReasonCard({ number, title, children }) {
   return (
-    <article className="group w-full rounded-xl border border-border bg-card p-6 text-left shadow-[0_5px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_30px_rgba(229,35,35,0.07)] sm:p-7">
-      <div className="flex w-full items-start justify-start gap-5 text-left">
+    <article className="group w-full rounded-xl border border-border bg-card p-6 shadow-[0_5px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_30px_rgba(229,35,35,0.07)] sm:p-7">
+      <div className="flex w-full items-start gap-5">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-oxanium text-sm font-black text-white shadow-[0_5px_15px_rgba(229,35,35,0.18)]">
           {number}
         </div>
 
-        <div className="min-w-0 flex-1 text-left">
-          <h3 className="text-left font-oxanium text-lg font-bold text-text-primary sm:text-xl">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-oxanium text-lg font-bold text-text-primary sm:text-xl">
             {title}
           </h3>
 
-          <div className="mt-3 text-left font-oxanium text-sm leading-7 text-text-secondary sm:text-[15px]">
+          <div className="mt-3 font-oxanium text-sm leading-7 text-text-secondary sm:text-[15px]">
             {children}
           </div>
         </div>

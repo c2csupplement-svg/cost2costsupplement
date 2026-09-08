@@ -24,7 +24,7 @@ const navItems = [
   { label: "Shop", href: "/products" },
   { label: "Whyc2c", href: "/why-cost2cost" },
   { label: "Blog", href: "/blogs" },
-  { label: "Contact Us", href: "/contact" },
+  { label: "About Us", href: "/about" },
 ];
 
 function getArrayFromState(value) {

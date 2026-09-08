@@ -50,6 +50,7 @@ export const getTopRelatedProductsApi = async () => {
       `${API_BASE_URL}/products/top-rated`
     );
 
+
     return response.data;
   } catch (error) {
     if (error.response) {

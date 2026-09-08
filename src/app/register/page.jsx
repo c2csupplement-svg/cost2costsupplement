@@ -200,8 +200,6 @@ export default function RegisterPage() {
     <main className="min-h-screen bg-[#f5f5f5]">
       <div className="mx-auto min-h-screen max-w-[1500px]">
         <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[42%_58%]">
-
-          {/* DESKTOP PROMOTIONAL SECTION */}
           <section className="relative hidden overflow-hidden bg-[#111] lg:flex">
             <img
               src="/images/login.webp"
@@ -211,119 +209,11 @@ export default function RegisterPage() {
 
             <div className="absolute inset-0 bg-black/45" />
 
-            <div className="relative z-10 flex min-h-screen w-full flex-col justify-between p-8 xl:p-12 2xl:p-16">
-
-              <div>
-                <div className="inline-flex rounded-xl bg-white px-5 py-3 shadow-lg">
-                  <img
-                    src="/images/c2c-logo-black.png"
-                    alt="Cost2Cost Supplement"
-                    className="h-auto w-[150px] object-contain"
-                  />
-                </div>
-              </div>
-
-              <div className="max-w-[500px]">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
-                  Cost2Cost Supplement
-                </p>
-
-                <h2 className="text-4xl font-black uppercase leading-[1.05] text-white xl:text-5xl 2xl:text-6xl">
-                  Fuel Your{" "}
-                  <span className="text-[#E52323]">
-                    Goals
-                  </span>
-                </h2>
-
-                <div className="mt-8 space-y-5">
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
-                      <ShieldCheck
-                        size={22}
-                        className="text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        100% Authentic Products
-                      </p>
-
-                      <p className="mt-1 text-xs text-white/65">
-                        Genuine supplements you can trust
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
-                      <Truck
-                        size={22}
-                        className="text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Fast & Secure Delivery
-                      </p>
-
-                      <p className="mt-1 text-xs text-white/65">
-                        Safe delivery right to your doorstep
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
-                      <Headphones
-                        size={22}
-                        className="text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Dedicated Customer Support
-                      </p>
-
-                      <p className="mt-1 text-xs text-white/65">
-                        We are here whenever you need us
-                      </p>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              <div>
-                <p className="text-2xl font-semibold italic text-white/90 xl:text-3xl">
-                  Stronger.
-                  <br />
-                  Healthier.
-                  <br />
-                  Happier.
-                </p>
-
-                <div className="mt-4 h-1 w-20 rounded-full bg-[#E52323]" />
-              </div>
-            </div>
           </section>
 
           <section className="flex flex-col gap-2 min-h-screen items-center justify-center bg-white px-4 py-6 sm:px-6 sm:py-8 md:px-10 lg:px-12 xl:px-16">
 
             <div className="w-full max-w-[570px]">
-
-              <div className="mb-5 flex justify-center lg:hidden">
-                <div className="rounded-xl border border-[#eeeeee] bg-white px-6 py-3 shadow-sm">
-                  <img
-                    src="/images/c2c-logo-black.png"
-                    alt="Cost2Cost Supplement"
-                    className="h-auto w-[145px] object-contain sm:w-[165px]"
-                  />
-                </div>
-              </div>
 
               <div className="rounded-2xl border border-[#e8e8e8] bg-white p-5 shadow-[0_8px_35px_rgba(0,0,0,0.06)] sm:p-7 md:p-9 lg:border-0 lg:p-0 lg:shadow-none">
 
@@ -644,7 +534,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="w-full max-w-[570px] mb-6 overflow-hidden rounded-2xl bg-[#171717] shadow-sm lg:hidden">
+            {/* <div className="w-full max-w-[570px] mb-6 overflow-hidden rounded-2xl bg-[#171717] shadow-sm lg:hidden">
               <div className="relative px-5 py-5 sm:px-7 sm:py-6">
 
                 <div className="relative z-10">
@@ -699,7 +589,7 @@ export default function RegisterPage() {
 
                 <div className="absolute right-[-25px] top-[-50px] h-40 w-40 rounded-full bg-[#E52323]/20 blur-3xl" />
               </div>
-            </div>
+            </div> */}
           </section>
         </div>
       </div>

@@ -1070,8 +1070,8 @@ export default function ProductPage() {
         );
       }
       finally {
-    setWishlistLoading(false);
-  }
+        setWishlistLoading(false);
+      }
     };
 
   const increaseQuantity =
@@ -1845,8 +1845,8 @@ export default function ProductPage() {
                   </div>
                 )}
 
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <div className="flex h-14 items-center justify-between rounded-lg border border-[#D4D4D4] bg-white sm:w-[150px]">
+                <div className="mt-7 flex flex-row gap-3">
+                  <div className="flex-1 flex h-10 sm:h-14 items-center justify-between rounded-lg border border-[#D4D4D4] bg-white">
                     <button
                       type="button"
                       onClick={
@@ -1884,33 +1884,32 @@ export default function ProductPage() {
                   </div>
 
                   <button
-  type="button"
-  onClick={handleWishlist}
-  disabled={wishlistLoading}
-  aria-busy={wishlistLoading}
-  className={`flex h-14 w-full items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:flex-1 disabled:cursor-not-allowed disabled:opacity-60 ${
-    wishlistActive
-      ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
-      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
-  }`}
->
-  {wishlistLoading ? (
-    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-  ) : (
-    <Heart className={`h-5 w-5 ${wishlistActive ? "fill-current" : ""}`} />
-  )}
+                    type="button"
+                    onClick={handleWishlist}
+                    disabled={wishlistLoading}
+                    aria-busy={wishlistLoading}
+                    className={`flex-1 flex  h-10 sm:h-14 items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:flex-1 disabled:cursor-not-allowed disabled:opacity-60 ${wishlistActive
+                      ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
+                      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
+                      }`}
+                  >
+                    {wishlistLoading ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Heart className={`h-5 w-5 ${wishlistActive ? "fill-current" : ""}`} />
+                    )}
 
-  {wishlistLoading
-    ? wishlistActive
-      ? "Removing..."
-      : "Adding..."
-    : wishlistActive
-    ? "Remove Wishlist"
-    : "Add to Wishlist"}
-</button>
+                    {wishlistLoading
+                      ? wishlistActive
+                        ? "Removing..."
+                        : "Adding..."
+                      : wishlistActive
+                        ? "Remove Wishlist"
+                        : "Add to Wishlist"}
+                  </button>
                 </div>
 
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-3 flex flex-row gap-3">
                   <button
                     type="button"
                     disabled={
@@ -1920,7 +1919,7 @@ export default function ProductPage() {
                     onClick={
                       handleAddToCart
                     }
-                    className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-1"
+                    className="flex h-10 sm:h-14 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-1"
                   >
                     <ShoppingCart className="h-5 w-5" />
 
@@ -1939,7 +1938,7 @@ export default function ProductPage() {
                     onClick={
                       handleBuyNow
                     }
-                    className="flex h-14 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-1"
+                    className="flex  h-10 sm:h-14 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-1"
                   >
                     {isBuyingNow
                       ? "Processing..."
@@ -1948,40 +1947,45 @@ export default function ProductPage() {
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+                  <div className="rounded-lg flex gap-2 sm:block sm:gap-2 justify-center items-center border border-[#E5E5E5] bg-white px-1 py-3 sm:p-4">
                     <Truck className="h-5 w-5 text-[#E52323]" />
 
-                    <p className="mt-2 text-xs font-bold sm:text-sm">
-                      Fast Delivery
-                    </p>
+                    <div>
+                      <p className="mt-2 text-xs font-bold sm:text-sm">
+                        Fast Delivery
+                      </p>
 
-                    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
-                      Reliable shipping
-                    </p>
+                      <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+                        Reliable shipping
+                      </p></div>
                   </div>
 
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+                  <div className="rounded-lg flex gap-2 sm:block sm:gap-2 justify-center items-center border border-[#E5E5E5] bg-white px-1 py-3 sm:p-4">
                     <ShieldCheck className="h-5 w-5 text-[#E52323]" />
 
-                    <p className="mt-2 text-xs font-bold sm:text-sm">
-                      Secure Payment
-                    </p>
+                    <div>
+                      <p className="mt-2 text-xs font-bold sm:text-sm">
+                        Secure Payment
+                      </p>
 
-                    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
-                      Safe checkout
-                    </p>
+                      <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+                        Safe checkout
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="rounded-lg border border-[#E5E5E5] bg-white p-3 sm:p-4">
+                  <div className="rounded-lg border flex gap-2 sm:block sm:gap-2 justify-center items-center border-[#E5E5E5] bg-white px-1 py-3 sm:p-4">
                     <ShieldCheck className="h-5 w-5 text-[#E52323]" />
 
-                    <p className="mt-2 text-xs font-bold sm:text-sm">
-                      Genuine Product
-                    </p>
+                    <div>
+                      <p className="mt-2 text-xs font-bold sm:text-sm">
+                        Genuine Product
+                      </p>
 
-                    <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
-                      100% authentic
-                    </p>
+                      <p className="mt-1 text-[10px] text-[#737373] sm:text-[11px]">
+                        100% authentic
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -2020,7 +2024,7 @@ export default function ProductPage() {
                         href={`/brands/${brandsSlug}`}
                         className="text-[#525252] transition hover:text-[#E52323]"
                       >
-                       {product.brand}
+                        {product.brand}
                       </Link>
                     </div>
                   </div>
@@ -2037,11 +2041,11 @@ export default function ProductPage() {
             />
 
 
-          
-<div className="mt-8 max-w-5xl">
-  <div className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6">
-    <div className="flex items-start gap-3">
-      {/* <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+
+            <div className="mt-8 max-w-5xl">
+              <div className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6">
+                <div className="flex items-start gap-3">
+                  {/* <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
         <svg
           className="h-4 w-4"
           viewBox="0 0 24 24"
@@ -2059,17 +2063,17 @@ export default function ProductPage() {
         </svg>
       </div> */}
 
-      <div>
-        <p className="w-full">
-          <span className="text-xs font-bold uppercase tracking-wide text-red-600">Disclaimer: {""}</span>
-          <span className="mt-1.5 text-xs leading-5 text-text-secondary">This statement has not been evaluated by the Food and Drug
-          Administration. This product is not intended to diagnose, treat,
-          cure, or prevent any disease.</span>
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
+                  <div>
+                    <p className="w-full">
+                      <span className="text-xs font-bold uppercase tracking-wide text-red-600">Disclaimer: {""}</span>
+                      <span className="mt-1.5 text-xs leading-5 text-text-secondary">This statement has not been evaluated by the Food and Drug
+                        Administration. This product is not intended to diagnose, treat,
+                        cure, or prevent any disease.</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
 
 

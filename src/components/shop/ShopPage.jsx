@@ -31,9 +31,9 @@ import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
 const SPECIAL_PRODUCT_KEYS = {
   trending: "trendProduct",
   featured: "featuredProduct",
-  "top related": "topRelateProduct",
+  "top rated": "topRelateProduct",
   popular: "popularProduct",
-  "top selling": "topSellingProduct",
+  "best sellers": "topSellingProduct",
   recent: "recentProduct",
   combo: "comboProduct",
 };
@@ -51,6 +51,7 @@ const getSpecialProductKey = (search) => {
   if (!search) {
     return null;
   }
+
 
   return (
     SPECIAL_PRODUCT_KEYS[
@@ -172,6 +173,7 @@ export default function ShopPage() {
   ).trim();
 
   const specialProductKey = getSpecialProductKey(searchQuery);
+
 
   const pageSize = 20;
 

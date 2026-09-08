@@ -3,24 +3,13 @@ import { ChevronRight } from "lucide-react";
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-background text-text-primary">
-
-
-      {/* =====================================================
-          BREADCRUMB
-      ===================================================== */}
-
+    <main className="min-h-screen w-full bg-background text-text-primary">
       <div className="border-b border-border">
         <div className="mx-auto max-w-[1440px] px-5 py-4 sm:px-8 lg:px-10">
           <div className="flex items-center gap-2 font-oxanium text-xs uppercase tracking-[0.14em]">
-
             <Link
               href="/"
-              className="
-                text-primary
-                transition-colors
-                hover:text-primary-hover
-              "
+              className="text-primary transition hover:text-primary-hover"
             >
               Home
             </Link>
@@ -30,109 +19,96 @@ export default function AboutPage() {
             <span className="text-text-muted">
               About Us
             </span>
-
           </div>
         </div>
       </div>
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
-
-      <section className="mx-auto max-w-[1440px] px-5 pb-14 pt-12 sm:px-8 lg:px-10 lg:pb-20 lg:pt-16">
-        <div className="max-w-4xl">
-
-          <p className="mb-4 font-oxanium text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-            Cost2Cost Supplement
-          </p>
-
-          <h1
-            className="
-              font-bebas
-              text-5xl
-              uppercase
-              leading-[0.95]
-              tracking-wide
-              text-text-primary
-              sm:text-6xl
-              lg:text-8xl
-            "
-          >
-            Authentic Sports Nutrition.
-            <br />
-
-            <span className="text-primary">
-              Trusted Global Brands.
-            </span>
-
-            <br />
-
-            Delivered.
-          </h1>
-
-          <p
-            className="
-              mt-7
-              max-w-3xl
-              font-oxanium
-              text-sm
-              leading-7
-              text-text-secondary
-              sm:text-base
-            "
-          >
-            At{" "}
-            <strong className="text-text-primary">
+      {/* HERO */}
+      <section className="w-full">
+        <div className="mx-auto w-full max-w-[1200px] px-5 pb-14 pt-12 sm:px-8 lg:px-10 xl:px-12 lg:pb-20 lg:pt-16">
+          <div className="max-w-4xl">
+            <p className="mb-4 font-oxanium text-xs font-semibold uppercase tracking-[0.22em] text-primary">
               Cost2Cost Supplement
-            </strong>
-            , we operate as a{" "}
-            <strong className="text-text-primary">
-              specialized online retailer and importer of sports nutrition and
-              dietary supplements in India
-            </strong>
-            , similar to leading e-commerce marketplaces.
-          </p>
+            </p>
 
-          <p
-            className="
-              mt-5
-              max-w-3xl
-              font-oxanium
-              text-sm
-              leading-7
-              text-text-secondary
-              sm:text-base
-            "
-          >
-            We do{" "}
-            <strong className="text-text-primary">
-              not manufacture, formulate, or alter any products
-            </strong>
-            . Our role is to connect customers with{" "}
-            <strong className="text-text-primary">
-              original, third-party branded supplements
-            </strong>{" "}
-            sourced through verified and authorized distribution channels.
-          </p>
+            <h1
+              className="
+                font-bebas
+                text-4xl
+                uppercase
+                leading-[0.95]
+                tracking-wide
+                text-text-primary
+                sm:text-5xl
+                lg:text-7xl
+              "
+            >
+              Authentic Sports Nutrition.
+              <br />
 
+              <span className="text-primary">
+                Trusted Global Brands.
+              </span>
+
+              <br />
+
+              Delivered.
+            </h1>
+
+            <p
+              className="
+                mt-7
+                max-w-3xl
+                font-oxanium
+                text-sm
+                leading-7
+                text-text-secondary
+                sm:text-base
+              "
+            >
+              At{" "}
+              <strong className="text-text-primary">
+                Cost2Cost Supplement
+              </strong>
+              , we operate as a{" "}
+              <strong className="text-text-primary">
+                specialized online retailer and importer of sports nutrition
+                and dietary supplements in India
+              </strong>
+              , similar to leading e-commerce marketplaces.
+            </p>
+
+            <p
+              className="
+                mt-5
+                max-w-3xl
+                font-oxanium
+                text-sm
+                leading-7
+                text-text-secondary
+                sm:text-base
+              "
+            >
+              We do{" "}
+              <strong className="text-text-primary">
+                not manufacture, formulate, or alter any products
+              </strong>
+              . Our role is to connect customers with{" "}
+              <strong className="text-text-primary">
+                original, third-party branded supplements
+              </strong>{" "}
+              sourced through verified and authorized distribution channels.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* =====================================================
-          CONTENT
-      ===================================================== */}
-
-      <section className="border-y border-border bg-surface">
-        <div className="mx-auto max-w-[1100px] px-5 py-12 sm:px-8 lg:py-16">
-
+      {/* CONTENT */}
+      <section className="w-full border-y border-border bg-surface">
+        <div className="mx-auto w-full max-w-[1200px] px-5 py-12 sm:px-8 lg:px-10 xl:px-12 lg:py-16">
           <div className="space-y-12">
-
-            {/* =================================================
-                WHO WE ARE
-            ================================================= */}
-
+            {/* WHO WE ARE */}
             <ContentSection title="Who We Are">
-
               <p>
                 We are a curated online platform focused on making genuine
                 sports nutrition products easily accessible in India.
@@ -167,18 +143,11 @@ export default function AboutPage() {
                   </>,
                 ]}
               />
-
             </ContentSection>
 
-            {/* =================================================
-                WHAT WE SELL
-            ================================================= */}
-
+            {/* WHAT WE SELL */}
             <ContentSection title="What We Sell">
-
-              <p>
-                All products available on our platform are:
-              </p>
+              <p>All products available on our platform are:</p>
 
               <BulletList
                 items={[
@@ -195,15 +164,10 @@ export default function AboutPage() {
                 </strong>
                 , not a product manufacturer.
               </p>
-
             </ContentSection>
 
-            {/* =================================================
-                AUTHENTICITY
-            ================================================= */}
-
+            {/* AUTHENTICITY */}
             <ContentSection title="Authenticity & Sourcing Standards">
-
               <p>
                 We follow strict sourcing and verification practices to help
                 ensure product authenticity:
@@ -230,15 +194,10 @@ export default function AboutPage() {
                 Customers are encouraged to verify product authenticity using
                 official brand verification systems whenever available.
               </p>
-
             </ContentSection>
 
-            {/* =================================================
-                MISSION
-            ================================================= */}
-
+            {/* MISSION */}
             <ContentSection title="Our Mission">
-
               <p>
                 Our mission is to simplify and improve the way people in India
                 access sports nutrition by offering:
@@ -256,13 +215,9 @@ export default function AboutPage() {
                 We aim to reduce uncertainty in online supplement purchasing by
                 focusing on authenticity and verified supply chains.
               </p>
-
             </ContentSection>
 
-            {/* =================================================
-                IMPORTANT CLARIFICATION
-            ================================================= */}
-
+            {/* IMPORTANT CLARIFICATION */}
             <section
               className="
                 rounded-xl
@@ -321,15 +276,9 @@ export default function AboutPage() {
               </p>
             </section>
 
-            {/* =================================================
-                COMMITMENT
-            ================================================= */}
-
+            {/* COMMITMENT */}
             <ContentSection title="Our Commitment">
-
-              <p>
-                We are committed to building trust through:
-              </p>
+              <p>We are committed to building trust through:</p>
 
               <BulletList
                 items={[
@@ -339,15 +288,10 @@ export default function AboutPage() {
                   "Customer-first service",
                 ]}
               />
-
             </ContentSection>
 
-            {/* =================================================
-                CLOSING
-            ================================================= */}
-
+            {/* CLOSING */}
             <section className="border-t border-border pt-12">
-
               <h2
                 className="
                   font-bebas
@@ -376,18 +320,13 @@ export default function AboutPage() {
                 and convenient online platform — helping you focus on your
                 fitness journey with confidence in what you consume.
               </p>
-
             </section>
-
           </div>
         </div>
       </section>
-
-
     </main>
   );
 }
-
 
 /* =====================================================
    REUSABLE CONTENT SECTION
@@ -396,7 +335,6 @@ export default function AboutPage() {
 function ContentSection({ title, children }) {
   return (
     <section>
-
       <h2
         className="
           font-bebas
@@ -422,11 +360,9 @@ function ContentSection({ title, children }) {
       >
         {children}
       </div>
-
     </section>
   );
 }
-
 
 /* =====================================================
    REUSABLE BULLET LIST
@@ -435,7 +371,6 @@ function ContentSection({ title, children }) {
 function BulletList({ items }) {
   return (
     <ul className="mt-5 space-y-3 pl-5">
-
       {items.map((item, index) => (
         <li
           key={index}
@@ -461,7 +396,6 @@ function BulletList({ items }) {
           {item}
         </li>
       ))}
-
     </ul>
   );
 }

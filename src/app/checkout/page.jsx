@@ -557,10 +557,7 @@ function CheckoutContent() {
     script.async = true;
 
     script.onload = () => {
-      console.log(
-        "Razorpay Checkout loaded"
-      );
-    };
+};
 
     script.onerror = () => {
       console.error(
@@ -1578,7 +1575,6 @@ function CheckoutContent() {
 
       const data = response?.data ?? response;
 
-      console.log("Checkout API response:", data);
 
       if (!data) {
         throw new Error("No response received from checkout API.");
@@ -1731,10 +1727,6 @@ function CheckoutContent() {
             const verifyData =
               verifyResponse?.data ?? verifyResponse;
 
-            console.log(
-              "Payment verification response:",
-              verifyData
-            );
 
             if (
               !verifyData ||
