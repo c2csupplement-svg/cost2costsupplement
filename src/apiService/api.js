@@ -358,9 +358,9 @@ export const buyNowApi = async (data) => {
     }
 }
 
-export const homePageSeo = async () => {
+export const getPageSeo = async (pageName) => {
     try {
-        const res = await axios.get(`${API_BASE_URL}/page-seo/home`);
+        const res = await axios.get(`${API_BASE_URL}/page-seo/${pageName}`);
         return res.data
     }
     catch (err) {

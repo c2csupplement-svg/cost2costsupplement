@@ -1,13 +1,11 @@
 import { cache } from "react";
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 import { getPageSeo } from "@/apiService/api";
+import AboutPage from "./AboutPage";
 
-import BlogsPage from "@/components/blogs/BlogsPage";
-import WhyC2C from "@/components/home/WhyC2C";
-
-const getBlogsSEO = cache(async () => {
+const getAboutSEO = cache(async () => {
   try {
-    const response = await getPageSeo("blogs");
+    const response = await getPageSeo("about");
 
     return (
       response?.data?.seo ||
@@ -17,19 +15,19 @@ const getBlogsSEO = cache(async () => {
       null
     );
   } catch (error) {
-    console.error("Blogs page SEO error:", error);
+    console.error("About page SEO error:", error);
     return null;
   }
 });
 
 export async function generateMetadata() {
-  const seo = await getBlogsSEO();
+  const seo = await getAboutSEO();
 
   return getSEOMetadata(seo);
 }
 
-export default async function Blogs() {
-  const seo = await getBlogsSEO();
+export default async function About() {
+  const seo = await getAboutSEO();
 
   const jsonld = getJSONLD(seo);
 
@@ -44,10 +42,7 @@ export default async function Blogs() {
         />
       )}
 
-      <main className="min-h-screen bg-[#0B0B0B] text-white">
-        <BlogsPage />
-        <WhyC2C />
-      </main>
+      <AboutPage />
     </>
   );
 }

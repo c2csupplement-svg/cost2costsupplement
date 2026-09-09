@@ -138,11 +138,11 @@ function ErrorState({ error }) {
   );
 }
 
-export default function BlogDetailsPage() {
+export default function BlogDetailsPage({blog: initialBlog = null}) {
   const params = useParams();
 
-  const [blog, setBlog] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [blog, setBlog] = useState(initialBlog);
+  const [loading, setLoading] = useState(!initialBlog);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -151,7 +151,15 @@ export default function BlogDetailsPage() {
     : params?.slug;
 
   useEffect(() => {
+    if (initialBlog) {
+      setBlog(initialBlog);
+      setLoading(false);
+      setError("");
+      return;
+    }
+
     if (!slug) {
+      setBlog(null);
       setLoading(false);
       setError("Blog slug is missing.");
       return;
@@ -180,12 +188,15 @@ export default function BlogDetailsPage() {
       } catch (err) {
         console.error(
           "Blog API error:",
-          err?.response?.data || err?.message || err
+          err?.response?.data ||
+            err?.message ||
+            err
         );
 
         if (!mounted) return;
 
         setBlog(null);
+
         setError(
           err?.response?.data?.message ||
             err?.message ||
@@ -203,7 +214,7 @@ export default function BlogDetailsPage() {
     return () => {
       mounted = false;
     };
-  }, [slug]);
+  }, [slug, initialBlog]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -211,7 +222,9 @@ export default function BlogDetailsPage() {
 
   const copyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(
+        window.location.href
+      );
 
       setCopied(true);
 
@@ -253,7 +266,8 @@ export default function BlogDetailsPage() {
     return <ErrorState error={error} />;
   }
 
-  const title = blog?.title || "Untitled Article";
+  const title =
+    blog?.title || "Untitled Article";
 
   const excerpt =
     blog?.excerpt ||

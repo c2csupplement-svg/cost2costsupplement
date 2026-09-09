@@ -1,8 +1,7 @@
 "use client";
 
-import Head from "next/head";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ArrowLeft,
@@ -400,18 +399,20 @@ function Pagination({
   );
 }
 
-export default function BrandsPage({
-  params,
-}) {
-  const { slug } = use(params);
+export default function BrandsPage({initialBrandData = null,initialSlug = ""}) {
+  const slug = initialSlug;
 
   const dispatch = useDispatch();
 
   const [brandData, setBrandData] =
-    useState(null);
+    useState(
+      initialBrandData
+    );
 
   const [brandLoading, setBrandLoading] =
-    useState(true);
+    useState(
+      !initialBrandData
+    );
 
   const [brandError, setBrandError] =
     useState(null);
@@ -422,13 +423,16 @@ export default function BrandsPage({
   const [search, setSearch] =
     useState("");
 
-  const productAdState = useSelector(
-    (state) => state.productAd || {}
-  );
+  const productAdState =
+    useSelector(
+      (state) =>
+        state.productAd || {}
+    );
 
-  const brands = normalizeBrands(
-    productAdState.brands
-  );
+  const brands =
+    normalizeBrands(
+      productAdState.brands
+    );
 
   const adsLoading = Boolean(
     productAdState.loading
@@ -443,7 +447,9 @@ export default function BrandsPage({
       !adsLoaded &&
       !adsLoading
     ) {
-      dispatch(getAllProductAds());
+      dispatch(
+        getAllProductAds()
+      );
     }
   }, [
     dispatch,
@@ -451,71 +457,113 @@ export default function BrandsPage({
     adsLoading,
   ]);
 
+
   useEffect(() => {
     setCurrentPage(1);
     setSearch("");
   }, [slug]);
 
   useEffect(() => {
+
+    if (
+      initialBrandData &&
+      currentPage === 1
+    ) {
+      setBrandData(
+        initialBrandData
+      );
+      setBrandLoading(false);
+      setBrandError(null);
+
+      return;
+    }
+
     if (!slug) {
+      setBrandData(null);
+      setBrandLoading(false);
+      setBrandError(
+        "Brand slug is missing."
+      );
+
       return;
     }
 
     let active = true;
 
-    const fetchBrand = async () => {
-      try {
-        setBrandLoading(true);
-        setBrandError(null);
+    const fetchBrand =
+      async () => {
+        try {
+          setBrandLoading(true);
+          setBrandError(null);
 
-        const response =
-          await getBrandBySlug(
-            slug,
-            currentPage,
-            PAGE_SIZE
+          const response =
+            await getBrandBySlug(
+              slug,
+              currentPage,
+              PAGE_SIZE
+            );
+
+          if (!active) {
+            return;
+          }
+
+          const data =
+            response?.data ??
+            response ??
+            null;
+
+          if (!data) {
+            setBrandData(null);
+            setBrandError(
+              "Brand not found."
+            );
+
+            return;
+          }
+
+          setBrandData(data);
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          console.error(
+            "getBrandBySlug:",
+            error
           );
 
-        if (!active) {
-          return;
+          setBrandError(
+            error?.response?.data
+              ?.message ||
+              error?.message ||
+              "Failed to load brand"
+          );
+
+          setBrandData(null);
+        } finally {
+          if (active) {
+            setBrandLoading(
+              false
+            );
+          }
         }
-
-        const data =
-          response?.data ?? response;
-
-        setBrandData(data);
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-
-        console.error(
-          "getBrandBySlug:",
-          error
-        );
-
-        setBrandError(
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to load brand"
-        );
-
-        setBrandData(null);
-      } finally {
-        if (active) {
-          setBrandLoading(false);
-        }
-      }
-    };
+      };
 
     fetchBrand();
 
     return () => {
       active = false;
     };
-  }, [slug, currentPage]);
+  }, [
+    slug,
+    currentPage,
+    initialBrandData,
+  ]);
 
   const brand =
-    brandData?.brand || null;
+    brandData?.brand ||
+    null;
+
 
   const displayName =
     brand?.name ||
@@ -531,153 +579,88 @@ export default function BrandsPage({
     "";
 
   const displayDescription =
-    brand?.description || "";
+    brand?.description ||
+    "";
 
-  const products = Array.isArray(
-    brandData?.products
-  )
-    ? brandData.products
-    : [];
 
-  const query = search
-    .trim()
-    .toLowerCase();
+  const products =
+    Array.isArray(
+      brandData?.products
+    )
+      ? brandData.products
+      : [];
 
-  const filteredProducts = query
-    ? products.filter((product) => {
-      const name = String(
-        product?.name ||
-        product?.title ||
-        product?.productName ||
-        ""
-      ).toLowerCase();
+  const query =
+    search
+      .trim()
+      .toLowerCase();
 
-      const sku = String(
-        product?.sku || ""
-      ).toLowerCase();
+  const filteredProducts =
+    query
+      ? products.filter(
+          (product) => {
+            const name =
+              String(
+                product?.name ||
+                  product?.title ||
+                  product?.productName ||
+                  ""
+              ).toLowerCase();
 
-      const productSlug = String(
-        product?.slug || ""
-      ).toLowerCase();
+            const sku =
+              String(
+                product?.sku ||
+                  ""
+              ).toLowerCase();
 
-      return (
-        name.includes(query) ||
-        sku.includes(query) ||
-        productSlug.includes(query)
-      );
-    })
-    : products;
+            const productSlug =
+              String(
+                product?.slug ||
+                  ""
+              ).toLowerCase();
+
+            return (
+              name.includes(
+                query
+              ) ||
+              sku.includes(
+                query
+              ) ||
+              productSlug.includes(
+                query
+              )
+            );
+          }
+        )
+      : products;
 
   const total =
     Number(
       brandData?.total ??
-      brandData?.count ??
-      0
+        brandData?.count ??
+        0
     ) || 0;
 
-  const totalPages = Math.max(
-    1,
-    Number(
-      brandData?.totalPages
-    ) ||
-    Math.ceil(
-      total / PAGE_SIZE
-    ) ||
-    1
-  );
+
+  const totalPages =
+    Math.max(
+      1,
+      Number(
+        brandData?.totalPages
+      ) ||
+        Math.ceil(
+          total /
+            PAGE_SIZE
+        ) ||
+        1
+    );
 
   const serverPage =
     Number(
       brandData?.page ??
-      brandData?.currentPage ??
-      currentPage
+        brandData?.currentPage ??
+        currentPage
     ) || currentPage;
-
-  const seoData =
-    brand?.seo || {};
-
-  const schemaData =
-    seoData?.schema || {};
-
-  const seoTitle =
-    seoData?.title ||
-    `${displayName} | Cost2Cost Supplement`;
-
-  const seoDescription =
-    seoData?.description ||
-    displayDescription ||
-    `Shop ${displayName} products and supplements online at Cost2Cost Supplement.`;
-
-  const seoKeywords = Array.isArray(
-    seoData?.keywords
-  )
-    ? seoData.keywords
-      .filter(Boolean)
-      .join(", ")
-    : String(
-      seoData?.keywords || ""
-    );
-
-  const canonical =
-    seoData?.canonical || "";
-
-  const facebook =
-    seoData?.facebook || {};
-
-  const twitter =
-    seoData?.twitter || {};
-
-  const ogTitle =
-    facebook?.title ||
-    seoTitle;
-
-  const ogDescription =
-    facebook?.description ||
-    seoDescription;
-
-  const ogImage =
-    facebook?.image_path ||
-    displayLogo ||
-    "";
-
-  const ogUrl =
-    facebook?.url ||
-    canonical ||
-    "";
-
-  const twitterCard =
-    twitter?.card ||
-    facebook?.card ||
-    "summary_large_image";
-
-  const twitterTitle =
-    twitter?.title ||
-    seoTitle;
-
-  const twitterDescription =
-    twitter?.description ||
-    seoDescription;
-
-  const twitterImage =
-    twitter?.image_path ||
-    facebook?.image_path ||
-    displayLogo ||
-    "";
-
-  const twitterUrl =
-    twitter?.redirect_url ||
-    "";
-
-  const schemaJson =
-    schemaData?.enabled &&
-      schemaData?.customJson
-      ? typeof schemaData.customJson ===
-        "string"
-        ? schemaData.customJson
-        : JSON.stringify(
-          schemaData.customJson
-        )
-      : "";
 
   const handlePageChange = (
     pageNumber
@@ -686,20 +669,27 @@ export default function BrandsPage({
       Number(pageNumber);
 
     if (
-      !Number.isInteger(nextPage) ||
+      !Number.isInteger(
+        nextPage
+      ) ||
       nextPage < 1 ||
-      nextPage > totalPages ||
-      nextPage === currentPage ||
+      nextPage >
+        totalPages ||
+      nextPage ===
+        currentPage ||
       brandLoading
     ) {
       return;
     }
 
     setSearch("");
-    setCurrentPage(nextPage);
+    setCurrentPage(
+      nextPage
+    );
 
     if (
-      typeof window !== "undefined"
+      typeof window !==
+      "undefined"
     ) {
       window.scrollTo({
         top: 0,
@@ -712,8 +702,11 @@ export default function BrandsPage({
     brandLoading &&
     !brandData
   ) {
-    return <BrandPageSkeleton />;
+    return (
+      <BrandPageSkeleton />
+    );
   }
+
 
   if (
     brandError &&
@@ -745,6 +738,7 @@ export default function BrandsPage({
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
             >
               Try Again
+
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -753,6 +747,9 @@ export default function BrandsPage({
     );
   }
 
+  /*
+   * Brand not found.
+   */
   if (!brand) {
     return (
       <main className="min-h-screen bg-surface-muted">
@@ -783,201 +780,127 @@ export default function BrandsPage({
   }
 
   return (
-    <>
-      <Head>
-        <title>{seoTitle}</title>
+    <main className="min-h-screen bg-surface-muted">
+      {/* Breadcrumb */}
+      <section className="relative overflow-hidden border-b border-border bg-surface-muted">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
 
-        <meta
-          name="description"
-          content={seoDescription}
-        />
+        <div className="relative mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
+          <div className="flex items-center gap-2 overflow-hidden text-xs font-bold uppercase tracking-wide text-text-secondary">
+            <Link
+              href="/"
+              className="shrink-0 transition-colors hover:text-primary"
+            >
+              Home
+            </Link>
 
-        {seoKeywords && (
-          <meta
-            name="keywords"
-            content={seoKeywords}
-          />
-        )}
+            <ChevronRight className="h-4 w-4 shrink-0" />
 
-        <meta
-          name="robots"
-          content={
-            seoData?.robots ||
-            "index, follow"
-          }
-        />
+            <Link
+              href="/brands"
+              className="shrink-0 transition-colors hover:text-primary"
+            >
+              Brands
+            </Link>
 
-        {seoData?.author && (
-          <meta
-            name="author"
-            content={seoData.author}
-          />
-        )}
+            <ChevronRight className="h-4 w-4 shrink-0" />
 
-        {canonical && (
-          <link
-            rel="canonical"
-            href={canonical}
-          />
-        )}
-
-        <meta
-          property="og:title"
-          content={ogTitle}
-        />
-
-        <meta
-          property="og:description"
-          content={ogDescription}
-        />
-
-        <meta
-          property="og:type"
-          content="website"
-        />
-
-        {ogImage && (
-          <meta
-            property="og:image"
-            content={ogImage}
-          />
-        )}
-
-        {ogUrl && (
-          <meta
-            property="og:url"
-            content={ogUrl}
-          />
-        )}
-
-        <meta
-          name="twitter:card"
-          content={twitterCard}
-        />
-
-        <meta
-          name="twitter:title"
-          content={twitterTitle}
-        />
-
-        <meta
-          name="twitter:description"
-          content={twitterDescription}
-        />
-
-        {twitterImage && (
-          <meta
-            name="twitter:image"
-            content={twitterImage}
-          />
-        )}
-
-        {twitterUrl && (
-          <meta
-            name="twitter:url"
-            content={twitterUrl}
-          />
-        )}
-
-        {schemaJson && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: schemaJson,
-            }}
-          />
-        )}
-      </Head>
-
-      <main className="min-h-screen bg-surface-muted">
-        <section className="relative overflow-hidden border-b border-border bg-surface-muted">
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
-
-          <div className="relative mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
-            <div className="flex items-center gap-2 overflow-hidden text-xs font-bold uppercase tracking-wide text-text-secondary">
-              <Link
-                href="/"
-                className="shrink-0 transition-colors hover:text-primary"
-              >
-                Home
-              </Link>
-
-              <ChevronRight className="h-4 w-4 shrink-0" />
-
-              <Link
-                href="/brands"
-                className="shrink-0 transition-colors hover:text-primary"
-              >
-                Brands
-              </Link>
-
-              <ChevronRight className="h-4 w-4 shrink-0" />
-
-              <span className="truncate text-primary bg-[]">
-                {displayName}
-              </span>
-            </div>
+            <span className="truncate text-primary">
+              {displayName}
+            </span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <OtherBrands
-          brands={brands}
-          currentSlug={slug}
-        />
+      {/* Other Brands */}
+      <OtherBrands
+        brands={brands}
+        currentSlug={slug}
+      />
 
-        {/* <section className="border-b border-border bg-card">
-          <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-            <div className="flex flex-col items-center justify-center gap-5 text-center sm:flex-row sm:text-left">
-              <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm sm:h-28 sm:w-40">
-                {displayLogo ? (
-                  <img
-                    src={displayLogo}
-                    alt={displayName}
-                    loading="eager"
-                    className="max-h-full max-w-full object-contain"
-                  />
-                ) : (
-                  <span className="px-3 text-center text-sm font-black uppercase text-text-primary">
-                    {displayName}
-                  </span>
-                )}
+      {/* Products */}
+      <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-primary">
+              {displayName}
+            </p>
+
+            <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary sm:text-3xl">
+              Products
+            </h2>
+
+            <p className="mt-2 text-sm text-text-secondary">
+              Showing{" "}
+              {
+                filteredProducts.length
+              }{" "}
+              of {total} products
+            </p>
+          </div>
+
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
+
+            <input
+              type="search"
+              value={search}
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target
+                    .value
+                )
+              }
+              placeholder="Search products..."
+              className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-10 text-sm font-medium text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
+
+            {search && (
+              <button
+                type="button"
+                onClick={() =>
+                  setSearch("")
+                }
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-muted hover:text-primary"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Loading products while changing page */}
+        {brandLoading &&
+          brandData && (
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-xs font-bold text-text-secondary">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Loading products...
+            </div>
+          )}
+
+        {/* No Products */}
+        {filteredProducts.length ===
+          0 &&
+          !brandLoading && (
+            <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+                <PackageOpen className="h-7 w-7 text-text-secondary" />
               </div>
-            </div>
-          </div>
-        </section> */}
 
-        <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
-          <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-primary">
-                {displayName}
-              </p>
-
-              <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary sm:text-3xl">
-                Products
+              <h2 className="mt-5 text-xl font-black uppercase text-text-primary">
+                {search
+                  ? "No Products Found"
+                  : "No Products Available"}
               </h2>
 
-              <p className="mt-2 text-sm text-text-secondary">
-                Showing{" "}
-                {filteredProducts.length}{" "}
-                of {total} products
+              <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
+                {search
+                  ? `No products match "${search}".`
+                  : `There are currently no products available from ${displayName}.`}
               </p>
-            </div>
-
-            <div className="relative w-full lg:max-w-sm">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
-
-              <input
-                type="search"
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search products..."
-                className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-10 text-sm font-medium text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-primary focus:ring-2 focus:ring-primary/10"
-              />
 
               {search && (
                 <button
@@ -985,105 +908,77 @@ export default function BrandsPage({
                   onClick={() =>
                     setSearch("")
                   }
-                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-muted hover:text-primary"
-                  aria-label="Clear search"
+                  className="mt-6 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
                 >
-                  ×
+                  Clear Search
                 </button>
               )}
             </div>
-          </div>
-
-          {brandLoading &&
-            brandData && (
-              <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-xs font-bold text-text-secondary">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Loading products...
-              </div>
-            )}
-
-          {filteredProducts.length === 0 &&
-            !brandLoading && (
-              <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
-                  <PackageOpen className="h-7 w-7 text-text-secondary" />
-                </div>
-
-                <h2 className="mt-5 text-xl font-black uppercase text-text-primary">
-                  {search
-                    ? "No Products Found"
-                    : "No Products Available"}
-                </h2>
-
-                <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
-                  {search
-                    ? `No products match "${search}".`
-                    : `There are currently no products available from ${displayName}.`}
-                </p>
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    className="mt-6 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-white transition hover:opacity-90"
-                  >
-                    Clear Search
-                  </button>
-                )}
-              </div>
-            )}
-
-          {filteredProducts.length > 0 && (
-            <>
-              <div className="mb-5 flex items-center justify-between gap-4">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-text-secondary">
-                  Page {serverPage} of{" "}
-                  {totalPages}
-                </p>
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    className="text-xs font-black uppercase tracking-wide text-primary hover:underline"
-                  >
-                    Clear Search
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-                {filteredProducts.map(
-                  (product, index) => (
-                    <ProductCard
-                      key={
-                        product?.id ||
-                        product?._id ||
-                        product?.slug ||
-                        `product-${index}`
-                      }
-                      product={product}
-                    />
-                  )
-                )}
-              </div>
-
-              <Pagination
-                currentPage={serverPage}
-                totalPages={totalPages}
-                onPageChange={
-                  handlePageChange
-                }
-                loading={brandLoading}
-              />
-            </>
           )}
-        </section>
-      </main>
-    </>
+
+        {/* Products */}
+        {filteredProducts.length >
+          0 && (
+          <>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-text-secondary">
+                Page{" "}
+                {serverPage}{" "}
+                of{" "}
+                {totalPages}
+              </p>
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  className="text-xs font-black uppercase tracking-wide text-primary hover:underline"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+              {filteredProducts.map(
+                (
+                  product,
+                  index
+                ) => (
+                  <ProductCard
+                    key={
+                      product?.id ||
+                      product?._id ||
+                      product?.slug ||
+                      `product-${index}`
+                    }
+                    product={
+                      product
+                    }
+                  />
+                )
+              )}
+            </div>
+
+            <Pagination
+              currentPage={
+                serverPage
+              }
+              totalPages={
+                totalPages
+              }
+              onPageChange={
+                handlePageChange
+              }
+              loading={
+                brandLoading
+              }
+            />
+          </>
+        )}
+      </section>
+    </main>
   );
 }

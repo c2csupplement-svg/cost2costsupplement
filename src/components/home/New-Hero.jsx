@@ -32,7 +32,6 @@ export default function Hero() {
     (state) => state.banners || {}
   );
 
-  console.log(bannerList)
 
   const [activeSlide, setActiveSlide] =
     useState(0);
