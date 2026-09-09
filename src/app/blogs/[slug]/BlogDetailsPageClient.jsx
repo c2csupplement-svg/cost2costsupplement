@@ -138,7 +138,7 @@ function ErrorState({ error }) {
   );
 }
 
-export default function BlogDetailsPage({blog: initialBlog = null}) {
+export default function BlogDetails({blog: initialBlog = null}) {
   const params = useParams();
 
   const [blog, setBlog] = useState(initialBlog);

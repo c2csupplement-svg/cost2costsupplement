@@ -72,7 +72,7 @@ function CategoryCard({ category }) {
   );
 }
 
-export default function ProductCategoriesPage() {
+export default function ProductCategories() {
   const dispatch = useDispatch();
 
   const [search, setSearch] = useState("");

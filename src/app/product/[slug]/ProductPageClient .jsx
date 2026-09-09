@@ -231,7 +231,7 @@ function getProductId(product) {
   );
 }
 
-export default function ProductPage({
+export default function ProductDetailsPage({
   product: initialProduct = null,
   slug: initialSlug = "",
 }) {

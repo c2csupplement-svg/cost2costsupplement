@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 import {getPageSeo} from "@/apiService/api";
-import BrandsPage from "./BrandsPage";
+import BrandsClientPage from "./BrandsPage";
 
 const getBrandsSEO = cache(async () => {
   try {
@@ -42,7 +42,7 @@ export default async function BrandsPage() {
         />
       )}
 
-      <BrandsPage/>
+      <BrandsClientPage/>
     </>
   );
 }

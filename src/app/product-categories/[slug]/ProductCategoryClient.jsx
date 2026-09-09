@@ -201,7 +201,7 @@ const getPageNumbers = (currentPage, totalPages) => {
   return result;
 };
 
-export default function ProductCategoryPage({ initialCategory = null,initialSlug = "",}) {
+export default function ProductDetailsCategory({ initialCategory = null,initialSlug = "",}) {
   const slug = initialSlug;
 
   const dispatch = useDispatch();

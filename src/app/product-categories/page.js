@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 import { getPageSeo } from "@/apiService/api";
-import ProductCategoriesPageClient from "./ProductCategoriesPageClient";
+import ProductCategoriesPageClient from "./ProductCategory";
 
 const getSEO = cache(async () => {
   const response = await getPageSeo("category");

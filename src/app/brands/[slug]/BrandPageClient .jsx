@@ -399,7 +399,7 @@ function Pagination({
   );
 }
 
-export default function BrandsPage({initialBrandData = null,initialSlug = ""}) {
+export default function BrandsDetails({initialBrandData = null,initialSlug = ""}) {
   const slug = initialSlug;
 
   const dispatch = useDispatch();

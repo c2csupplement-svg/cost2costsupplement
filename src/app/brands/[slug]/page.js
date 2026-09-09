@@ -6,7 +6,7 @@ import {
   getJSONLD,
 } from "@/lib/seo";
 
-import BrandPageClient from "./BrandPageClient";
+import BrandPageClient from "./BrandPageClient ";
 
 const getBrand = cache(async (slug) => {
   if (!slug) {
@@ -56,7 +56,7 @@ export async function generateMetadata({
   return getSEOMetadata(seo);
 }
 
-export default async function BrandPage({
+export default async function BrandDetailsPage({
   params,
 }) {
   const resolvedParams = await params;

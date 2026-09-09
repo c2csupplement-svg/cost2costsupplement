@@ -3,7 +3,7 @@ import { cache } from "react";
 import { getCategoryBySlug } from "@/apiService/api";
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 
-import ProductCategoryPage from "./ProductCategoryPage";
+import ProductCategoryClient from "./ProductCategoryClient";
 
 function normalizeCategoryResponse(response) {
   if (!response) {
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }) {
   return getSEOMetadata(category?.seo);
 }
 
-export default async function CategoryPage({
+export default async function CategoryDetailsPage({
   params,
 }) {
   const resolvedParams = await params;
@@ -90,7 +90,7 @@ export default async function CategoryPage({
         />
       )}
 
-      <ProductCategoryPage
+      <ProductCategoryClient
         initialCategory={category}
         initialSlug={slug}
       />
