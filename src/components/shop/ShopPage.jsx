@@ -1538,7 +1538,7 @@ export default function ShopPage() {
           </div>
 
           <button
-            className="bg-red-600 py-1 px-3 rounded-xl text-[12px] sm:py-1 sm:px-4 sm:text-[14px]"
+            className="bg-red-600 cursor-pointer py-1 px-3 rounded-xl text-[12px] sm:py-1 sm:px-4 sm:text-[14px]"
             onClick={handleRemoveFilter}
           >Remove Filter</button>
         </div>

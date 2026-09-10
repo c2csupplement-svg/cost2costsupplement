@@ -495,7 +495,7 @@ function WishlistCard({
       }`}
     >
       <div className="relative aspect-[4/3] w-full shrink-0 bg-white">
-        <Link href={`/product/${productSlug}`} className="absolute inset-0">
+        <Link href={`/products/${productSlug}`} className="absolute inset-0">
           <Image
             src={image}
             alt={productName}
@@ -532,7 +532,7 @@ function WishlistCard({
         )}
 
         <Link
-          href={`/product/${productSlug}`}
+          href={`/products/${productSlug}`}
           className="mt-0.5 line-clamp-1 font-oxanium text-sm font-semibold leading-5 text-text-primary transition hover:text-primary"
         >
           {productName}

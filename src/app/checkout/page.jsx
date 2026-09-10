@@ -187,6 +187,7 @@ function CheckoutContent() {
 
   const [isBuyNow, setIsBuyNow] = useState(false);
   const [buyNowItem, setBuyNowItem] = useState(null);
+  const [buyNowItems, setBuyNowItems] = useState([]);
 
   const [selectedAddressId, setSelectedAddressId] =
     useState(null);
@@ -263,10 +264,11 @@ function CheckoutContent() {
     : [];
 
   const cart = isBuyNow
-    ? buyNowItem
-      ? [buyNowItem]
+    ? Array.isArray(buyNowItems)
+      ? buyNowItems
       : []
     : normalCart;
+
 
   const addressData =
     addressState?.addressData;
@@ -294,54 +296,211 @@ function CheckoutContent() {
     dispatch(getAddress());
 
     if (isBuyNowRoute) {
-      const saved = sessionStorage.getItem("buyNowCheckout");
+      const saved = sessionStorage.getItem(
+        "buyNowCheckout"
+      );
 
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
 
-          if (parsed?.productId && parsed?.quantity) {
-            setIsBuyNow(true);
+          const savedItems = Array.isArray(
+            parsed?.items
+          )
+            ? parsed.items
+            : parsed?.productId
+              ? [parsed]
+              : [];
 
-            setBuyNowItem({
-              id: `buy-now-${parsed.productId}-${parsed.variantId ?? "default"}`,
-              productId: parsed.productId,
-              variantId: parsed.variantId ?? null,
-              quantity: Number(parsed.quantity) || 1,
-              name: parsed.name ?? parsed.title ?? "Product",
-              price: Number(parsed.price ?? parsed.unitPrice ?? 0),
-              image: parsed.image ?? null,
-              variant: parsed.variant ?? null,
-              product: parsed.product ?? {},
-            });
+          if (savedItems.length > 0) {
+            const normalizedItems =
+              savedItems
+                .map((savedItem, index) => {
+                  if (
+                    !savedItem?.productId &&
+                    !savedItem?.product?.id
+                  ) {
+                    return null;
+                  }
+
+                  const productId =
+                    savedItem?.productId ??
+                    savedItem?.product?.id;
+
+                  return {
+                    ...savedItem,
+
+                    id:
+                      savedItem?.id ??
+                      `buy-now-${productId}-${savedItem?.variantId ??
+                      "default"
+                      }-${index}`,
+
+                    productId,
+
+                    variantId:
+                      savedItem?.variantId ??
+                      null,
+
+                    quantity:
+                      Number(
+                        savedItem?.quantity || 1
+                      ),
+
+                    name:
+                      savedItem?.name ??
+                      savedItem?.title ??
+                      savedItem?.productName ??
+                      savedItem?.product?.name ??
+                      savedItem?.product?.title ??
+                      "Product",
+
+                    price: Number(
+                      savedItem?.price ??
+                      savedItem?.unitPrice ??
+                      savedItem?.priceAtPurchase ??
+                      savedItem?.variant?.price ??
+                      savedItem?.product?.price ??
+                      0
+                    ),
+
+                    image:
+                      savedItem?.image ??
+                      savedItem?.featuredimg ??
+                      savedItem?.product
+                        ?.featuredimg ??
+                      savedItem?.product
+                        ?.featuredImage ??
+                      savedItem?.product
+                        ?.image ??
+                      savedItem?.variant
+                        ?.image ??
+                      null,
+
+                    variant:
+                      savedItem?.variant ??
+                      null,
+
+                    product:
+                      savedItem?.product ??
+                      {},
+                  };
+                })
+                .filter(Boolean);
+
+            if (normalizedItems.length > 0) {
+              setIsBuyNow(true);
+
+              setBuyNowItems(normalizedItems);
+              setBuyNowItem(normalizedItems[0] || null);
+
+              if (
+                parsed?.couponCode ||
+                parsed?.couponId ||
+                Number(
+                  parsed?.couponDiscount || 0
+                ) > 0
+              ) {
+                setCouponInput(
+                  String(
+                    parsed.couponCode || ""
+                  ).toUpperCase()
+                );
+
+                setAppliedCoupon(
+                  parsed.couponCode
+                    ? {
+                      id:
+                        parsed.couponId ??
+                        null,
+                      code:
+                        parsed.couponCode,
+                      discountAmount:
+                        Number(
+                          parsed.couponDiscount ||
+                          0
+                        ),
+                    }
+                    : null
+                );
+
+                setAppliedCouponDiscount(
+                  Number(
+                    parsed.couponDiscount || 0
+                  )
+                );
+              }
+            } else {
+              sessionStorage.removeItem(
+                "buyNowCheckout"
+              );
+
+              setIsBuyNow(false);
+              setBuyNowItems([]);
+              setBuyNowItem(null);
+
+              router.replace("/checkout");
+            }
           } else {
-            // URL says buy-now but data is malformed — bail to cart
-            sessionStorage.removeItem("buyNowCheckout");
+            sessionStorage.removeItem(
+              "buyNowCheckout"
+            );
+
             setIsBuyNow(false);
+            setBuyNowItems([]);
+            setBuyNowItem(null);
+
             router.replace("/checkout");
           }
         } catch (error) {
-          console.error("Buy Now session error:", error);
-          sessionStorage.removeItem("buyNowCheckout");
+          console.error(
+            "Buy Now session error:",
+            error
+          );
+
+          sessionStorage.removeItem(
+            "buyNowCheckout"
+          );
+
           setIsBuyNow(false);
+          setBuyNowItems([]);
+          setBuyNowItem(null);
+
           router.replace("/checkout");
         }
       } else {
         setIsBuyNow(false);
+        setBuyNowItems([]);
+        setBuyNowItem(null);
+
         router.replace("/checkout");
       }
     } else {
-      sessionStorage.removeItem("buyNowCheckout");
+      sessionStorage.removeItem(
+        "buyNowCheckout"
+      );
+
       setIsBuyNow(false);
+      setBuyNowItems([]);
       setBuyNowItem(null);
+
       dispatch(fetchCartItems());
     }
 
     return () => {
       mountedRef.current = false;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      if (debounceRef.current) {
+        clearTimeout(
+          debounceRef.current
+        );
+      }
     };
-  }, [dispatch, router, isBuyNowRoute]);
+  }, [
+    dispatch,
+    router,
+    isBuyNowRoute,
+  ]);
 
   useEffect(() => {
     if (isBuyNow) {
@@ -352,70 +511,103 @@ function CheckoutContent() {
   }, [dispatch, isBuyNow]);
 
   useEffect(() => {
-    if (!isBuyNow || !buyNowItem) {
+    if (!isBuyNow || !Array.isArray(buyNowItems) || buyNowItems.length === 0) {
       return;
     }
 
     try {
-      const saved =
-        sessionStorage.getItem(
-          "buyNowCheckout"
-        );
+      const saved = sessionStorage.getItem("buyNowCheckout");
 
-      const parsed = saved
-        ? JSON.parse(saved)
-        : {};
+      const parsed = saved ? JSON.parse(saved) : {};
+
+      const normalizedItems = buyNowItems
+        .map((item, index) => {
+          const productId =
+            item?.productId ??
+            item?.product?.id;
+
+          if (!productId) {
+            return null;
+          }
+
+          return {
+            ...item,
+
+            id:
+              item?.id ??
+              `buy-now-${productId}-${item?.variantId ?? "default"}-${index}`,
+
+            productId,
+
+            variantId:
+              item?.variantId ?? null,
+
+            quantity:
+              Number(item?.quantity || 1),
+
+            name:
+              item?.name ??
+              item?.title ??
+              item?.productName ??
+              item?.product?.name ??
+              item?.product?.title ??
+              "Product",
+
+            price: Number(
+              item?.price ??
+              item?.unitPrice ??
+              item?.priceAtPurchase ??
+              item?.variant?.price ??
+              item?.product?.price ??
+              0
+            ),
+
+            image:
+              item?.image ??
+              item?.featuredimg ??
+              item?.product?.featuredimg ??
+              item?.product?.featuredImage ??
+              item?.product?.image ??
+              item?.variant?.image ??
+              null,
+
+            variant:
+              item?.variant ?? null,
+
+            product:
+              item?.product ?? {},
+          };
+        })
+        .filter(Boolean);
+
+      if (normalizedItems.length === 0) {
+        return;
+      }
 
       sessionStorage.setItem(
         "buyNowCheckout",
         JSON.stringify({
           ...parsed,
-          productId:
-            buyNowItem.productId,
-          variantId:
-            buyNowItem.variantId,
-          quantity:
-            Number(
-              buyNowItem.quantity || 1
-            ),
-          name:
-            buyNowItem.name,
-          price:
-            buyNowItem.price,
-          image:
-            buyNowItem.image,
-          variant:
-            buyNowItem.variant,
-          product:
-            buyNowItem.product,
-          couponCode:
-            appliedCoupon?.code ||
-            parsed?.couponCode ||
-            "",
-          couponId:
-            appliedCoupon?.id ??
-            parsed?.couponId ??
-            null,
-          couponDiscount:
-            Number(
-              appliedCouponDiscount ||
-              parsed?.couponDiscount ||
-              0
-            ),
+
+          items: normalizedItems,
+
+          source:
+            parsed?.source || "reorder",
+
+          orderId:
+            parsed?.orderId ?? null,
+
+          createdAt:
+            parsed?.createdAt ?? Date.now(),
         })
       );
     } catch (error) {
       console.error(
-        "Buy Now session synchronization error:",
+        "Unable to synchronize Buy Now data:",
         error
       );
     }
-  }, [
-    isBuyNow,
-    buyNowItem,
-    appliedCoupon,
-    appliedCouponDiscount,
-  ]);
+  }, [isBuyNow, buyNowItems]);
 
   useEffect(() => {
     if (isBuyNow) {
@@ -557,7 +749,7 @@ function CheckoutContent() {
     script.async = true;
 
     script.onload = () => {
-};
+    };
 
     script.onerror = () => {
       console.error(
@@ -1556,15 +1748,29 @@ function CheckoutContent() {
       let response;
 
       if (isBuyNow) {
+        const items = buyNowItems.map((item) => ({
+          productId:
+            item?.productId,
+
+          variantId:
+            item?.variantId,
+
+          quantity:
+            Number(item?.quantity || 1),
+        }));
+
         response = await buyNowApi({
           productId: buyNowItem?.productId,
           variantId: buyNowItem?.variantId ?? null,
           quantity: Number(buyNowItem?.quantity || 1),
           addressId: Number(selectedAddressId),
           paymentMethod: paymentMode,
-          couponCode: appliedCoupon?.code || null,
-          couponId: appliedCoupon?.id || null,
-          couponDiscount: Number(appliedCouponDiscount || 0),
+          couponCode:
+            appliedCoupon?.code || null,
+          couponId:
+            appliedCoupon?.id || null,
+          couponDiscount:
+            Number(appliedCouponDiscount || 0),
         });
       } else {
         response = await createRazorpayOrderApi({
@@ -2370,15 +2576,15 @@ function CheckoutContent() {
                   onClick={() => setPaymentMode("PREPAID")}
                   aria-pressed={paymentMode === "PREPAID"}
                   className={`group relative flex flex-col rounded-2xl border p-4 text-left transition sm:p-5 ${paymentMode === "PREPAID"
-                      ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
-                      : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
+                    ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
+                    : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
                     }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${paymentMode === "PREPAID"
-                          ? "bg-primary text-white"
-                          : "bg-surface text-text-muted"
+                        ? "bg-primary text-white"
+                        : "bg-surface text-text-muted"
                         }`}
                     >
                       <CreditCard className="h-5 w-5" />
@@ -2390,8 +2596,8 @@ function CheckoutContent() {
 
                         <span
                           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${paymentMode === "PREPAID"
-                              ? "border-primary bg-primary"
-                              : "border-border"
+                            ? "border-primary bg-primary"
+                            : "border-border"
                             }`}
                         >
                           {paymentMode === "PREPAID" && (
@@ -2418,15 +2624,15 @@ function CheckoutContent() {
                   onClick={() => setPaymentMode("COD")}
                   aria-pressed={paymentMode === "COD"}
                   className={`group relative flex flex-col rounded-2xl border p-4 text-left transition sm:p-5 ${paymentMode === "COD"
-                      ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
-                      : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
+                    ? "border-primary bg-primary/[0.04] ring-1 ring-primary/30 shadow-sm"
+                    : "border-border bg-background hover:border-primary/40 active:scale-[0.99]"
                     }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${paymentMode === "COD"
-                          ? "bg-primary text-white"
-                          : "bg-surface text-text-muted"
+                        ? "bg-primary text-white"
+                        : "bg-surface text-text-muted"
                         }`}
                     >
                       <Truck className="h-5 w-5" />
@@ -2440,8 +2646,8 @@ function CheckoutContent() {
 
                         <span
                           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${paymentMode === "COD"
-                              ? "border-primary bg-primary"
-                              : "border-border"
+                            ? "border-primary bg-primary"
+                            : "border-border"
                             }`}
                         >
                           {paymentMode === "COD" && (

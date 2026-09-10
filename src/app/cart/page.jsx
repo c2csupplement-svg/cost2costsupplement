@@ -1944,7 +1944,7 @@ function CartItem({
     price * quantity;
 
   const productHref = slug
-    ? `/product/${encodeURIComponent(slug)}`
+    ? `/products/${encodeURIComponent(slug)}`
     : "/products";
 
   const variantDetails =

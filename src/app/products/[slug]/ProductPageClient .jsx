@@ -1723,7 +1723,7 @@ export default function ProductDetailsPage({
                       disabled={
                         quantity <= 1
                       }
-                      className="flex h-full w-12 items-center justify-center text-[#525252] transition hover:text-[#E52323] disabled:opacity-40"
+                      className="flex cursor-pointer h-full w-12 items-center justify-center text-[#525252] transition hover:text-[#E52323] disabled:opacity-40"
                       aria-label="Decrease quantity"
                     >
                       <Minus className="h-4 w-4" />
@@ -1744,7 +1744,7 @@ export default function ProductDetailsPage({
                         quantity >=
                           product.stockQuantity
                       }
-                      className="flex h-full w-12 items-center justify-center text-[#525252] transition hover:text-[#E52323] disabled:opacity-40"
+                      className="flex h-full cursor-pointer w-12 items-center justify-center text-[#525252] transition hover:text-[#E52323] disabled:opacity-40"
                       aria-label="Increase quantity"
                     >
                       <Plus className="h-4 w-4" />
@@ -1762,7 +1762,7 @@ export default function ProductDetailsPage({
                     aria-busy={
                       wishlistLoading
                     }
-                    className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:h-14 ${
+                    className={`flex cursor-pointer h-10 flex-1 items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:h-14 ${
                       wishlistActive
                         ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
                         : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
@@ -1800,7 +1800,7 @@ export default function ProductDetailsPage({
                     onClick={
                       handleAddToCart
                     }
-                    className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
+                    className="flex cursor-pointer h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
                   >
                     <ShoppingCart className="h-5 w-5" />
 
@@ -1819,7 +1819,7 @@ export default function ProductDetailsPage({
                     onClick={
                       handleBuyNow
                     }
-                    className="flex h-10 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
+                    className="flex cursor-pointer h-10 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
                   >
                     {isBuyingNow
                       ? "Processing..."

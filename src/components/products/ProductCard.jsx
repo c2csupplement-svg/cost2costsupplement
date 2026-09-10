@@ -234,7 +234,7 @@ export default function ProductCard({ product }) {
       : "0";
 
   const productHref = productSlug
-    ? `/product/${encodeURIComponent(
+    ? `/products/${encodeURIComponent(
         productSlug
       )}`
     : "/products";
@@ -543,6 +543,7 @@ export default function ProductCard({ product }) {
   <Link
     href={productHref}
     className="
+    cursor-pointer
       shrink-0
       rounded-lg
       border
