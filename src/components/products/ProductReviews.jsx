@@ -364,8 +364,9 @@ Customer Reviews ({totalReviews}) </SectionHeading>
         key={review.id}
         className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white p-5 transition hover:border-[#D4D4D4] hover:shadow-sm sm:p-6"
       >
-        {/* Header: avatar + name/date */}
-        <div className="flex items-center gap-3">
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-black uppercase text-white">
             {review.name?.charAt(0) || "?"}
           </div>
@@ -380,8 +381,7 @@ Customer Reviews ({totalReviews}) </SectionHeading>
           </div>
         </div>
 
-        {/* Rating */}
-        <div className="mt-3 flex items-center gap-1">
+        <div className="flex items-center gap-1">
           {Array.from({ length: 5 }).map((_, index) => (
             <Star
               key={index}
@@ -393,22 +393,21 @@ Customer Reviews ({totalReviews}) </SectionHeading>
             />
           ))}
         </div>
+        </div>
 
-        {/* Title */}
+
         {review.title && (
           <h3 className="mt-3 text-sm font-bold leading-snug text-[#111111]">
             {review.title}
           </h3>
         )}
 
-        {/* Body */}
         {review.review && (
           <p className="mt-2 flex-1 text-sm leading-6 text-[#525252]">
             {review.review}
           </p>
         )}
 
-        {/* Images */}
         {review.images.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             {review.images.map((image, index) => {
