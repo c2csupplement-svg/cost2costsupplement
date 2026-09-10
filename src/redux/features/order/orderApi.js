@@ -39,21 +39,26 @@ const handleApiError = (err, operation) => {
   }
 };
 
-const getOrderApi = async () => {
-    try{
-        const response = await axios.get(
-            `${API_BASE_URL}/orders`,
-           getAuthConfig()
+const getOrderApi = async ({ page = 1, limit = 10 } = {}) => {
+  try {
+
+    const response = await axios.get(
+      `${API_BASE_URL}/orders`,
+      {
+        ...getAuthConfig(),
+        params: {
+          page,
+          limit,
+        },
+      }
     );
 
+    return response;
+  } catch (err) {
+    handleApiError(err, "Get Order");
+  }
+};
 
-
-      return response;  
-    }
-    catch(err){
-        handleApiError(err, "Get Order");
-    }
-}
 
 const orderCancelApi = async (id) => {
     try{

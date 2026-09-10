@@ -4,6 +4,7 @@ import {
   ShoppingBag,
   Package,
   ChevronRight,
+  ChevronLeft,
   ArrowLeft,
   MapPin,
   CreditCard,
@@ -12,6 +13,7 @@ import {
   XCircle,
   RefreshCw,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -19,6 +21,8 @@ import {
   getOrder,
   orderCancel,
 } from "@/redux/features/order/orderActon";
+
+const ORDERS_PER_PAGE = 10;
 
 const formatCurrency = (value) => {
   const amount = Number(value || 0);
@@ -79,6 +83,7 @@ const formatStatus = (status) => {
 };
 
 const getStatusClass = (status) => {
+
   const normalized = String(status || "").toLowerCase();
 
   if (
@@ -105,24 +110,32 @@ const getStatusClass = (status) => {
     return "border-blue-500/20 bg-blue-500/10 text-blue-600";
   }
 
+  if (normalized.includes("confirm")) {
+    return "border-indigo-500/20 bg-indigo-500/10 text-indigo-600";
+  }
+
   return "border-orange-500/20 bg-orange-500/10 text-orange-600";
 };
 
 const getItemImage = (item) => {
-  return (item?.product?.featuredimg || item?.product?.varitant?.image);
+  return (
+    item?.product?.featuredimg ||
+    item?.product?.varitant?.image
+  );
 };
 
 const getItemName = (item) => {
-  return (item?.productName)
+  return item?.productName;
 };
 
 const getItemQuantity = (item) => {
-  return Number(item?.quantity);
+  return Number(item?.quantity || 0);
 };
 
 const getItemPrice = (item) => {
-  return Number(item?.priceAtPurchase);
+  return Number(item?.priceAtPurchase || 0);
 };
+
 
 const stageOrder = [
   "pending",
@@ -167,16 +180,16 @@ function OrderProgress({ status }) {
   return (
     <div className="rounded-xl border border-[#e8e8e8] bg-white px-3 py-5 sm:px-6 sm:py-6">
       <div className="relative">
-
         <div className="absolute left-[8.33%] right-[8.33%] top-[8px] h-[3px] rounded-full bg-[#e5e5e5]" />
-
         <div
           className="absolute left-[8.33%] top-[8px] h-[3px] rounded-full bg-[#E52323] transition-all duration-500"
           style={{
             width:
               currentIndex === 0
                 ? "0%"
-                : `calc(${(currentIndex / (stageOrder.length - 1)) * 83.34}% - 0px)`,
+                : `calc(${(currentIndex / (stageOrder.length - 1)) *
+                83.34
+                }% - 0px)`,
           }}
         />
 
@@ -192,8 +205,8 @@ function OrderProgress({ status }) {
               >
                 <div
                   className={`relative z-10 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[2px] transition-all duration-300 ${isCompleted || isCurrent
-                      ? "border-[#E52323] bg-[#E52323]"
-                      : "border-[#777] bg-white"
+                    ? "border-[#E52323] bg-[#E52323]"
+                    : "border-[#777] bg-white"
                     }`}
                 >
                   {isCompleted && (
@@ -203,10 +216,10 @@ function OrderProgress({ status }) {
 
                 <span
                   className={`mt-3 px-1 text-center text-[9px] font-semibold leading-tight sm:text-[10px] md:text-[11px] ${isCurrent
-                      ? "text-[#E52323]"
-                      : isCompleted
-                        ? "text-[#333]"
-                        : "text-[#777]"
+                    ? "text-[#E52323]"
+                    : isCompleted
+                      ? "text-[#333]"
+                      : "text-[#777]"
                     }`}
                 >
                   {stageLabels[stage]}
@@ -257,6 +270,7 @@ function OrdersSkeleton() {
   );
 }
 
+
 function EmptyOrders({ onBack }) {
   return (
     <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center sm:px-8">
@@ -284,18 +298,10 @@ function EmptyOrders({ onBack }) {
   );
 }
 
-function OrderItem({
-  order,
-  expanded,
-  onToggle,
-  onCancel,
-  cancelling,
-}) {
-  const items = Array.isArray(order?.items)
-    ? order.items
-    : [];
-
-  const canCancel = order?.displayStage !== "pending";
+function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const canCancel = order?.displayStage !== "pending" && order?.displayStage !== "cancelled";
+  const contentId = `order-${order?.id}-details`;
 
   const shippingAddress =
     order?.address || {
@@ -312,111 +318,72 @@ function OrderItem({
     };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl">
+      {/* Order Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full p-4 text-left sm:p-5"
+        aria-expanded={expanded}
+        aria-controls={contentId}
+        className="w-full p-3 text-left active:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-5"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface">
-              <Package className="h-5 w-5 text-primary" />
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface sm:h-11 sm:w-11 sm:rounded-xl">
+              <Package className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
             </div>
 
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="truncate text-sm font-bold text-text-primary sm:text-base">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 className="truncate text-xs font-bold text-text-primary sm:text-base">
                   {order?.orderNumber || `Order #${order?.id}`}
                 </h3>
 
                 <span
-                  className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${getStatusClass(
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:text-xs ${getStatusClass(
                     order?.displayStage
                   )}`}
                 >
-                  {formatStatus(
-                    order?.displayStage
-                  )}
+                  {formatStatus(order?.displayStage)}
                 </span>
               </div>
 
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-text-secondary sm:mt-1.5 sm:gap-x-3 sm:text-xs">
                 <span className="inline-flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5" />
+                  <CalendarDays className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   {formatDate(order?.createdAt)}
                 </span>
-
+                <span className="hidden sm:inline">·</span>
                 <span>
-                  {items.length}{" "}
-                  {items.length === 1 ? "item" : "items"}
+                  {items.length} {items.length === 1 ? "item" : "items"}
+                </span>
+                <span className="hidden sm:inline">·</span>
+                <span className="w-full font-semibold text-text-primary sm:w-auto">
+                  {formatCurrency(order?.totalAmount)}
                 </span>
               </div>
             </div>
           </div>
 
           <ChevronRight
-            className={`mt-1 h-5 w-5 shrink-0 text-text-secondary transition-transform ${expanded ? "rotate-90" : ""
+            className={`mt-1 h-4 w-4 shrink-0 text-text-secondary transition-transform duration-200 sm:h-5 sm:w-5 ${expanded ? "rotate-90" : ""
               }`}
           />
         </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl bg-surface p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-              Total
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-text-primary">
-              {formatCurrency(order?.totalAmount)}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-surface p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-              Payment
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-text-primary">
-              {formatStatus(order?.paymentMethod)}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-surface p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-              Payment Status
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-text-primary">
-              {formatStatus(order?.paymentStatus)}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-surface p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-              Shipping
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-text-primary">
-              {formatCurrency(order?.shippingCost)}
-            </p>
-          </div>
-        </div>
       </button>
 
-      {expanded && (
-        <div className="border-t border-border p-4 sm:p-5">
-          <div className="space-y-6">
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+      >
+        <div className="overflow-hidden">
+          <div id={contentId} className="space-y-5 border-t border-border p-3 sm:space-y-6 sm:p-5">
             <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Package className="h-4 w-4 text-primary" />
+              <h4 className="mb-2.5 text-xs font-bold text-text-primary sm:mb-3 sm:text-sm">
+                Items in this order
+              </h4>
 
-                <h4 className="text-sm font-bold text-text-primary">
-                  Order Items
-                </h4>
-              </div>
-
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 {items.length > 0 ? (
                   items.map((item, index) => {
                     const quantity = getItemQuantity(item);
@@ -425,88 +392,56 @@ function OrderItem({
 
                     return (
                       <div
-                        key={
-                          item?.id ||
-                          item?.productId ||
-                          `${order?.id}-${index}`
-                        }
-                        className="flex gap-3 rounded-xl border border-border p-3 sm:p-4"
+                        key={item?.id || item?.productId || `${order?.id}-${index}`}
+                        className="flex gap-2.5 rounded-lg bg-surface p-2.5 sm:gap-3 sm:rounded-xl sm:p-4"
                       >
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface sm:h-20 sm:w-20">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-card sm:h-20 sm:w-20">
                           <img
                             src={image}
                             alt={getItemName(item)}
-                            className="h-full w-full object-contain p-1.5"
+                            className="h-full w-full object-contain p-1 sm:p-1.5"
                             onError={(event) => {
-                              if (
-                                !event.currentTarget.src.includes(
-                                  "/placeholder-product.svg"
-                                )
-                              ) {
-                                event.currentTarget.src =
-                                  "/placeholder-product.svg";
+                              if (!event.currentTarget.src.includes("/placeholder-product.svg")) {
+                                event.currentTarget.src = "/placeholder-product.svg";
                               }
                             }}
                           />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <h5 className="line-clamp-2 text-sm font-semibold text-text-primary">
+                          <h5 className="line-clamp-2 text-xs font-semibold leading-snug text-text-primary sm:text-sm">
                             {getItemName(item)}
                           </h5>
 
                           {item?.variantName && (
-                            <p className="mt-1 text-xs text-text-secondary">
+                            <p className="mt-0.5 text-[11px] text-text-secondary sm:text-xs">
                               {item.variantName}
                             </p>
                           )}
 
-                          {(item?.variant?.flavour ||
-                            item?.variant?.flavor ||
-                            item?.variant?.size) && (
-                              <div className="mt-1 flex flex-wrap gap-2 text-xs text-text-secondary">
-                                {(item?.variant?.flavour ||
-                                  item?.variant?.flavor) && (
-                                    <span>
-                                      {item?.variant?.flavour ||
-                                        item?.variant?.flavor}
-                                    </span>
-                                  )}
+                          {(item?.variant?.flavour || item?.variant?.flavor || item?.variant?.size) && (
+                            <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-text-secondary sm:gap-x-3 sm:text-xs">
+                              {(item?.variant?.flavour || item?.variant?.flavor) && (
+                                <span>{item?.variant?.flavour || item?.variant?.flavor}</span>
+                              )}
+                              {item?.variant?.size && <span>{item.variant.size}</span>}
+                            </div>
+                          )}
 
-                                {item?.variant?.size && (
-                                  <span>
-                                    {item.variant.size}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                            <span className="text-text-secondary">
-                              Qty:{" "}
-                              <span className="font-semibold text-text-primary">
-                                {quantity}
-                              </span>
+                          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 sm:mt-2">
+                            <span className="text-[11px] text-text-secondary sm:text-xs">
+                              {formatCurrency(price)} × {quantity}
                             </span>
-
-                            <span className="font-semibold text-text-primary">
-                              {formatCurrency(price)}
+                            <span className="text-xs font-bold text-text-primary sm:text-sm">
+                              {formatCurrency(price * quantity)}
                             </span>
                           </div>
-                        </div>
-
-                        <div className="shrink-0 text-right">
-                          <p className="text-sm font-bold text-text-primary">
-                            {formatCurrency(
-                              price * quantity
-                            )}
-                          </p>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-text-secondary">
+                  <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-text-secondary sm:p-5 sm:text-sm">
                     No items found for this order.
                   </div>
                 )}
@@ -515,48 +450,28 @@ function OrderItem({
 
             <OrderProgress status={order?.displayStage} />
 
-            <section className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-xl border border-border p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-
-                  <h4 className="text-sm font-bold text-text-primary">
-                    Delivery Address
-                  </h4>
+            {/* Address + Payment stack on mobile, side by side from md up */}
+            <section className="grid gap-4 md:grid-cols-2">
+              <div>
+                <div className="mb-2.5 flex items-center gap-2 sm:mb-3">
+                  <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">Delivery address</h4>
                 </div>
 
-                <div className="space-y-1 text-sm text-text-secondary">
+                <div className="space-y-1 text-xs text-text-secondary sm:text-sm">
                   <p className="font-semibold text-text-primary">
                     {shippingAddress?.fullName || "N/A"}
                   </p>
-
-                  <p>
-                    {shippingAddress?.addressLine1 ||
-                      "N/A"}
-                  </p>
-
+                  <p className="break-words">{shippingAddress?.addressLine1 || "N/A"}</p>
                   {shippingAddress?.addressLine2 && (
-                    <p>
-                      {shippingAddress.addressLine2}
-                    </p>
+                    <p className="break-words">{shippingAddress.addressLine2}</p>
                   )}
-
-                  {shippingAddress?.landmark && (
-                    <p>
-                      {shippingAddress.landmark}
-                    </p>
-                  )}
-
+                  {shippingAddress?.landmark && <p className="break-words">{shippingAddress.landmark}</p>}
                   <p>
-                    {shippingAddress?.city || "N/A"},{" "}
-                    {shippingAddress?.state || "N/A"}{" "}
-                    - {shippingAddress?.pincode || "N/A"}
+                    {shippingAddress?.city || "N/A"}, {shippingAddress?.state || "N/A"} -{" "}
+                    {shippingAddress?.pincode || "N/A"}
                   </p>
-
-                  <p>
-                    {shippingAddress?.country || "India"}
-                  </p>
-
+                  <p>{shippingAddress?.country || "India"}</p>
                   {shippingAddress?.mobile && (
                     <p className="pt-1 font-medium text-text-primary">
                       Mobile: {shippingAddress.mobile}
@@ -565,47 +480,29 @@ function OrderItem({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" />
-
-                  <h4 className="text-sm font-bold text-text-primary">
-                    Payment Details
-                  </h4>
+              <div>
+                <div className="mb-2.5 flex items-center gap-2 sm:mb-3">
+                  <CreditCard className="h-4 w-4 shrink-0 text-primary" />
+                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">Payment</h4>
                 </div>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-xs sm:text-sm">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-text-secondary">
-                      Method
-                    </span>
-
+                    <span className="text-text-secondary">Status</span>
                     <span className="font-semibold text-text-primary">
-                      {formatStatus(
-                        order?.paymentMethod
-                      )}
+                      {formatStatus(order?.paymentStatus)}
                     </span>
                   </div>
-
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-text-secondary">
-                      Status
-                    </span>
-
+                    <span className="text-text-secondary">Shipment</span>
                     <span className="font-semibold text-text-primary">
-                      {formatStatus(
-                        order?.paymentStatus
-                      )}
+                      {formatStatus(order?.shipmentStatus || "not_shipped")}
                     </span>
                   </div>
-
                   {order?.razorpayPaymentId && (
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="text-text-secondary">
-                        Payment ID
-                      </span>
-
-                      <span className="max-w-[220px] break-all text-right text-xs font-medium text-text-primary">
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                      <span className="text-text-secondary">Payment ID</span>
+                      <span className="break-all text-[11px] font-medium text-text-primary sm:max-w-[220px] sm:text-right sm:text-xs">
                         {order.razorpayPaymentId}
                       </span>
                     </div>
@@ -614,63 +511,21 @@ function OrderItem({
               </div>
             </section>
 
-            <section className="rounded-xl border border-border p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Truck className="h-4 w-4 text-primary" />
-
-                <h4 className="text-sm font-bold text-text-primary">
-                  Shipment Details
-                </h4>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-                <div>
-                  <p className="text-xs text-text-secondary">
-                    Shipment Status
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-text-primary">
-                    {formatStatus(
-                      order?.shipmentStatus ||
-                      "not_shipped"
-                    )}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-text-secondary">
-                    Order Date
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-text-primary">
-                    {formatDateTime(order?.createdAt)}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-xl border border-border p-4">
-              <h4 className="mb-4 text-sm font-bold text-text-primary">
-                Order Summary
+            <section className="rounded-lg bg-surface p-3 sm:rounded-xl sm:p-4">
+              <h4 className="mb-2.5 text-xs font-bold text-text-primary sm:mb-3 sm:text-sm">
+                Order summary
               </h4>
 
-              <div className="space-y-2.5 text-sm">
+              <div className="space-y-1.5 text-xs sm:space-y-2 sm:text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-text-secondary">
-                    Subtotal
-                  </span>
-
+                  <span className="text-text-secondary">Subtotal</span>
                   <span className="font-medium text-text-primary">
                     {formatCurrency(order?.subtotal)}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-text-secondary">
-                    Shipping
-                  </span>
-
+                  <span className="text-text-secondary">Shipping</span>
                   <span className="font-medium text-text-primary">
                     {formatCurrency(order?.shippingCost)}
                   </span>
@@ -679,71 +534,47 @@ function OrderItem({
                 {Number(order?.discountAmount || 0) > 0 && (
                   <div className="flex justify-between gap-4">
                     <span className="text-text-secondary">
-                      Discount
-                      {order?.couponCode
-                        ? ` (${order.couponCode})`
-                        : ""}
+                      Discount{order?.couponCode ? ` (${order.couponCode})` : ""}
                     </span>
-
                     <span className="font-medium text-green-600">
-                      -{" "}
-                      {formatCurrency(
-                        order?.discountAmount
-                      )}
+                      -{formatCurrency(order?.discountAmount)}
                     </span>
                   </div>
                 )}
 
-                <div className="border-t border-border pt-3">
-                  <div className="flex justify-between gap-4">
-                    <span className="font-bold text-text-primary">
-                      Total
-                    </span>
-
-                    <span className="text-base font-black text-text-primary">
-                      {formatCurrency(
-                        order?.totalAmount
-                      )}
-                    </span>
-                  </div>
+                <div className="flex justify-between gap-4 border-t border-border pt-2">
+                  <span className="font-bold text-text-primary">Total</span>
+                  <span className="text-sm font-black text-text-primary sm:text-base">
+                    {formatCurrency(order?.totalAmount)}
+                  </span>
                 </div>
 
-                {order?.paymentStatus !== "pending" && <div>
-                  {Number(order?.advanceAmount || 0) > 0 && (
-                    <div className="flex justify-between gap-4">
-                      <span className="text-text-secondary">
-                        Advance Paid
-                      </span>
-
-                      <span className="font-medium text-text-primary">
-                        {formatCurrency(
-                          order?.advanceAmount
-                        )}
-                      </span>
-                    </div>
-                  )}
-
-                  {Number(order?.remainingAmount || 0) > 0 && (
-                    <div className="flex justify-between gap-4">
-                      <span className="text-text-secondary">
-                        Remaining
-                      </span>
-
-                      <span className="font-bold text-primary">
-                        {formatCurrency(
-                          order?.remainingAmount
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>}
+                {order?.paymentStatus !== "pending" && (
+                  <>
+                    {Number(order?.advanceAmount || 0) > 0 && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-text-secondary">Advance paid</span>
+                        <span className="font-medium text-text-primary">
+                          {formatCurrency(order?.advanceAmount)}
+                        </span>
+                      </div>
+                    )}
+                    {Number(order?.remainingAmount || 0) > 0 && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-text-secondary">Remaining</span>
+                        <span className="font-bold text-primary">
+                          {formatCurrency(order?.remainingAmount)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </section>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs text-text-secondary">
-                Last updated:{" "}
-                {formatDateTime(order?.updatedAt)}
+              <div className="text-[11px] text-text-secondary sm:text-xs">
+                Last updated: {formatDateTime(order?.updatedAt)}
               </div>
 
               {canCancel && (
@@ -754,7 +585,7 @@ function OrderItem({
                     onCancel(order);
                   }}
                   disabled={cancelling}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 text-sm font-semibold text-red-600 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 text-sm font-semibold text-red-600 transition active:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-auto sm:hover:bg-red-500/10"
                 >
                   {cancelling ? (
                     <>
@@ -764,13 +595,151 @@ function OrderItem({
                   ) : (
                     <>
                       <XCircle className="h-4 w-4" />
-                      Cancel Order
+                      Cancel order
                     </>
                   )}
                 </button>
               )}
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderPagination({
+  page,
+  totalPages,
+  total,
+  count,
+  loading,
+  onPageChange,
+}) {
+  if (!totalPages || totalPages <= 1) {
+    return null;
+  }
+
+  const currentPage = Number(page || 1);
+  const pages = [];
+
+
+  if (totalPages <= 5) {
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+
+    if (currentPage > 3) {
+      pages.push("...");
+    }
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(
+      totalPages - 1,
+      currentPage + 1
+    );
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      pages.push("...");
+    }
+
+    pages.push(totalPages);
+  }
+
+  const hasPrevious = currentPage > 1;
+  const hasNext = currentPage < totalPages;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-card p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-center text-xs text-text-secondary sm:text-left sm:text-sm">
+          Showing{" "}
+          <span className="font-semibold text-text-primary">
+            {count}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold text-text-primary">
+            {total}
+          </span>{" "}
+          orders
+        </div>
+
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            type="button"
+            disabled={!hasPrevious || loading}
+            onClick={() =>
+              onPageChange(currentPage - 1)
+            }
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-2.5 text-sm font-semibold text-text-primary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
+          >
+            <ChevronLeft className="h-4 w-4" />
+
+            <span className="ml-1 hidden sm:inline">
+              Previous
+            </span>
+          </button>
+
+          <div className="flex items-center gap-1">
+            {pages.map((item, index) => {
+              if (item === "...") {
+                return (
+                  <span
+                    key={`dots-${index}`}
+                    className="flex h-9 w-7 items-center justify-center text-sm text-text-secondary"
+                  >
+                    ...
+                  </span>
+                );
+              }
+
+              const isActive =
+                item === currentPage;
+
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onPageChange(item)}
+                  className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-semibold transition ${isActive
+                    ? "bg-primary text-white"
+                    : "border border-border bg-card text-text-primary hover:bg-surface"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  {item}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            disabled={!hasNext || loading}
+            onClick={() =>
+              onPageChange(currentPage + 1)
+            }
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-2.5 text-sm font-semibold text-text-primary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
+          >
+            <span className="mr-1 hidden sm:inline">
+              Next
+            </span>
+
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-text-secondary">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          Loading orders...
         </div>
       )}
     </div>
@@ -786,52 +755,90 @@ export default function OrdersSection({ onBack }) {
     error = null,
   } = useSelector((state) => state.order || {});
 
+
   const [expandedOrder, setExpandedOrder] =
     useState(null);
 
   const [cancellingOrderId, setCancellingOrderId] =
     useState(null);
 
-  const orders = Array.isArray(reduxOrders)
-    ? reduxOrders
-    : Array.isArray(reduxOrders?.orders)
-      ? reduxOrders.orders
-      : [];
+  const [currentPage, setCurrentPage] = useState(1);
+
+
+  const orders = Array.isArray(reduxOrders?.orders)
+    ? reduxOrders.orders
+    : [];
+
+  const apiPage = currentPage;
+
+  const totalOrders = Number(
+    reduxOrders?.total || 0
+  );
+
+  const totalPages = Number(
+    reduxOrders?.totalPages || 1
+  );
+
+  const orderCount = Number(
+    reduxOrders?.count ?? orders.length
+  );
+
 
   useEffect(() => {
-    dispatch(getOrder());
-  }, [dispatch]);
+    dispatch(
+      getOrder({
+        page: currentPage,
+        limit: ORDERS_PER_PAGE,
+      })
+    );
+  }, [dispatch, currentPage]);
+
+
+  const handlePageChange = (page) => {
+    const nextPage = Number(page);
+
+    if (
+      nextPage < 1 ||
+      nextPage > totalPages ||
+      nextPage === currentPage
+    ) {
+      return;
+    }
+
+    setExpandedOrder(null);
+    setCurrentPage(nextPage);
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
 
   const handleCancelOrder = async (order) => {
     if (!order?.id) {
       return;
     }
 
-    // const confirmed = window.confirm(
-    //   "Are you sure you want to cancel this order?"
-    // );
-
-    // if (!confirmed) {
-    //   return;
-    // }
+    const pageBeforeCancel = currentPage;
 
     try {
       setCancellingOrderId(order.id);
 
+      await dispatch(orderCancel(order.id)).unwrap();
+
       await dispatch(
-        orderCancel({
-          orderId: order.id,
+        getOrder({
+          page: pageBeforeCancel,
+          limit: ORDERS_PER_PAGE,
+          refresh: true,
         })
       ).unwrap?.();
 
-      await dispatch(getOrder());
-
       setExpandedOrder(null);
     } catch (error) {
-      console.error(
-        "Cancel order error:",
-        error
-      );
+      console.error("Cancel order error:", error);
     } finally {
       setCancellingOrderId(null);
     }
@@ -840,6 +847,17 @@ export default function OrdersSection({ onBack }) {
   const handleToggleOrder = (orderId) => {
     setExpandedOrder((current) =>
       current === orderId ? null : orderId
+    );
+  };
+
+
+  const handleRetry = () => {
+    dispatch(
+      getOrder({
+        page: currentPage,
+        limit: ORDERS_PER_PAGE,
+        refresh: true,
+      })
     );
   };
 
@@ -889,7 +907,7 @@ export default function OrdersSection({ onBack }) {
 
             <button
               type="button"
-              onClick={() => dispatch(getOrder())}
+              onClick={handleRetry}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover"
             >
               <RefreshCw className="h-4 w-4" />
@@ -901,29 +919,44 @@ export default function OrdersSection({ onBack }) {
 
       {!loading &&
         !error &&
-        orders.length === 0 && (
+        orders.length === 0 &&
+        totalOrders === 0 && (
           <EmptyOrders onBack={onBack} />
         )}
 
       {orders.length > 0 && (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <OrderItem
-              key={order?.id || order?.orderNumber}
-              order={order}
-              expanded={
-                expandedOrder === order?.id
-              }
-              onToggle={() =>
-                handleToggleOrder(order?.id)
-              }
-              onCancel={handleCancelOrder}
-              cancelling={
-                cancellingOrderId === order?.id
-              }
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <OrderItem
+                key={
+                  order?.id ||
+                  order?.orderNumber
+                }
+                order={order}
+                expanded={
+                  expandedOrder === order?.id
+                }
+                onToggle={() =>
+                  handleToggleOrder(order?.id)
+                }
+                onCancel={handleCancelOrder}
+                cancelling={
+                  cancellingOrderId === order?.id
+                }
+              />
+            ))}
+          </div>
+
+          <OrderPagination
+            page={currentPage}
+            totalPages={totalPages}
+            total={totalOrders}
+            count={orderCount}
+            loading={loading}
+            onPageChange={handlePageChange}
+          />
+        </>
       )}
 
       {loading && orders.length > 0 && (

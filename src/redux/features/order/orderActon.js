@@ -2,44 +2,56 @@ import { setLoading, setOrderList, setError } from "./orderSlice";
 import { getOrderApi, orderCancelApi } from "./orderApi"
 import { toast } from "sonner";
 
-let fetchOrdePromise = null;
+let fetchOrderPromises = {};
 
-export const getOrder = (refresh = false) => async (dispatch, getState) => {
-
+export const getOrder =({ page = 1, limit = 10, refresh = false } = {}) =>
+  async (dispatch, getState) => {
     const { orderLists, loading } = getState().order;
 
-    if (!refresh && loading) {
-        return orderLists;
+    const promiseKey = `${page}-${limit}`;
+
+    if (fetchOrderPromises[promiseKey] && !refresh) {
+      return fetchOrderPromises[promiseKey];
     }
 
-    if (!refresh && orderLists) {
-        return orderLists;
+    if (
+      !refresh &&
+      !loading &&
+      orderLists?.page === page &&
+      Array.isArray(orderLists?.orders)
+    ) {
+      return orderLists;
     }
 
-    if (fetchOrdePromise) {
-        return fetchOrdePromise;
-    }
+    fetchOrderPromises[promiseKey] = (async () => {
+      try {
+        dispatch(setLoading(true));
+        dispatch(setError(null));
 
-    fetchOrdePromise = (async () => {
-        try {
-            dispatch(setLoading(true));
+        const response = await getOrderApi({
+          page,
+          limit,
+        });
 
-            const response = await getOrderApi();
+        const data = response?.data;
 
-            dispatch(setOrderList(response.data));
+        dispatch(setOrderList(data));
 
-            return response.data;
-        } catch (err) {
-            dispatch(setError(err.message));
-            throw err;
-        } finally {
-            dispatch(setLoading(false));
-            fetchOrdePromise = null;
-        }
+        return data;
+      } catch (err) {
+        dispatch(
+          setError(err?.message || "Failed to fetch orders")
+        );
+
+        throw err;
+      } finally {
+        dispatch(setLoading(false));
+        delete fetchOrderPromises[promiseKey];
+      }
     })();
 
-    return fetchOrdePromise;
-};
+    return fetchOrderPromises[promiseKey];
+  };
 
 export const orderCancel = (id) => async (dispatch) => {
     try {

@@ -1502,7 +1502,23 @@ export default function ShopPage() {
   const router = useRouter();
 
   const handleRemoveFilter = () => {
+    setSelectedBrand({
+      id: null,
+      name: "All Brands",
+    });
+
+    setSortBy("");
+
+    setCurrentPage(1);
+    setSelectedCategory({
+      id: null,
+      name: "All Products",
+    });
     router.replace("/products");
+  };
+
+  const handleFilterChange = () => {
+    router.replace("/products", { scroll: false });
   };
 
   return (
@@ -1553,10 +1569,9 @@ export default function ShopPage() {
           <div className="flex min-w-max items-center gap-2 py-4">
             {categories.map(
               (category) => {
-                const active =
-                  String(
-                    selectedCategory.id
-                  ) ===
+                const active = String(
+                  selectedCategory.id
+                ) ===
                   String(
                     category.id
                   ) &&
@@ -1574,7 +1589,7 @@ export default function ShopPage() {
                       setSelectedCategory(
                         category
                       );
-
+                      handleFilterChange();
                       setSortBy("");
 
                       setSortedProducts(
@@ -1586,8 +1601,8 @@ export default function ShopPage() {
                       );
                     }}
                     className={`rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition-all ${active
-                        ? "border-[#E52323] bg-[#E52323] text-white"
-                        : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
+                      ? "border-[#E52323] bg-[#E52323] text-white"
+                      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
                       }`}
                   >
                     {
@@ -1643,7 +1658,7 @@ export default function ShopPage() {
                               name: "All Products",
                             }
                           );
-
+                          handleFilterChange()
                           setCurrentPage(
                             1
                           );
@@ -1796,6 +1811,7 @@ export default function ShopPage() {
                 setCurrentPage
               }
               setSortBy={setSortBy}
+              handleFilterChange={handleFilterChange}
             />
           </aside>
 
@@ -1956,9 +1972,9 @@ export default function ShopPage() {
                                 : undefined
                             }
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
-                                page
-                                ? "border-[#E52323] bg-[#E52323] text-white"
-                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                              page
+                              ? "border-[#E52323] bg-[#E52323] text-white"
+                              : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                               } disabled:pointer-events-none disabled:opacity-40`}
                           >
                             {page}
@@ -2073,9 +2089,9 @@ export default function ShopPage() {
                                   : undefined
                               }
                               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
-                                  page
-                                  ? "border-[#E52323] bg-[#E52323] text-white"
-                                  : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                                page
+                                ? "border-[#E52323] bg-[#E52323] text-white"
+                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                                 } disabled:pointer-events-none disabled:opacity-40`}
                             >
                               {page}
@@ -2181,6 +2197,7 @@ export default function ShopPage() {
                 setCurrentPage
               }
               setSortBy={setSortBy}
+              handleFilterChange={handleFilterChange}
             />
           </div>
         </div>
@@ -2198,6 +2215,7 @@ function FilterSidebar({
   setSelectedCategory,
   setCurrentPage,
   setSortBy,
+  handleFilterChange,
 }) {
 
   const router = useRouter();
@@ -2251,10 +2269,11 @@ function FilterSidebar({
                     setCurrentPage(
                       1
                     );
+                    handleFilterChange()
                   }}
                   className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${active
-                      ? "bg-[#E52323]/10 text-[#E52323]"
-                      : "text-[#525252] hover:bg-[#F5F5F5] hover:text-[#E52323]"
+                    ? "bg-[#E52323]/10 text-[#E52323]"
+                    : "text-[#525252] hover:bg-[#F5F5F5] hover:text-[#E52323]"
                     }`}
                 >
                   <span>
@@ -2303,6 +2322,8 @@ function FilterSidebar({
                       brand
                     );
 
+                    handleFilterChange();
+
                     setSortBy("");
 
                     setCurrentPage(
@@ -2314,8 +2335,8 @@ function FilterSidebar({
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active
-                          ? "border-[#E52323] bg-[#E52323]"
-                          : "border-[#A3A3A3]"
+                        ? "border-[#E52323] bg-[#E52323]"
+                        : "border-[#A3A3A3]"
                         }`}
                     >
                       {active && (
