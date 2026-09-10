@@ -228,7 +228,7 @@ export default function AccountPage() {
                       key={item.label}
                       type="button"
                       onClick={() => setActiveSection(item.label)}
-                      className={`oxanium flex min-w-max flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition lg:mb-1 lg:w-full lg:justify-start ${
+                      className={`oxanium cursor-pointer cursor-pointer flex min-w-max flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition lg:mb-1 lg:w-full lg:justify-start ${
                         active
                           ? "bg-[#e52323] text-white"
                           : "text-gray-600 hover:bg-gray-100 hover:text-black"
@@ -246,7 +246,7 @@ export default function AccountPage() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="oxanium flex min-w-max flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-gray-500 transition hover:bg-red-50 hover:text-[#e52323] lg:w-full lg:justify-start"
+                  className="oxanium cursor-pointer flex min-w-max flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-gray-500 transition hover:bg-red-50 hover:text-[#e52323] lg:w-full lg:justify-start"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>

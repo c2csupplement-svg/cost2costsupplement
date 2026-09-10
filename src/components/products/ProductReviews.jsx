@@ -60,8 +60,8 @@ const productReviewCount = Number(
 product?.reviewCount ?? product?.reviewsCount ?? 0
 );
 
-const totalReviews =
-productReviewCount + normalizedReviews.length;
+const totalReviews = normalizedReviews.length;
+
 
 const baseRating = Number(
 product?.rating ?? product?.averageRating ?? 0
@@ -301,14 +301,15 @@ return parsedDate.toLocaleDateString("en-IN", {
 
 };
 
-return ( <div className="mt-12 max-w-5xl sm:mt-16 lg:mt-20"> <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"> <SectionHeading>
+return ( 
+<div className="mt-12 max-w-5xl sm:mt-16 lg:mt-20"> <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"> <SectionHeading>
 Customer Reviews ({totalReviews}) </SectionHeading>
 
 
     <button
       type="button"
       onClick={() => setIsReviewFormOpen(true)}
-      className="inline-flex h-11 items-center justify-center rounded-lg bg-[#E52323] px-5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#ff2b2b] disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex cursor-pointer h-11 items-center justify-center rounded-lg bg-[#E52323] px-5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#ff2b2b] disabled:cursor-not-allowed disabled:opacity-50"
     >
       Write a Review
     </button>
@@ -357,80 +358,83 @@ Customer Reviews ({totalReviews}) </SectionHeading>
   </div>
 
   {normalizedReviews.length > 0 && (
-    <div className="mt-8 space-y-4">
-      {normalizedReviews.map((review) => (
-        <article
-          key={review.id}
-          className="rounded-2xl border border-[#E5E5E5] bg-white p-6 sm:p-7"
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={index}
-                    className={`h-4 w-4 ${
-                      index < review.rating
-                        ? "fill-[#F7B84B] text-[#F7B84B]"
-                        : "text-[#D4D4D4]"
-                    }`}
-                  />
-                ))}
-              </div>
+  <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {normalizedReviews.map((review) => (
+      <article
+        key={review.id}
+        className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white p-5 transition hover:border-[#D4D4D4] hover:shadow-sm sm:p-6"
+      >
 
-              {review.title && (
-                <h3 className="mt-3 text-base font-bold">
-                  {review.title}
-                </h3>
-              )}
-
-              {review.review && (
-                <p className="mt-3 text-sm leading-6 text-[#525252]">
-                  {review.review}
-                </p>
-              )}
-
-              {review.images.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {review.images.map((image, index) => {
-                    const imageUrl =
-                      typeof image === "string"
-                        ? image
-                        : image?.url ||
-                          image?.image ||
-                          image?.imageUrl;
-
-                    if (!imageUrl) {
-                      return null;
-                    }
-
-                    return (
-                      <img
-                        key={`${imageUrl}-${index}`}
-                        src={imageUrl}
-                        alt={`Review ${index + 1}`}
-                        className="h-20 w-20 rounded-xl border border-[#E5E5E5] object-cover"
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="shrink-0 text-sm sm:text-right">
-              <p className="font-semibold text-[#111111]">
-                {review.name}
-              </p>
-
-              <p className="mt-1 text-xs text-[#A3A3A3]">
-                {formatReviewDate(review.date)}
-              </p>
-            </div>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-black uppercase text-white">
+            {review.name?.charAt(0) || "?"}
           </div>
-        </article>
-      ))}
-    </div>
-  )}
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[#111111]">
+              {review.name}
+            </p>
+            <p className="text-xs text-[#A3A3A3]">
+              {formatReviewDate(review.date)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star
+              key={index}
+              className={`h-4 w-4 ${
+                index < review.rating
+                  ? "fill-[#F7B84B] text-[#F7B84B]"
+                  : "text-[#D4D4D4]"
+              }`}
+            />
+          ))}
+        </div>
+        </div>
+
+
+        {review.title && (
+          <h3 className="mt-3 text-sm font-bold leading-snug text-[#111111]">
+            {review.title}
+          </h3>
+        )}
+
+        {review.review && (
+          <p className="mt-2 flex-1 text-sm leading-6 text-[#525252]">
+            {review.review}
+          </p>
+        )}
+
+        {review.images.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {review.images.map((image, index) => {
+              const imageUrl =
+                typeof image === "string"
+                  ? image
+                  : image?.url || image?.image || image?.imageUrl;
+
+              if (!imageUrl) {
+                return null;
+              }
+
+              return (
+                <img
+                  key={`${imageUrl}-${index}`}
+                  src={imageUrl}
+                  alt={`Review ${index + 1}`}
+                  className="h-16 w-16 rounded-lg border border-[#E5E5E5] object-cover"
+                />
+              );
+            })}
+          </div>
+        )}
+      </article>
+    ))}
+  </div>
+)}
 
   {isReviewFormOpen && (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
@@ -682,8 +686,6 @@ Customer Reviews ({totalReviews}) </SectionHeading>
     </div>
   )}
 </div>
-
-
 );
 }
 

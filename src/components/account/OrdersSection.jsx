@@ -12,10 +12,13 @@ import {
   CalendarDays,
   XCircle,
   RefreshCw,
+  ShoppingCart,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import {
   getOrder,
@@ -83,7 +86,6 @@ const formatStatus = (status) => {
 };
 
 const getStatusClass = (status) => {
-
   const normalized = String(status || "").toLowerCase();
 
   if (
@@ -119,13 +121,21 @@ const getStatusClass = (status) => {
 
 const getItemImage = (item) => {
   return (
+    item?.image ||
     item?.product?.featuredimg ||
-    item?.product?.varitant?.image
+    item?.product?.image ||
+    item?.variant?.image ||
+    "/placeholder-product.svg"
   );
 };
 
 const getItemName = (item) => {
-  return item?.productName;
+  return (
+    item?.productName ||
+    item?.name ||
+    item?.product?.name ||
+    "Product"
+  );
 };
 
 const getItemQuantity = (item) => {
@@ -133,9 +143,75 @@ const getItemQuantity = (item) => {
 };
 
 const getItemPrice = (item) => {
-  return Number(item?.priceAtPurchase || 0);
+  return Number(
+    item?.priceAtPurchase ??
+    item?.price ??
+    item?.product?.price ??
+    0
+  );
 };
 
+const buildBuyNowItem = (item) => {
+  const product = item?.product || {};
+  const variant = item?.variant || null;
+
+  return {
+    productId:
+      item?.productId ??
+      product?.id ??
+      null,
+
+    variantId:
+      item?.variantId ??
+      variant?.id ??
+      null,
+
+    quantity:
+      Number(item?.quantity) || 1,
+
+    name:
+      item?.productName ||
+      item?.name ||
+      product?.name ||
+      "",
+
+    price: Number(
+      item?.priceAtPurchase ??
+      item?.price ??
+      product?.price ??
+      0
+    ),
+
+    image:
+      item?.image ||
+      product?.featuredimg ||
+      product?.image ||
+      variant?.image ||
+      "",
+
+    product: product || {},
+
+    variant: variant
+      ? {
+        id: variant?.id ?? null,
+        flavour: variant?.flavour ?? null,
+        size: variant?.size ?? "",
+        attributes: Array.isArray(variant?.attributes)
+          ? variant.attributes
+          : [],
+      }
+      : null,
+
+    couponCode:
+      item?.couponCode ?? "",
+
+    couponDiscount:
+      Number(item?.couponDiscount) || 0,
+
+    couponId:
+      item?.couponId ?? null,
+  };
+};
 
 const stageOrder = [
   "pending",
@@ -181,13 +257,15 @@ function OrderProgress({ status }) {
     <div className="rounded-xl border border-[#e8e8e8] bg-white px-3 py-5 sm:px-6 sm:py-6">
       <div className="relative">
         <div className="absolute left-[8.33%] right-[8.33%] top-[8px] h-[3px] rounded-full bg-[#e5e5e5]" />
+
         <div
           className="absolute left-[8.33%] top-[8px] h-[3px] rounded-full bg-[#E52323] transition-all duration-500"
           style={{
             width:
               currentIndex === 0
                 ? "0%"
-                : `calc(${(currentIndex / (stageOrder.length - 1)) *
+                : `calc(${(currentIndex /
+                  (stageOrder.length - 1)) *
                 83.34
                 }% - 0px)`,
           }}
@@ -205,8 +283,8 @@ function OrderProgress({ status }) {
               >
                 <div
                   className={`relative z-10 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[2px] transition-all duration-300 ${isCompleted || isCurrent
-                    ? "border-[#E52323] bg-[#E52323]"
-                    : "border-[#777] bg-white"
+                      ? "border-[#E52323] bg-[#E52323]"
+                      : "border-[#777] bg-white"
                     }`}
                 >
                   {isCompleted && (
@@ -216,10 +294,10 @@ function OrderProgress({ status }) {
 
                 <span
                   className={`mt-3 px-1 text-center text-[9px] font-semibold leading-tight sm:text-[10px] md:text-[11px] ${isCurrent
-                    ? "text-[#E52323]"
-                    : isCompleted
-                      ? "text-[#333]"
-                      : "text-[#777]"
+                      ? "text-[#E52323]"
+                      : isCompleted
+                        ? "text-[#333]"
+                        : "text-[#777]"
                     }`}
                 >
                   {stageLabels[stage]}
@@ -270,7 +348,6 @@ function OrdersSkeleton() {
   );
 }
 
-
 function EmptyOrders({ onBack }) {
   return (
     <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center sm:px-8">
@@ -298,10 +375,36 @@ function EmptyOrders({ onBack }) {
   );
 }
 
-function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
-  const items = Array.isArray(order?.items) ? order.items : [];
-  const canCancel = order?.displayStage !== "pending" && order?.displayStage !== "cancelled";
+function OrderItem({ order, expanded, onToggle, onCancel, cancelling, }) {
+  const router = useRouter();
+  const [showAllItems, setShowAllItems] = useState(false);
+
+  const items = Array.isArray(order?.items)
+    ? order.items
+    : [];
+
+  const MOBILE_VISIBLE_COUNT = 2;
+  const visibleItems = showAllItems
+    ? items
+    : items.slice(0, MOBILE_VISIBLE_COUNT);
+  const hiddenCount = items.length - visibleItems.length;
+
+  const canCancel =
+    order?.displayStage !== "pending" &&
+    order?.displayStage !== "cancelled";
+
   const contentId = `order-${order?.id}-details`;
+
+  const headerItem = items[0] || null;
+
+  const headerImage =
+    getItemImage(headerItem) ||
+    "/placeholder-product.svg";
+
+  const headerName =
+    getItemName(headerItem) || "Product";
+
+  const canBuyNowOrder = items.length > 0;
 
   const shippingAddress =
     order?.address || {
@@ -317,9 +420,93 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
       addressType: order?.shippingAddressType,
     };
 
+  const goToBuyNowCheckout = (item) => {
+    if (!item) {
+      console.error("No buy now item found");
+      return;
+    }
+
+    const buyNowItem = buildBuyNowItem(item);
+
+    if (!buyNowItem.productId) {
+      console.error(
+        "Buy Now failed: productId is missing",
+        item
+      );
+      return;
+    }
+
+    const buyNowData = {
+      items: [buyNowItem],
+      source: "reorder",
+      orderId: order?.id ?? null,
+      createdAt: Date.now(),
+    };
+
+    try {
+      const serializedData = JSON.stringify(buyNowData);
+      sessionStorage.setItem("buyNowCheckout", serializedData);
+
+      const storedData = sessionStorage.getItem("buyNowCheckout");
+
+      if (!storedData) {
+        console.error(
+          "Buy Now data was not stored in sessionStorage"
+        );
+        return;
+      }
+
+      router.push("/checkout?buyNow=true");
+    } catch (error) {
+      console.error("Unable to store buy now data:", error);
+    }
+  };
+
+  const handleBuyNow = (event, item) => {
+    event.preventDefault();
+    event.stopPropagation();
+    goToBuyNowCheckout(item);
+  };
+
+  const handleBuyNowOrder = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!Array.isArray(items) || items.length === 0) {
+      console.error("No order items found");
+      return;
+    }
+
+    const buyNowItems = items.map(buildBuyNowItem);
+
+    const buyNowData = {
+      items: buyNowItems,
+      source: "reorder",
+      orderId: order?.id ?? null,
+      createdAt: Date.now(),
+    };
+
+    try {
+      const serializedData = JSON.stringify(buyNowData);
+      sessionStorage.setItem("buyNowCheckout", serializedData);
+
+      const storedData = sessionStorage.getItem("buyNowCheckout");
+
+      if (!storedData) {
+        console.error(
+          "Buy Again data was not stored in sessionStorage"
+        );
+        return;
+      }
+
+      router.push("/checkout?buyNow=true");
+    } catch (error) {
+      console.error("Unable to store Buy Again data:", error);
+    }
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl">
-      {/* Order Header */}
       <button
         type="button"
         onClick={onToggle}
@@ -328,9 +515,23 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
         className="w-full p-3 text-left active:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-5"
       >
         <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface sm:h-11 sm:w-11 sm:rounded-xl">
-              <Package className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+          <div onClick={() => router.push(`/products/${order?.items[0]?.product?.slug}`)}
+            className="flex min-w-0 items-start gap-2.5 sm:gap-3">
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-surface sm:h-11 sm:w-11 sm:rounded-xl">
+              <img
+                src={headerImage}
+                alt={headerName}
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  if (
+                    !event.currentTarget.src.includes(
+                      "/placeholder-product.svg"
+                    )
+                  ) {
+                    event.currentTarget.src = "/placeholder-product.svg";
+                  }
+                }}
+              />
             </div>
 
             <div className="min-w-0">
@@ -353,11 +554,15 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
                   <CalendarDays className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   {formatDate(order?.createdAt)}
                 </span>
+
                 <span className="hidden sm:inline">·</span>
+
                 <span>
                   {items.length} {items.length === 1 ? "item" : "items"}
                 </span>
+
                 <span className="hidden sm:inline">·</span>
+
                 <span className="w-full font-semibold text-text-primary sm:w-auto">
                   {formatCurrency(order?.totalAmount)}
                 </span>
@@ -377,69 +582,165 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
           }`}
       >
         <div className="overflow-hidden">
-          <div id={contentId} className="space-y-5 border-t border-border p-3 sm:space-y-6 sm:p-5">
+          <div
+            id={contentId}
+            className="space-y-5 border-t border-border p-3 sm:space-y-6 sm:p-5"
+          >
             <section>
-              <h4 className="mb-2.5 text-xs font-bold text-text-primary sm:mb-3 sm:text-sm">
-                Items in this order
-              </h4>
+              <div className="mb-2.5 flex items-center justify-between sm:mb-3">
+                <h4 className="text-xs font-bold text-text-primary sm:text-sm">
+                  Items in this order
+                </h4>
 
-              <div className="space-y-2.5 sm:space-y-3">
+                {items.length > MOBILE_VISIBLE_COUNT && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setShowAllItems((prev) => !prev);
+                    }}
+                    className="text-[11px] font-semibold text-primary sm:hidden"
+                  >
+                    {showAllItems
+                      ? "Show less"
+                      : `Show all ${items.length}`}
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2 sm:space-y-3">
                 {items.length > 0 ? (
-                  items.map((item, index) => {
-                    const quantity = getItemQuantity(item);
-                    const price = getItemPrice(item);
-                    const image = getItemImage(item);
+                  <>
+                    <div className="space-y-2 sm:hidden">
+                      {visibleItems.map((item, index) => (
+                        <MobileItemRow
+                          key={
+                            item?.id ||
+                            item?.productId ||
+                            `${order?.id}-m-${index}`
+                          }
+                          item={item}
+                          onBuyNow={handleBuyNow}
+                        />
+                      ))}
 
-                    return (
-                      <div
-                        key={item?.id || item?.productId || `${order?.id}-${index}`}
-                        className="flex gap-2.5 rounded-lg bg-surface p-2.5 sm:gap-3 sm:rounded-xl sm:p-4"
-                      >
-                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-card sm:h-20 sm:w-20">
-                          <img
-                            src={image}
-                            alt={getItemName(item)}
-                            className="h-full w-full object-contain p-1 sm:p-1.5"
-                            onError={(event) => {
-                              if (!event.currentTarget.src.includes("/placeholder-product.svg")) {
-                                event.currentTarget.src = "/placeholder-product.svg";
-                              }
-                            }}
-                          />
-                        </div>
+                      {!showAllItems && hiddenCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setShowAllItems(true);
+                          }}
+                          className="w-full rounded-lg border border-dashed border-border py-2 text-[11px] font-semibold text-text-secondary active:bg-surface/60"
+                        >
+                          + {hiddenCount} more{" "}
+                          {hiddenCount === 1 ? "item" : "items"}
+                        </button>
+                      )}
+                    </div>
 
-                        <div className="min-w-0 flex-1">
-                          <h5 className="line-clamp-2 text-xs font-semibold leading-snug text-text-primary sm:text-sm">
-                            {getItemName(item)}
-                          </h5>
+                    <div className="hidden sm:block sm:space-y-3">
+                      {items.map((item, index) => {
+                        const quantity = getItemQuantity(item);
+                        const price = getItemPrice(item);
+                        const image =
+                          getItemImage(item) ||
+                          "/placeholder-product.svg";
+                        const canBuyNow = Boolean(
+                          item?.productId ||
+                          item?.product?.id ||
+                          item?.product?.slug
+                        );
 
-                          {item?.variantName && (
-                            <p className="mt-0.5 text-[11px] text-text-secondary sm:text-xs">
-                              {item.variantName}
-                            </p>
-                          )}
-
-                          {(item?.variant?.flavour || item?.variant?.flavor || item?.variant?.size) && (
-                            <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-text-secondary sm:gap-x-3 sm:text-xs">
-                              {(item?.variant?.flavour || item?.variant?.flavor) && (
-                                <span>{item?.variant?.flavour || item?.variant?.flavor}</span>
-                              )}
-                              {item?.variant?.size && <span>{item.variant.size}</span>}
+                        return (
+                          <div
+                          onClick={() => router.push(`/products/${item?.product?.slug}`)}
+                            key={
+                              item?.id ||
+                              item?.productId ||
+                              `${order?.id}-d-${index}`
+                            }
+                            className="flex gap-3 rounded-xl bg-surface p-4"
+                          >
+                            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-card">
+                              <img
+                                src={image}
+                                alt={getItemName(item)}
+                                className="h-full w-full object-contain p-1.5"
+                                onError={(event) => {
+                                  if (
+                                    !event.currentTarget.src.includes(
+                                      "/placeholder-product.svg"
+                                    )
+                                  ) {
+                                    event.currentTarget.src =
+                                      "/placeholder-product.svg";
+                                  }
+                                }}
+                              />
                             </div>
-                          )}
 
-                          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 sm:mt-2">
-                            <span className="text-[11px] text-text-secondary sm:text-xs">
-                              {formatCurrency(price)} × {quantity}
-                            </span>
-                            <span className="text-xs font-bold text-text-primary sm:text-sm">
-                              {formatCurrency(price * quantity)}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="line-clamp-2 text-sm font-semibold leading-snug text-text-primary">
+                                {getItemName(item)}
+                              </h5>
+
+                              {item?.variantName && (
+                                <p className="mt-0.5 text-xs text-text-secondary">
+                                  {item.variantName}
+                                </p>
+                              )}
+
+                              {(item?.variant?.flavour ||
+                                item?.variant?.flavor ||
+                                item?.variant?.size) && (
+                                  <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-text-secondary">
+                                    {(item?.variant?.flavour ||
+                                      item?.variant?.flavor) && (
+                                        <span>
+                                          {item?.variant?.flavour ||
+                                            item?.variant?.flavor}
+                                        </span>
+                                      )}
+
+                                    {item?.variant?.size && (
+                                      <span>{item.variant.size}</span>
+                                    )}
+                                  </div>
+                                )}
+
+                              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
+                                <span className="text-xs text-text-secondary">
+                                  {formatCurrency(price)} × {quantity}
+                                </span>
+
+                                <span className="text-sm font-bold text-text-primary">
+                                  {formatCurrency(price * quantity)}
+                                </span>
+                              </div>
+
+                              {/* {canBuyNow && (
+                                <div className="mt-2 flex cursor-pointer justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={(event) =>{
+                                      event.stopPropagation();
+                                      handleBuyNow(event, item)
+                                    }
+                                    }
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
+                                  >
+                                    <ShoppingCart className="h-3.5 w-3.5" />
+                                    Buy Now
+                                  </button>
+                                </div>
+                              )} */}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })
+                        );
+                      })}
+                    </div>
+                  </>
                 ) : (
                   <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-text-secondary sm:p-5 sm:text-sm">
                     No items found for this order.
@@ -450,30 +751,47 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
 
             <OrderProgress status={order?.displayStage} />
 
-            {/* Address + Payment stack on mobile, side by side from md up */}
             <section className="grid gap-4 md:grid-cols-2">
               <div>
                 <div className="mb-2.5 flex items-center gap-2 sm:mb-3">
                   <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">Delivery address</h4>
+                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">
+                    Delivery address
+                  </h4>
                 </div>
 
-                <div className="space-y-1 text-xs text-text-secondary sm:text-sm">
+                <div className="rounded-lg bg-surface p-3 text-xs leading-relaxed text-text-secondary sm:bg-transparent sm:p-0 sm:text-sm">
                   <p className="font-semibold text-text-primary">
                     {shippingAddress?.fullName || "N/A"}
                   </p>
-                  <p className="break-words">{shippingAddress?.addressLine1 || "N/A"}</p>
+
+                  <p className="mt-1 break-words">
+                    {shippingAddress?.addressLine1 || "N/A"}
+                  </p>
+
                   {shippingAddress?.addressLine2 && (
-                    <p className="break-words">{shippingAddress.addressLine2}</p>
+                    <p className="break-words">
+                      {shippingAddress.addressLine2}
+                    </p>
                   )}
-                  {shippingAddress?.landmark && <p className="break-words">{shippingAddress.landmark}</p>}
+
+                  {shippingAddress?.landmark && (
+                    <p className="break-words">
+                      {shippingAddress.landmark}
+                    </p>
+                  )}
+
+                  <p className="mt-1">
+                    {shippingAddress?.city || "N/A"}
+                  </p>
                   <p>
-                    {shippingAddress?.city || "N/A"}, {shippingAddress?.state || "N/A"} -{" "}
+                    {shippingAddress?.state || "N/A"} -{" "}
                     {shippingAddress?.pincode || "N/A"}
                   </p>
                   <p>{shippingAddress?.country || "India"}</p>
+
                   {shippingAddress?.mobile && (
-                    <p className="pt-1 font-medium text-text-primary">
+                    <p className="mt-2 border-t border-border/60 pt-2 font-medium text-text-primary">
                       Mobile: {shippingAddress.mobile}
                     </p>
                   )}
@@ -483,24 +801,30 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
               <div>
                 <div className="mb-2.5 flex items-center gap-2 sm:mb-3">
                   <CreditCard className="h-4 w-4 shrink-0 text-primary" />
-                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">Payment</h4>
+                  <h4 className="text-xs font-bold text-text-primary sm:text-sm">
+                    Payment
+                  </h4>
                 </div>
 
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="rounded-lg bg-surface p-3 text-xs sm:bg-transparent sm:p-0 sm:text-sm">
+                  <div className="flex items-center justify-between gap-4 py-1">
                     <span className="text-text-secondary">Status</span>
                     <span className="font-semibold text-text-primary">
                       {formatStatus(order?.paymentStatus)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-4">
+
+                  <div className="flex items-center justify-between gap-4 py-1">
                     <span className="text-text-secondary">Shipment</span>
                     <span className="font-semibold text-text-primary">
-                      {formatStatus(order?.shipmentStatus || "not_shipped")}
+                      {formatStatus(
+                        order?.shipmentStatus || "not_shipped"
+                      )}
                     </span>
                   </div>
+
                   {order?.razorpayPaymentId && (
-                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="flex flex-col gap-0.5 py-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <span className="text-text-secondary">Payment ID</span>
                       <span className="break-all text-[11px] font-medium text-text-primary sm:max-w-[220px] sm:text-right sm:text-xs">
                         {order.razorpayPaymentId}
@@ -534,7 +858,8 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
                 {Number(order?.discountAmount || 0) > 0 && (
                   <div className="flex justify-between gap-4">
                     <span className="text-text-secondary">
-                      Discount{order?.couponCode ? ` (${order.couponCode})` : ""}
+                      Discount
+                      {order?.couponCode ? ` (${order.couponCode})` : ""}
                     </span>
                     <span className="font-medium text-green-600">
                       -{formatCurrency(order?.discountAmount)}
@@ -553,12 +878,15 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
                   <>
                     {Number(order?.advanceAmount || 0) > 0 && (
                       <div className="flex justify-between gap-4">
-                        <span className="text-text-secondary">Advance paid</span>
+                        <span className="text-text-secondary">
+                          Advance paid
+                        </span>
                         <span className="font-medium text-text-primary">
                           {formatCurrency(order?.advanceAmount)}
                         </span>
                       </div>
                     )}
+
                     {Number(order?.remainingAmount || 0) > 0 && (
                       <div className="flex justify-between gap-4">
                         <span className="text-text-secondary">Remaining</span>
@@ -577,30 +905,116 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling }) {
                 Last updated: {formatDateTime(order?.updatedAt)}
               </div>
 
-              {canCancel && (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onCancel(order);
-                  }}
-                  disabled={cancelling}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 text-sm font-semibold text-red-600 transition active:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-auto sm:hover:bg-red-500/10"
-                >
-                  {cancelling ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Cancelling...
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-4 w-4" />
-                      Cancel order
-                    </>
-                  )}
-                </button>
-              )}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                {/* {canBuyNowOrder && (
+                  <button
+                    type="button"
+                    onClick={handleBuyNowOrder}
+                    className="inline-flex cursor-pointer h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 text-sm font-semibold text-primary transition active:bg-primary/15 sm:h-10 sm:w-auto sm:hover:bg-primary/10"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Buy Again
+                  </button>
+                )} */}
+
+                {canCancel && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onCancel(order);
+                    }}
+                    disabled={cancelling}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 text-sm font-semibold text-red-600 transition active:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-auto sm:hover:bg-red-500/10"
+                  >
+                    {cancelling ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4" />
+                        Cancel order
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileItemRow({ item, onBuyNow }) {
+  const quantity = getItemQuantity(item);
+  const price = getItemPrice(item);
+  const image = getItemImage(item) || "/placeholder-product.svg";
+  const canBuyNow = Boolean(
+    item?.productId || item?.product?.id || item?.product?.slug
+  );
+
+  const router = useRouter();
+
+  // console.log(item)
+
+  return (
+    <div onClick={() => router.push(`/products/${item?.product?.slug}`)}
+      className="flex gap-2 rounded-lg bg-surface p-2">
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-card">
+        <img
+          src={image}
+          alt={getItemName(item)}
+          className="h-full w-full object-contain p-1"
+          onError={(event) => {
+            if (
+              !event.currentTarget.src.includes(
+                "/placeholder-product.svg"
+              )
+            ) {
+              event.currentTarget.src = "/placeholder-product.svg";
+            }
+          }}
+        />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <h5 className="line-clamp-1 text-[11px] font-semibold leading-snug text-text-primary">
+          {getItemName(item)}
+        </h5>
+
+        {item?.variantName && (
+          <p className="text-[10px] text-text-secondary">
+            {item.variantName}
+          </p>
+        )}
+
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="text-[10px] text-text-secondary">
+            {formatCurrency(price)} × {quantity}
+          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-text-primary">
+              {formatCurrency(price * quantity)}
+            </span>
+
+            {canBuyNow && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onBuyNow(event, item)
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-[10px] font-bold text-primary active:bg-primary/15"
+              >
+                <ShoppingCart className="h-3 w-3" />
+                Buy
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -623,9 +1037,12 @@ function OrderPagination({
   const currentPage = Number(page || 1);
   const pages = [];
 
-
   if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i++) {
+    for (
+      let i = 1;
+      i <= totalPages;
+      i++
+    ) {
       pages.push(i);
     }
   } else {
@@ -635,13 +1052,21 @@ function OrderPagination({
       pages.push("...");
     }
 
-    const start = Math.max(2, currentPage - 1);
+    const start = Math.max(
+      2,
+      currentPage - 1
+    );
+
     const end = Math.min(
       totalPages - 1,
       currentPage + 1
     );
 
-    for (let i = start; i <= end; i++) {
+    for (
+      let i = start;
+      i <= end;
+      i++
+    ) {
       pages.push(i);
     }
 
@@ -653,7 +1078,8 @@ function OrderPagination({
   }
 
   const hasPrevious = currentPage > 1;
-  const hasNext = currentPage < totalPages;
+  const hasNext =
+    currentPage < totalPages;
 
   return (
     <div className="mt-6 rounded-2xl border border-border bg-card p-4">
@@ -675,7 +1101,9 @@ function OrderPagination({
             type="button"
             disabled={!hasPrevious || loading}
             onClick={() =>
-              onPageChange(currentPage - 1)
+              onPageChange(
+                currentPage - 1
+              )
             }
             className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-2.5 text-sm font-semibold text-text-primary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
           >
@@ -707,10 +1135,12 @@ function OrderPagination({
                   key={item}
                   type="button"
                   disabled={loading}
-                  onClick={() => onPageChange(item)}
+                  onClick={() =>
+                    onPageChange(item)
+                  }
                   className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-semibold transition ${isActive
-                    ? "bg-primary text-white"
-                    : "border border-border bg-card text-text-primary hover:bg-surface"
+                      ? "bg-primary text-white"
+                      : "border border-border bg-card text-text-primary hover:bg-surface"
                     } disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {item}
@@ -723,7 +1153,9 @@ function OrderPagination({
             type="button"
             disabled={!hasNext || loading}
             onClick={() =>
-              onPageChange(currentPage + 1)
+              onPageChange(
+                currentPage + 1
+              )
             }
             className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-2.5 text-sm font-semibold text-text-primary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
           >
@@ -746,30 +1178,35 @@ function OrderPagination({
   );
 }
 
-export default function OrdersSection({ onBack }) {
+export default function OrdersSection({
+  onBack,
+}) {
   const dispatch = useDispatch();
 
   const {
     orderLists: reduxOrders,
     loading = false,
     error = null,
-  } = useSelector((state) => state.order || {});
-
+  } = useSelector(
+    (state) => state.order || {}
+  );
 
   const [expandedOrder, setExpandedOrder] =
     useState(null);
 
-  const [cancellingOrderId, setCancellingOrderId] =
-    useState(null);
+  const [
+    cancellingOrderId,
+    setCancellingOrderId,
+  ] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
-
-  const orders = Array.isArray(reduxOrders?.orders)
+  const orders = Array.isArray(
+    reduxOrders?.orders
+  )
     ? reduxOrders.orders
     : [];
-
-  const apiPage = currentPage;
 
   const totalOrders = Number(
     reduxOrders?.total || 0
@@ -783,7 +1220,6 @@ export default function OrdersSection({ onBack }) {
     reduxOrders?.count ?? orders.length
   );
 
-
   useEffect(() => {
     dispatch(
       getOrder({
@@ -792,7 +1228,6 @@ export default function OrdersSection({ onBack }) {
       })
     );
   }, [dispatch, currentPage]);
-
 
   const handlePageChange = (page) => {
     const nextPage = Number(page);
@@ -808,25 +1243,26 @@ export default function OrdersSection({ onBack }) {
     setExpandedOrder(null);
     setCurrentPage(nextPage);
 
-
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
 
-
   const handleCancelOrder = async (order) => {
     if (!order?.id) {
       return;
     }
 
-    const pageBeforeCancel = currentPage;
+    const pageBeforeCancel =
+      currentPage;
 
     try {
       setCancellingOrderId(order.id);
 
-      await dispatch(orderCancel(order.id)).unwrap();
+      await dispatch(
+        orderCancel(order.id)
+      ).unwrap();
 
       await dispatch(
         getOrder({
@@ -838,7 +1274,10 @@ export default function OrdersSection({ onBack }) {
 
       setExpandedOrder(null);
     } catch (error) {
-      console.error("Cancel order error:", error);
+      console.error(
+        "Cancel order error:",
+        error
+      );
     } finally {
       setCancellingOrderId(null);
     }
@@ -846,10 +1285,11 @@ export default function OrdersSection({ onBack }) {
 
   const handleToggleOrder = (orderId) => {
     setExpandedOrder((current) =>
-      current === orderId ? null : orderId
+      current === orderId
+        ? null
+        : orderId
     );
   };
-
 
   const handleRetry = () => {
     dispatch(
@@ -868,19 +1308,19 @@ export default function OrdersSection({ onBack }) {
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-text-primary transition hover:bg-surface"
             aria-label="Go back"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-text-primary transition active:bg-surface sm:hover:bg-surface"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
 
         <div className="min-w-0">
-          <h2 className="text-xl font-black text-text-primary sm:text-2xl">
+          <h2 className="truncate text-xl font-black text-text-primary sm:text-2xl">
             My Orders
           </h2>
 
-          <p className="mt-1 text-xs text-text-secondary sm:text-sm">
+          <p className="mt-1 truncate text-xs text-text-secondary sm:text-sm">
             Track and manage your orders
           </p>
         </div>
@@ -891,14 +1331,14 @@ export default function OrdersSection({ onBack }) {
       )}
 
       {!loading && error && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 sm:rounded-2xl sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-red-600">
                 Unable to load orders
               </h3>
 
-              <p className="mt-1 text-xs text-red-500/80 sm:text-sm">
+              <p className="mt-1 text-xs leading-5 text-red-500/80 sm:text-sm">
                 {typeof error === "string"
                   ? error
                   : "Something went wrong while loading your orders."}
@@ -908,7 +1348,7 @@ export default function OrdersSection({ onBack }) {
             <button
               type="button"
               onClick={handleRetry}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover"
+              className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition active:bg-primary-hover sm:h-10 sm:w-auto sm:hover:bg-primary-hover"
             >
               <RefreshCw className="h-4 w-4" />
               Try Again
@@ -926,7 +1366,7 @@ export default function OrdersSection({ onBack }) {
 
       {orders.length > 0 && (
         <>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {orders.map((order) => (
               <OrderItem
                 key={
@@ -935,14 +1375,20 @@ export default function OrdersSection({ onBack }) {
                 }
                 order={order}
                 expanded={
-                  expandedOrder === order?.id
+                  expandedOrder ===
+                  order?.id
                 }
                 onToggle={() =>
-                  handleToggleOrder(order?.id)
+                  handleToggleOrder(
+                    order?.id
+                  )
                 }
-                onCancel={handleCancelOrder}
+                onCancel={
+                  handleCancelOrder
+                }
                 cancelling={
-                  cancellingOrderId === order?.id
+                  cancellingOrderId ===
+                  order?.id
                 }
               />
             ))}
@@ -954,14 +1400,16 @@ export default function OrdersSection({ onBack }) {
             total={totalOrders}
             count={orderCount}
             loading={loading}
-            onPageChange={handlePageChange}
+            onPageChange={
+              handlePageChange
+            }
           />
         </>
       )}
 
       {loading && orders.length > 0 && (
-        <div className="mt-4 flex items-center justify-center gap-2 py-3 text-xs text-text-secondary">
-          <RefreshCw className="h-4 w-4 animate-spin" />
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-surface py-2.5 text-xs font-medium text-text-secondary">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
           Updating orders...
         </div>
       )}

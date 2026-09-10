@@ -384,7 +384,7 @@ export default function Header() {
     setSearchResults([]);
 
     router.push(
-      `/product/${encodeURIComponent(slug)}`
+      `/products/${encodeURIComponent(slug)}`
     );
   };
 
