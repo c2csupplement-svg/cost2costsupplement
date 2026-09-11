@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getProductBySlug } from "@/redux/features/product/productApi";
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 import ProductPageClient  from "./ProductPageClient ";
+import LoadingPage from "@/components/ui/loading"
 
 function normalizeProductResponse(response) {
   if (!response) {
@@ -76,6 +77,7 @@ export default async function ProductPage({ params }) {
         />
       )}
 
+      <LoadingPage/>
       <ProductPageClient
         product={product}
         slug={slug}
