@@ -367,59 +367,59 @@ export default function WishlistPage() {
           </div>
         </div>
 
-        {isLoading && wishlist.length === 0 ? (
-          <WishlistSkeleton />
-        ) : wishlist.length === 0 ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card px-5 text-center">
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-surface text-primary">
-              <Heart className="h-9 w-9" />
-            </div>
+       {isLoading ? (
+  <WishlistSkeleton />
+) : wishlist.length === 0 ? (
+  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card px-5 text-center">
+    <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-surface text-primary">
+      <Heart className="h-9 w-9" />
+    </div>
 
-            <h2 className="font-oxanium text-2xl font-bold text-text-primary">
-              Your wishlist is empty
-            </h2>
+    <h2 className="font-oxanium text-2xl font-bold text-text-primary">
+      Your wishlist is empty
+    </h2>
 
-            <p className="mt-2 max-w-sm text-sm text-text-muted">
-              Tap the heart on any product to save it here and pick up where
-              you left off.
-            </p>
+    <p className="mt-2 max-w-sm text-sm text-text-muted">
+      Tap the heart on any product to save it here and pick up where you left
+      off.
+    </p>
 
-            <Link
-              href="/products"
-              className="mt-7 flex items-center gap-2 rounded-full bg-primary px-7 py-3 font-oxanium text-sm font-bold uppercase tracking-wide text-white transition hover:bg-primary-hover hover:shadow-[0_8px_22px_rgba(229,35,35,0.20)]"
-            >
-              Continue Shopping
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-            {wishlist.map((product, index) => (
-              <WishlistCard
-                key={
-                  product?.wishlistItemId ??
-                  `${product?.productId}-${product?.variantId}` ??
-                  product?.id ??
-                  index
-                }
-                product={product}
-                removing={
-                  String(removingId) === String(product?.wishlistItemId)
-                }
-                movingToCart={
-                  String(movingToCartId) ===
-                  String(
-                    product?.wishlistProductId ??
-                      product?.productId ??
-                      product?.id
-                  )
-                }
-                onRemove={() => handleRemove(product)}
-                onMoveToCart={() => handleMoveToCart(product)}
-              />
-            ))}
-          </div>
-        )}
+    <Link
+      href="/products"
+      className="mt-7 flex items-center gap-2 rounded-full bg-primary px-7 py-3 font-oxanium text-sm font-bold uppercase tracking-wide text-white transition hover:bg-primary-hover hover:shadow-[0_8px_22px_rgba(229,35,35,0.20)]"
+    >
+      Continue Shopping
+      <ArrowRight className="h-4 w-4" />
+    </Link>
+  </div>
+) : (
+  <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+    {wishlist.map((product, index) => (
+      <WishlistCard
+        key={
+          product?.wishlistItemId ??
+          `${product?.productId}-${product?.variantId}` ??
+          product?.id ??
+          index
+        }
+        product={product}
+        removing={
+          String(removingId) === String(product?.wishlistItemId)
+        }
+        movingToCart={
+          String(movingToCartId) ===
+          String(
+            product?.wishlistProductId ??
+              product?.productId ??
+              product?.id
+          )
+        }
+        onRemove={() => handleRemove(product)}
+        onMoveToCart={() => handleMoveToCart(product)}
+      />
+    ))}
+  </div>
+)}
       </div>
     </main>
   );
