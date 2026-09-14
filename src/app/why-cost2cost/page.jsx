@@ -209,11 +209,11 @@ export default function WhyCost2CostPage() {
                 </p>
               </div>
 
-              <h1 className="mt-6 font-bebas text-6xl uppercase leading-[0.9] tracking-wide text-text-primary sm:text-7xl lg:text-8xl">
+              <h3 className="mt-6 font-bebas text-6xl uppercase leading-[0.9] tracking-wide text-text-primary sm:text-7xl lg:text-8xl">
                 Questions.
                 <br />
                 <span className="text-primary">Answered.</span>
-              </h1>
+              </h3>
 
               <p className="mt-6 max-w-xl font-oxanium text-sm leading-7 text-text-secondary sm:text-base">
                 Everything you need to know about our products, orders,

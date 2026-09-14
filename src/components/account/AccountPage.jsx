@@ -121,10 +121,10 @@ export default function AccountPage() {
               Login Required
             </h1>
 
-            <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
+            <h1 className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
               Please login to access your account, orders, addresses and
               account settings.
-            </p>
+            </h1>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               <button

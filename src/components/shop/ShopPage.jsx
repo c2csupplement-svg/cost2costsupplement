@@ -1219,11 +1219,11 @@ export default function ShopPage() {
               : "Shop Supplements"}
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#525252] sm:text-base">
+          <h1 className="mt-4 max-w-2xl text-sm leading-7 text-[#525252] sm:text-base">
             {searchQuery
               ? `Showing products for "${searchQuery}".`
               : "Discover premium sports nutrition, supplements, vitamins and wellness products from trusted brands."}
-          </p>
+          </h1>
         </div>
       </div>
 

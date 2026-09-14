@@ -1,7 +1,6 @@
 import { getSEOMetadata, getJSONLD } from "@/lib/seo";
 import { getPageSeo } from "@/apiService/api";
 import Main from "./main";
-import LoadingPage from "../components/ui/loading"
 
 export async function generateMetadata() {
   try {
@@ -48,8 +47,6 @@ export default async function Home() {
           }}
         />
       )}
-
-      <LoadingPage/>
       <Main />
     </>
   );
