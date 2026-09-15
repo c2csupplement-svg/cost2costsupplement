@@ -3,7 +3,7 @@
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { ShoppingBag, Star } from "lucide-react";
 
 export default function ProductCard({ product }) {
 
@@ -207,17 +207,10 @@ export default function ProductCard({ product }) {
       ? product.category
       : product?.category?.name || "";
 
-  const rating =
-    Number(product?.averageRating) ||
-    Number(product?.rating) ||
-    0;
+const reviewCount = product?.reviewCount;
 
-  const reviewCount =
-    Number(product?.reviewCount) ||
-    Number(product?._count?.reviews) ||
-    (Array.isArray(product?.reviews)
-      ? product.reviews.length
-      : 0);
+const rating = product?.avgRating || 0.0
+
 
   const formattedPrice =
     Number(price) > 0
