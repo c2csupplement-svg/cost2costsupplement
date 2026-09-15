@@ -1,9 +1,46 @@
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { cache } from "react";
+import { getSEOMetadata, getJSONLD } from "@/lib/seo";
+import { getPageSeo } from "@/apiService/api";
 
-export default function ShippingPolicy() {
+const getShippingSEO = cache(async () => {
+  try {
+    const response = await getPageSeo("shipping-policy");
+
+    return (
+      response?.pageSeo ||
+      null
+    );
+  } catch (error) {
+    console.error("Shipping Policy page SEO error:", error);
+    return null;
+  }
+});
+
+export async function generateMetadata() {
+  const seo = await getShippingSEO();
+
+  return getSEOMetadata(seo);
+}
+
+export default async function ShippingPolicy() {
+
+    const seo = await getShippingSEO();
+  
+    const jsonld = getJSONLD(seo);
+
   return (
+    <>
+     {jsonld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonld,
+          }}
+        />
+      )}
     <main className="min-h-screen bg-background text-text-primary">
 
 
@@ -480,5 +517,6 @@ export default function ShippingPolicy() {
       </section>
 
     </main>
+    </>
   );
 }

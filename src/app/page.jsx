@@ -6,11 +6,7 @@ export async function generateMetadata() {
   try {
     const response = await getPageSeo("home");
 
-    const seo =
-      response?.data?.seo ||
-      response?.seo ||
-      response?.data ||
-      response;
+    const seo =response?.pageSeo
 
     return getSEOMetadata(seo);
   } catch (error) {

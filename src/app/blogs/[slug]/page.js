@@ -49,7 +49,7 @@ export async function generateMetadata({ params }) {
 
   const blog = await getBlog(slug);
 
-  return getSEOMetadata(blog?.seo);
+  return getSEOMetadata(blog);
 }
 
 export default async function BlogDetailsPage({ params }) {

@@ -10,11 +10,7 @@ const getBlogsSEO = cache(async () => {
     const response = await getPageSeo("blogs");
 
     return (
-      response?.data?.seo ||
-      response?.seo ||
-      response?.data ||
-      response ||
-      null
+      response?.pageSeo||null
     );
   } catch (error) {
     console.error("Blogs page SEO error:", error);

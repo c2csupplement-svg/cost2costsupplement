@@ -7,11 +7,7 @@ const getSEO = cache(async () => {
   const response = await getPageSeo("category");
 
   return (
-    response?.data?.seo ||
-    response?.seo ||
-    response?.data ||
-    response ||
-    null
+    response?.pageSeo||null
   );
 });
 

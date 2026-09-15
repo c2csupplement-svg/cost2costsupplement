@@ -156,7 +156,6 @@ export const getProductCategoryApi = async () => {
       `${API_BASE_URL}/category`
     );
 
-
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -192,7 +191,6 @@ export const getBrandsApi = async () => {
     throw error;
   }
 };
-
 
 export const getComboProductsApi = async () => {
   try {

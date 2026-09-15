@@ -1,8 +1,47 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { cache } from "react";
+import { getSEOMetadata, getJSONLD } from "@/lib/seo";
+import { getPageSeo } from "@/apiService/api";
 
-export default function TermsAndConditions() {
+
+const getTCSEO = cache(async () => {
+  try {
+    const response = await getPageSeo("terms-and-conditions");
+
+    return (
+      response?.pageSeo ||
+      null
+    );
+  } catch (error) {
+    console.error("T&C page SEO error:", error);
+    return null;
+  }
+});
+
+export async function generateMetadata() {
+  const seo = await getTCSEO();
+
+  return getSEOMetadata(seo);
+}
+
+export default async function TermsAndConditions() {
+
+    const seo = await getTCSEO();
+  
+    const jsonld = getJSONLD(seo);
+
   return (
+    <>
+     {jsonld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonld,
+          }}
+        />
+      )}
+      
     <main className="min-h-screen bg-background text-text-primary">
 
       {/* =====================================================
@@ -435,5 +474,6 @@ export default function TermsAndConditions() {
 
 
     </main>
+    </>
   );
 }

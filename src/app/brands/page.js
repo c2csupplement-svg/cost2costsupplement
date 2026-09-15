@@ -8,11 +8,7 @@ const getBrandsSEO = cache(async () => {
     const response = await getPageSeo("brands");
 
     return (
-      response?.data?.seo ||
-      response?.seo ||
-      response?.data ||
-      response ||
-      null
+      response?.pageSeo||null
     );
   } catch (error) {
     console.error("Failed to load brands SEO:", error);

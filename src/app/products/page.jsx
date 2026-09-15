@@ -1,8 +1,32 @@
 import { Suspense } from "react";
 import ShopPage from "@/components/shop/ShopPage";
 import WhyC2C from "@/components/home/WhyC2C";
+import { cache } from "react";
+import { getSEOMetadata, getJSONLD } from "@/lib/seo";
+import { getPageSeo } from "@/apiService/api";
+
+const getProductsSEO = cache(async () => {
+  try {
+    const response = await getPageSeo("products");
+
+    return (
+      response?.pageSeo ||
+      null
+    );
+  } catch (error) {
+    console.error("Product page SEO error:", error);
+    return null;
+  }
+});
+
+export async function generateMetadata() {
+  const seo = await getProductsSEO();
+
+  return getSEOMetadata(seo);
+}
 
 function ShopPageLoading() {
+
   return (
     <div className="min-h-[600px] bg-[#FAFAFA]">
       <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-10">
@@ -23,14 +47,29 @@ function ShopPageLoading() {
   );
 }
 
-export default function Shop() {
-  return (
-    <main className="min-h-screen bg-[#0B0B0B] text-white">
-      <Suspense fallback={<ShopPageLoading />}>
-        <ShopPage />
-      </Suspense>
+export default async function Shop() {
+  const seo = await getProductsSEO();
 
-      <WhyC2C />
-    </main>
+  const jsonld = getJSONLD(seo);
+
+  return (
+    <>
+
+      {jsonld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonld,
+          }}
+        />
+      )}
+
+      <main className="min-h-screen bg-[#0B0B0B] text-white">
+        <Suspense fallback={<ShopPageLoading />}>
+          <ShopPage />
+        </Suspense>
+
+        <WhyC2C />
+      </main></>
   );
 }

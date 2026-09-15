@@ -8,10 +8,7 @@ const getAboutSEO = cache(async () => {
     const response = await getPageSeo("about");
 
     return (
-      response?.data?.seo ||
-      response?.seo ||
-      response?.data ||
-      response ||
+      response?.pageSeo ||
       null
     );
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -164,13 +164,52 @@ const getUniqueProducts = (products) => {
   );
 };
 
+// Shared helper: compute a viewport-safe position for the category
+// flyout, anchored to the trigger element that was clicked.
+const computeDropdownPosition = (triggerEl) => {
+  const rect = triggerEl.getBoundingClientRect();
+  const dropdownWidth = 300;
+  const estimatedHeight = 220;
+  const gap = 8;
+
+  const viewportWidth =
+    typeof window !== "undefined" ? window.innerWidth : 1024;
+  const viewportHeight =
+    typeof window !== "undefined" ? window.innerHeight : 768;
+
+  // Anchor horizontally to the trigger's left edge, but clamp so the
+  // panel never runs off either side of the viewport.
+  let left = rect.left;
+  if (left + dropdownWidth > viewportWidth - gap) {
+    left = viewportWidth - dropdownWidth - gap;
+  }
+  left = Math.max(gap, left);
+
+  // Prefer opening below the trigger; flip above it if there isn't
+  // enough room beneath (e.g. trigger near the bottom of the screen).
+  let top = rect.bottom + gap;
+  if (top + estimatedHeight > viewportHeight - gap) {
+    top = rect.top - estimatedHeight - gap;
+  }
+  top = Math.max(gap, top);
+
+  return { left, top };
+};
+
 export default function ShopPage() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
+  const [openCategoryDropdown, setOpenCategoryDropdown] = useState(null);
+  const [categoryDropdownPosition, setCategoryDropdownPosition] = useState({
+    left: 0,
+    top: 0,
+  });
 
   const searchQuery = (searchParams.get("search") || "").trim();
   const specialProductKey = getSpecialProductKey(searchQuery);
   const pageSize = 20;
+
+  const categoryDropdownRef = useRef(null);
 
   const [selectedCategory, setSelectedCategory] = useState({
     id: null,
@@ -181,6 +220,54 @@ export default function ShopPage() {
     id: null,
     name: "All Brands",
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target)
+      ) {
+        setOpenCategoryDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Close the flyout on scroll — it's `position: fixed`, so it won't
+  // track the trigger button if the page scrolls while it's open.
+  useEffect(() => {
+    const handleScroll = () => setOpenCategoryDropdown(null);
+
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, []);
+
+  // Reposition (rather than just close) on resize, so a currently-open
+  // flyout stays anchored correctly if the viewport width changes.
+  useEffect(() => {
+    if (openCategoryDropdown === null) {
+      return;
+    }
+
+    const handleResize = () => {
+      setOpenCategoryDropdown(null);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [openCategoryDropdown]);
+
 
   const [sortBy, setSortBy] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -207,12 +294,7 @@ export default function ShopPage() {
   const productState = useSelector((state) => state.products || {});
   const productAdState = useSelector((state) => state.productAd || {});
 
-  const productData =
-    productState.productList ??
-    productState.products ??
-    productState.product ??
-    productState.data ??
-    productState;
+  const productData = productState.productList
 
   const productLoading = Boolean(productState.loading);
   const productError = productState.error || null;
@@ -220,6 +302,7 @@ export default function ShopPage() {
   const adsLoading = Boolean(productAdState.loading);
   const adsLoaded = Boolean(productAdState.loaded);
   const adsError = productAdState.error || null;
+
 
   const productCategory =
     productAdState.productCateogry ??
@@ -246,18 +329,6 @@ export default function ShopPage() {
 
     if (Array.isArray(productData?.products)) {
       return productData.products;
-    }
-
-    if (Array.isArray(productData?.data)) {
-      return productData.data;
-    }
-
-    if (Array.isArray(productData?.data?.products)) {
-      return productData.data.products;
-    }
-
-    if (Array.isArray(productData?.results)) {
-      return productData.results;
     }
 
     return [];
@@ -309,8 +380,8 @@ export default function ShopPage() {
 
         setSearchError(
           error?.response?.data?.message ||
-            error?.message ||
-            "Unable to search products."
+          error?.message ||
+          "Unable to search products."
         );
       } finally {
         if (active) {
@@ -427,8 +498,8 @@ export default function ShopPage() {
 
         setFilterError(
           error?.response?.data?.message ||
-            error?.message ||
-            "Unable to filter products."
+          error?.message ||
+          "Unable to filter products."
         );
       } finally {
         if (active) {
@@ -510,8 +581,8 @@ export default function ShopPage() {
 
         setSortError(
           error?.response?.data?.message ||
-            error?.message ||
-            "Unable to sort products."
+          error?.message ||
+          "Unable to sort products."
         );
       } finally {
         if (active) {
@@ -545,49 +616,23 @@ export default function ShopPage() {
             ? productCategory.data.categories
             : [];
 
-    const normalizedCategories = apiCategories
-      .map((category) => {
-        const id =
-          category?.id ??
-          category?.categoryId ??
-          category?._id ??
-          null;
+    const normalizeCategory = (category) => {
+      const id = category?.id ?? category?.categoryId ?? category?._id ?? null;
+      const name = category?.name ?? category?.title ?? category?.categoryName ?? '';
+      const slug = category?.slug || String(name).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const children = Array.isArray(category?.children) ? category.children.map((child) => {
+        const childId = child?.id ?? child?.categoryId ?? child?._id ?? null;
+        const childName = child?.name ?? child?.title ?? child?.categoryName ?? '';
+        const childSlug = child?.slug || String(childName).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return { ...child, id: childId, name: typeof childName === 'string' ? childName.trim() : String(childName || '').trim(), slug: childSlug };
+      }).filter((child) => child.id !== null && child.name) : [];
+      return { ...category, id, name: typeof name === 'string' ? name.trim() : String(name || '').trim(), slug, children };
+    };
 
-        const name =
-          category?.name ??
-          category?.title ??
-          category?.categoryName ??
-          "";
+    const normalizedCategories = apiCategories.map(normalizeCategory).filter((category) => category.id !== null && category.name);
+    const uniqueCategories = normalizedCategories.filter((category, index, array) => array.findIndex((item) => String(item.id) === String(category.id)) === index);
 
-        return {
-          id,
-          name:
-            typeof name === "string"
-              ? name.trim()
-              : String(name || "").trim(),
-        };
-      })
-      .filter(
-        (category) => category.id !== null && category.name
-      );
-
-    const uniqueCategories = normalizedCategories.filter(
-      (category, index, array) =>
-        array.findIndex(
-          (item) =>
-            String(item.id) === String(category.id)
-        ) === index
-    );
-
-    return [
-      {
-        id: null,
-        name: "All Products",
-      },
-      ...uniqueCategories.sort((a, b) =>
-        a.name.localeCompare(b.name)
-      ),
-    ];
+    return [{ id: null, name: 'All Products', slug: 'all', children: [] }, ...uniqueCategories.sort((a, b) => a.name.localeCompare(b.name))];
   })();
 
   const brands = (() => {
@@ -681,7 +726,7 @@ export default function ShopPage() {
     : sortBy
       ? sortedProducts
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? filteredProducts
         : allProducts;
 
@@ -690,7 +735,7 @@ export default function ShopPage() {
 
     const salePrice =
       product?.salePrice !== null &&
-      product?.salePrice !== undefined
+        product?.salePrice !== undefined
         ? Number(product.salePrice)
         : null;
 
@@ -706,13 +751,13 @@ export default function ShopPage() {
 
     const discount =
       originalPrice > 0 &&
-      salePrice !== null &&
-      salePrice < originalPrice
+        salePrice !== null &&
+        salePrice < originalPrice
         ? Math.round(
-            ((originalPrice - salePrice) /
-              originalPrice) *
-              100
-          )
+          ((originalPrice - salePrice) /
+            originalPrice) *
+          100
+        )
         : Number(product?.discount) || 0;
 
     let images = [];
@@ -802,47 +847,47 @@ export default function ShopPage() {
   const totalProducts = searchQuery
     ? specialProductKey
       ? specialTotal ||
-        normalizedSpecialProducts.length ||
-        searchProducts.length
+      normalizedSpecialProducts.length ||
+      searchProducts.length
       : searchProducts.length
     : sortBy
       ? sortTotal || sortedProducts.length
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? filterTotal || filteredProducts.length
         : Number(productData?.total) ||
-          Number(productData?.data?.total) ||
-          allProducts.length;
+        Number(productData?.data?.total) ||
+        allProducts.length;
 
   const totalPages = searchQuery
     ? specialProductKey
       ? getTotalPagesFromResponse(
-          specialProduct,
-          totalProducts,
-          pageSize
-        )
+        specialProduct,
+        totalProducts,
+        pageSize
+      )
       : Math.max(
-          1,
-          Math.ceil(totalProducts / pageSize)
-        )
+        1,
+        Math.ceil(totalProducts / pageSize)
+      )
     : sortBy
       ? sortTotalPages
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? filterTotalPages
         : Number(productData?.totalPages) ||
-          Number(productData?.data?.totalPages) ||
-          Math.max(
-            1,
-            Math.ceil(totalProducts / pageSize)
-          );
+        Number(productData?.data?.totalPages) ||
+        Math.max(
+          1,
+          Math.ceil(totalProducts / pageSize)
+        );
 
   const paginatedProducts =
     searchQuery && !specialProductKey
       ? products.slice(
-          (currentPage - 1) * pageSize,
-          currentPage * pageSize
-        )
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+      )
       : products;
 
   const isSpecialProductLoading = Boolean(
@@ -856,20 +901,20 @@ export default function ShopPage() {
     : sortBy
       ? sortLoading
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? filterLoading
         : productLoading;
 
   const isProductsError = searchQuery
     ? specialProductKey
       ? Boolean(
-          productState.error || searchError
-        )
+        productState.error || searchError
+      )
       : Boolean(searchError)
     : sortBy
       ? Boolean(sortError)
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? Boolean(filterError)
         : Boolean(productError);
 
@@ -889,12 +934,12 @@ export default function ShopPage() {
 
   const error = searchQuery
     ? searchError ||
-      productState.error ||
-      adsError
+    productState.error ||
+    adsError
     : sortBy
       ? sortError || adsError
       : selectedCategory.id !== null ||
-          selectedBrand.id !== null
+        selectedBrand.id !== null
         ? filterError || adsError
         : productError || adsError;
 
@@ -946,8 +991,8 @@ export default function ShopPage() {
       } catch (err) {
         setSearchError(
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to search products."
+          err?.message ||
+          "Unable to search products."
         );
       } finally {
         setSearchLoading(false);
@@ -992,8 +1037,8 @@ export default function ShopPage() {
       } catch (err) {
         setSortError(
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to sort products."
+          err?.message ||
+          "Unable to sort products."
         );
       } finally {
         setSortLoading(false);
@@ -1031,8 +1076,8 @@ export default function ShopPage() {
       } catch (err) {
         setFilterError(
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to filter products."
+          err?.message ||
+          "Unable to filter products."
         );
       } finally {
         setFilterLoading(false);
@@ -1227,40 +1272,232 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="border-y border-[#E5E5E5] bg-white">
-        <div className="mx-auto max-w-[1440px] overflow-x-auto px-5 sm:px-8 lg:px-10">
-          <div className="flex min-w-max items-center gap-2 py-4">
-            {categories.map((category) => {
-              const active =
-                String(selectedCategory.id) ===
-                  String(category.id) &&
-                selectedCategory.name ===
-                  category.name;
+      <div
+        ref={categoryDropdownRef}
+        className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-10"
+      >
+        <div className="w-full overflow-x-auto overflow-y-visible scrollbar-hide">
+          <div className="flex w-max min-w-full items-center gap-2 py-2">
 
-              return (
-                <button
-                  key={category.id ?? "all"}
-                  type="button"
-                  onClick={() => {
-                    setLoadedViewKey(null);
-                    setSelectedCategory(category);
-                    handleFilterChange();
-                    setSortBy("");
-                    setSortedProducts([]);
-                    setCurrentPage(1);
-                  }}
-                  className={`rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition-all ${
-                    active
-                      ? "border-[#E52323] bg-[#E52323] text-white"
-                      : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory({
+                  id: null,
+                  name: "All Products",
+                  slug: "all",
+                  children: [],
+                });
+
+                setSortBy("");
+                setCurrentPage(1);
+                setLoadedViewKey(null);
+                setOpenCategoryDropdown(null);
+
+                handleFilterChange();
+
+                window.scrollTo({
+                  top: 0,
+                  behavior: "smooth",
+                });
+              }}
+              className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${!selectedCategory?.id
+                ? "border-[#E52323] bg-[#E52323] text-white"
+                : "border-[#E5E5E5] bg-white text-[#737373] hover:border-[#E52323] hover:text-[#E52323]"
+                }`}
+            >
+              All Products
+            </button>
+
+
+            {categories
+              .filter((category) => category.id !== null)
+              .map((category) => {
+                const hasChildren =
+                  Array.isArray(category.children) &&
+                  category.children.length > 0;
+
+                const isParentSelected =
+                  String(selectedCategory?.id) === String(category.id) &&
+                  !selectedCategory?.parentId;
+
+                const isDropdownOpen =
+                  String(openCategoryDropdown) === String(category.id);
+
+                return (
+                  <div
+                    key={category.id}
+                    className="relative flex shrink-0 items-center"
+                  >
+                    <div className="group flex items-center">
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+
+                          if (hasChildren) {
+                            setCategoryDropdownPosition(
+                              computeDropdownPosition(event.currentTarget)
+                            );
+
+                            setOpenCategoryDropdown((prev) =>
+                              String(prev) === String(category.id)
+                                ? null
+                                : category.id
+                            );
+
+                            return;
+                          }
+
+                          setSelectedCategory(category);
+                          setSortBy("");
+                          setCurrentPage(1);
+                          setLoadedViewKey(null);
+                          setOpenCategoryDropdown(null);
+
+                          handleFilterChange();
+
+                          window.scrollTo({
+                            top: 0,
+                            behavior: "smooth",
+                          });
+                        }}
+                        className={`cursor-pointer h-[37px] px-4 py-2 text-sm font-medium transition ${hasChildren ? "rounded-l-full border border-r-0" : "rounded-full border"
+                          } ${isParentSelected
+                            ? "border-[#E52323] bg-[#E52323] text-white"
+                            : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
+                          }`}
+                      >
+                        {category.name}
+                      </button>
+
+                      {/* ARROW */}
+                      {hasChildren && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+
+                            setCategoryDropdownPosition(
+                              computeDropdownPosition(event.currentTarget)
+                            );
+
+                            setOpenCategoryDropdown((prev) =>
+                              String(prev) === String(category.id)
+                                ? null
+                                : category.id
+                            );
+                          }}
+                          className={`flex h-[37px] cursor-pointer items-center justify-center rounded-r-full border border-l-0 px-2 transition ${isParentSelected
+                              ? "border-[#E52323] bg-[#E52323] text-white"
+                              : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
+                            }`}
+                          aria-label={`Show ${category.name} child categories`}
+                          aria-expanded={isDropdownOpen}
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                              }`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
+
+        {/* CHILD CATEGORY DROPDOWN */}
+        {openCategoryDropdown !== null && (
+          <div
+            className="fixed z-[99999] w-[300px] overflow-hidden rounded-xl border border-[#E5E5E5] bg-white p-2 shadow-2xl"
+            style={{
+              left: `${categoryDropdownPosition.left}px`,
+              top: `${categoryDropdownPosition.top}px`,
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            {categories
+              .filter(
+                (category) =>
+                  String(category.id) ===
+                  String(openCategoryDropdown)
+              )
+              .map((category) => {
+                if (
+                  !Array.isArray(category.children) ||
+                  category.children.length === 0
+                ) {
+                  return null;
+                }
+
+                return (
+                  <div key={category.id}>
+
+                    {/* CATEGORY NAME */}
+                    <div className="mb-1 border-b border-[#F0F0F0] px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#999999]">
+                        {category.name}
+                      </p>
+                    </div>
+
+                    {/* CHILDREN */}
+                    <div className="max-h-64 overflow-y-auto">
+                      {category.children.map((child) => {
+                        const isChildSelected =
+                          String(selectedCategory?.id) ===
+                          String(child.id) &&
+                          String(selectedCategory?.parentId) ===
+                          String(category.id);
+
+                        return (
+                          <button
+                            key={child.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategory({
+                                ...child,
+                                parentId: category.id,
+                                parentName: category.name,
+                              });
+
+                              setSortBy("");
+                              setCurrentPage(1);
+                              setLoadedViewKey(null);
+                              setOpenCategoryDropdown(null);
+
+                              handleFilterChange();
+
+                              window.scrollTo({
+                                top: 0,
+                                behavior: "smooth",
+                              });
+                            }}
+                            className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${isChildSelected
+                              ? "bg-[#E52323]/10 font-semibold text-[#E52323]"
+                              : "text-[#555555] hover:bg-[#F7F7F7] hover:text-[#E52323]"
+                              }`}
+                          >
+                            <span className="truncate pr-3">
+                              {child.name}
+                            </span>
+
+                            {isChildSelected && (
+                              <ChevronRight className="h-4 w-4 shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </div>
 
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
@@ -1474,7 +1711,7 @@ export default function ShopPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {paginatedProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -1561,11 +1798,10 @@ export default function ShopPage() {
                                 ? "page"
                                 : undefined
                             }
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${
-                              currentPage === page
-                                ? "border-[#E52323] bg-[#E52323] text-white"
-                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
-                            } disabled:pointer-events-none disabled:opacity-40`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage === page
+                              ? "border-[#E52323] bg-[#E52323] text-white"
+                              : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                              } disabled:pointer-events-none disabled:opacity-40`}
                           >
                             {page}
                           </button>
@@ -1640,11 +1876,10 @@ export default function ShopPage() {
                                   ? "page"
                                   : undefined
                               }
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${
-                                currentPage === page
-                                  ? "border-[#E52323] bg-[#E52323] text-white"
-                                  : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
-                              } disabled:pointer-events-none disabled:opacity-40`}
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage === page
+                                ? "border-[#E52323] bg-[#E52323] text-white"
+                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                                } disabled:pointer-events-none disabled:opacity-40`}
                             >
                               {page}
                             </button>
@@ -1753,180 +1988,83 @@ export default function ShopPage() {
   );
 }
 
-function FilterSidebar({
-  categories,
-  brands,
-  selectedBrand,
-  setSelectedBrand,
-  selectedCategory,
-  setSelectedCategory,
-  setCurrentPage,
-  setSortBy,
-  handleFilterChange,
-}) {
-
+function FilterSidebar({ categories, brands, selectedBrand, setSelectedBrand, selectedCategory, setSelectedCategory, setCurrentPage, setSortBy, handleFilterChange }) {
   const router = useRouter();
+  const handleRemoveFilter = () => router.replace('/products');
+  const selectCategory = (category) => {
+    setSelectedCategory(category);
+    setSortBy('');
+    setCurrentPage(1);
+    handleFilterChange();
 
-  const handleRemoveFilter = () => {
-    router.replace("/products");
+    if (typeof window !== "undefined") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
   };
-
   return (
     <div className="rounded-xl border border-[#E5E5E5] bg-white p-5 shadow-[0_6px_25px_rgba(0,0,0,0.04)]">
-      <div className="mb-6 flex items-center gap-2">
-        <ListFilter className="h-4 w-4 text-[#E52323]" />
-
-        <h2 className="text-sm font-bold uppercase tracking-[0.12em]">
-          Filters
-        </h2>
-      </div>
-
-      <div className="border-b border-[#E5E5E5] pb-6">
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#AAAAAA]">
-          Categories
-        </h3>
-
-        <div className="space-y-2">
-          {categories.map(
-            (category) => {
-              const active =
-                String(
-                  selectedCategory.id
-                ) ===
-                String(
-                  category.id
-                ) &&
-                selectedCategory.name ===
-                category.name;
-
-              return (
-                <button
-                  key={
-                    category.id ??
-                    "all"
-                  }
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(
-                      category
-                    );
-
-                    setSortBy("");
-
-                    setCurrentPage(
-                      1
-                    );
-                    handleFilterChange()
-                  }}
-                  className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${active
-                    ? "bg-[#E52323]/10 text-[#E52323]"
-                    : "text-[#525252] hover:bg-[#F5F5F5] hover:text-[#E52323]"
-                    }`}
-                >
-                  <span>
-                    {
-                      category.name
-                    }
-                  </span>
-
-                  {active && (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
-              );
-            }
-          )}
-        </div>
-      </div>
-
-      <div className="pt-6">
+      <div className="mb-6 flex items-center gap-2"><ListFilter className="h-4 w-4 text-[#E52323]" /><h2 className="text-sm font-bold uppercase tracking-[0.12em]">Filters</h2></div>
+      <div>
         <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#AAAAAA]">
           Brands
         </h3>
 
         <div className="space-y-2">
-          {brands.map(
-            (brand) => {
-              const active =
-                String(
-                  selectedBrand.id
-                ) ===
-                String(
-                  brand.id
-                ) &&
-                selectedBrand.name ===
-                brand.name;
+          {brands.map((brand) => {
+            const active =
+              String(selectedBrand?.id) === String(brand.id);
 
-              return (
-                <button
-                  key={
-                    brand.id ??
-                    "all"
+            return (
+              <button
+                key={brand.id ?? "all"}
+                type="button"
+                onClick={() => {
+                  setSelectedBrand({
+                    ...brand,
+                    id: brand.id,
+                    name: brand.name,
+                  });
+
+                  setSortBy("");
+                  setCurrentPage(1);
+
+                  handleFilterChange();
+
+                  if (typeof window !== "undefined") {
+                    window.scrollTo({
+                      top: 0,
+                      behavior: "smooth",
+                    });
                   }
-                  type="button"
-                  onClick={() => {
-                    setSelectedBrand(
-                      brand
-                    );
+                }}
+                className={`flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm transition ${active
+                  ? "font-semibold text-[#E52323]"
+                  : "text-[#525252] hover:text-[#E52323]"
+                  }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active
+                      ? "border-[#E52323] bg-[#E52323]"
+                      : "border-[#A3A3A3]"
+                      }`}
+                  >
+                    {active && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                    )}
+                  </span>
 
-                    handleFilterChange();
-
-                    setSortBy("");
-
-                    setCurrentPage(
-                      1
-                    );
-                  }}
-                  className="flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm text-[#525252] transition hover:text-[#E52323]"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active
-                        ? "border-[#E52323] bg-[#E52323]"
-                        : "border-[#A3A3A3]"
-                        }`}
-                    >
-                      {active && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                      )}
-                    </span>
-
-                    <span>
-                      {
-                        brand.name
-                      }
-                    </span>
-                  </div>
-                </button>
-              );
-            }
-          )}
+                  <span>{brand.name}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setSelectedCategory({
-            id: null,
-            name: "All Products",
-          });
-
-          handleRemoveFilter()
-
-          setSelectedBrand({
-            id: null,
-            name: "All Brands",
-          });
-
-          setSortBy("");
-
-          setCurrentPage(1);
-        }}
-        className="mt-7 w-full rounded-md border border-[#333333] py-2.5 text-xs font-semibold uppercase tracking-wide text-[#737373] transition hover:border-[#E52323] hover:text-[#E52323]"
-      >
-        Clear All Filters
-      </button>
+      <button type="button" onClick={() => { setSelectedCategory({ id: null, name: 'All Products', slug: 'all', children: [] }); setSelectedBrand({ id: null, name: 'All Brands' }); setSortBy(''); setCurrentPage(1); handleRemoveFilter(); }} className="mt-7 w-full rounded-md border border-[#333333] py-2.5 text-xs font-semibold uppercase tracking-wide text-[#737373] transition hover:border-[#E52323] hover:text-[#E52323]">Clear All Filters</button>
     </div>
   );
 }
