@@ -278,8 +278,8 @@ export default function Header() {
         console.error(
           "Product search error:",
           error?.response?.data ||
-            error?.message ||
-            error
+          error?.message ||
+          error
         );
 
         setSearchResults([]);
@@ -414,69 +414,68 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 font-oxanium backdrop-blur-md">
-  <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-    <div className="relative flex h-[76px] items-center">
+        <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+          <div className="relative flex h-[76px] items-center">
 
-      <button
-        type="button"
-        onClick={() => setMenuOpen(true)}
-        aria-label="Open menu"
-        aria-expanded={menuOpen}
-        className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white xl:hidden"
-      >
-        <Menu className="h-6 w-6 transition-transform duration-300 group-hover:scale-105" />
-      </button>
-
-      <nav className="hidden items-center gap-5 xl:flex 2xl:gap-8">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`relative whitespace-nowrap text-sm font-bold uppercase tracking-wide transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:text-primary hover:after:w-full ${
-                active
-                  ? "text-primary after:w-full"
-                  : "text-text-primary after:w-0"
-              }`}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white xl:hidden"
             >
-              {item.label}
+              <Menu className="h-6 w-6 transition-transform duration-300 group-hover:scale-105" />
+            </button>
+
+            <nav className="hidden items-center gap-5 xl:flex 2xl:gap-8">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`relative whitespace-nowrap text-sm font-bold uppercase tracking-wide transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:text-primary hover:after:w-full ${active
+                      ? "text-primary after:w-full"
+                      : "text-text-primary after:w-0"
+                      }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <Link
+              href="/"
+              className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+            >
+              <img
+                src="/images/c2c-logo-black.png"
+                alt="C2C Supplement"
+                className="h-10 w-auto object-contain sm:h-11 xl:h-13"
+              />
             </Link>
-          );
-        })}
-      </nav>
 
-      <Link
-        href="/"
-        className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-      >
-        <img
-          src="/images/c2c-logo-black.png"
-          alt="C2C Supplement"
-          className="h-10 w-auto object-contain sm:h-11 xl:h-13"
-        />
-      </Link>
+            <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2 xl:gap-5">
 
-      <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2 xl:gap-5">
+              <div
+                ref={desktopSearchRef}
+                className="relative hidden min-w-0 md:block"
+              >
+                <form
+                  onSubmit={handleSearchSubmit}
+                  className="relative"
+                >
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
 
-        <div
-          ref={desktopSearchRef}
-          className="relative hidden min-w-0 md:block"
-        >
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative"
-          >
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
-
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onFocus={handleSearchFocus}
-              placeholder="Search products..."
-              className="
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onFocus={handleSearchFocus}
+                    placeholder="Search products..."
+                    className="
                 h-11
                 w-[180px]
                 rounded-full
@@ -499,101 +498,101 @@ export default function Header() {
                 xl:text-sm
                 2xl:w-[320px]
               "
-            />
-          </form>
+                  />
+                </form>
 
-          {searchOpen && (
-            <SearchDropdown
-              results={searchResults}
-              loading={searchLoading}
-              query={searchQuery}
-              onProductClick={handleProductClick}
-            />
-          )}
+                {searchOpen && (
+                  <SearchDropdown
+                    results={searchResults}
+                    loading={searchLoading}
+                    query={searchQuery}
+                    onProductClick={handleProductClick}
+                    onClose={() => setSearchOpen(false)}
+                  />
+                )}
+              </div>
+
+              <Link
+                href="/wishlist"
+                aria-label={`Wishlist${wishlistCount
+                  ? `, ${wishlistCount} items`
+                  : ""
+                  }`}
+                className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+              >
+                <Heart className="h-6 w-6" />
+
+                {wishlistCount > 0 && (
+                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+                    {wishlistCount > 99
+                      ? "99+"
+                      : wishlistCount}
+                  </span>
+                )}
+              </Link>
+
+              <Link
+                href="/cart"
+                aria-label={`Cart${cartCount
+                  ? `, ${cartCount} items`
+                  : ""
+                  }`}
+                className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+              >
+                <ShoppingCart className="h-6 w-6" />
+
+                {cartCount > 0 && (
+                  <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+                    {cartCount > 99
+                      ? "99+"
+                      : cartCount}
+                  </span>
+                )}
+              </Link>
+
+              <Link
+                href="/account"
+                aria-label="Account"
+                className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
+              >
+                <User className="h-6 w-6" />
+              </Link>
+            </div>
+          </div>
+
+          <div
+            ref={mobileSearchRef}
+            className="relative pb-3 md:hidden"
+          >
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative"
+            >
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={handleSearchFocus}
+                placeholder="Search products..."
+                className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-4 text-xs font-semibold text-text-primary outline-none transition-colors focus:border-primary"
+              />
+            </form>
+
+            {searchOpen && (
+              <SearchDropdown
+                results={searchResults}
+                loading={searchLoading}
+                query={searchQuery}
+                onProductClick={handleProductClick}
+                onClose={() => setSearchOpen(false)}
+                mobile
+              />
+            )}
+          </div>
         </div>
-
-        <Link
-          href="/wishlist"
-          aria-label={`Wishlist${
-            wishlistCount
-              ? `, ${wishlistCount} items`
-              : ""
-          }`}
-          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-        >
-          <Heart className="h-6 w-6" />
-
-          {wishlistCount > 0 && (
-            <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
-              {wishlistCount > 99
-                ? "99+"
-                : wishlistCount}
-            </span>
-          )}
-        </Link>
-
-        <Link
-          href="/cart"
-          aria-label={`Cart${
-            cartCount
-              ? `, ${cartCount} items`
-              : ""
-          }`}
-          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-        >
-          <ShoppingCart className="h-6 w-6" />
-
-          {cartCount > 0 && (
-            <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
-              {cartCount > 99
-                ? "99+"
-                : cartCount}
-            </span>
-          )}
-        </Link>
-
-        <Link
-          href="/account"
-          aria-label="Account"
-          className="relative flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-text-primary transition-all duration-300 hover:bg-primary hover:text-white"
-        >
-          <User className="h-6 w-6" />
-        </Link>
-      </div>
-    </div>
-
-    <div
-      ref={mobileSearchRef}
-      className="relative pb-3 md:hidden"
-    >
-      <form
-        onSubmit={handleSearchSubmit}
-        className="relative"
-      >
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          onFocus={handleSearchFocus}
-          placeholder="Search products..."
-          className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-4 text-xs font-semibold text-text-primary outline-none transition-colors focus:border-primary"
-        />
-      </form>
-
-      {searchOpen && (
-        <SearchDropdown
-          results={searchResults}
-          loading={searchLoading}
-          query={searchQuery}
-          onProductClick={handleProductClick}
-          mobile
-        />
-      )}
-    </div>
-  </div>
-</header>
+      </header>
 
       {menuOpen && (
         <div className="fixed inset-0 z-[100]">
@@ -662,21 +661,30 @@ export default function Header() {
   );
 }
 
-function SearchDropdown({
-  results,
-  loading,
-  query,
-  onProductClick,
-  mobile = false,
-}) {
+function SearchDropdown({ results,loading,query,onProductClick,onClose,mobile = false,}) {
   return (
     <div
-      className={`absolute left-0 right-0 top-[calc(100%+8px)] z-[80] overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white shadow-[0_15px_50px_rgba(0,0,0,0.15)] ${
-        mobile ? "max-h-[70vh]" : "w-[360px]"
-      }`}
+      className={`
+        absolute
+        left-0
+        right-0
+        top-[calc(100%+8px)]
+        z-[80]
+        flex
+        max-h-[70vh]
+        flex-col
+        overflow-hidden
+        rounded-2xl
+        border
+        border-[#E5E5E5]
+        bg-white
+        shadow-[0_15px_50px_rgba(0,0,0,0.15)]
+        ${mobile ? "w-full" : "w-[360px]"}
+      `}
     >
+
       {loading && (
-        <div className="flex items-center justify-center gap-2 px-5 py-6 text-xs font-semibold text-[#737373]">
+        <div className="flex shrink-0 items-center justify-center gap-2 px-5 py-6 text-xs font-semibold text-[#737373]">
           <Loader2 className="h-4 w-4 animate-spin text-[#E52323]" />
           Searching products...
         </div>
@@ -685,7 +693,7 @@ function SearchDropdown({
       {!loading &&
         query.trim() &&
         results.length === 0 && (
-          <div className="px-5 py-7 text-center">
+          <div className="shrink-0 px-5 py-7 text-center">
             <SearchIcon className="mx-auto h-5 w-5 text-[#B5B5B5]" />
 
             <p className="mt-2 text-sm font-bold text-[#111111]">
@@ -699,90 +707,111 @@ function SearchDropdown({
         )}
 
       {!loading && results.length > 0 && (
-        <div className="max-h-[440px] overflow-y-auto p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
           <div className="px-3 py-2">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#737373]">
               Search Results
             </p>
           </div>
 
-          {results.slice(0, 8).map(
-            (product, index) => {
-              const slug =
-                getProductSlug(product);
+          {results.slice(0, 8).map((product, index) => {
+            const slug = getProductSlug(product);
+            const image = getProductImage(product);
 
-              const image =
-                getProductImage(product);
+            const productKey =
+              product?.id ??
+              product?.productId ??
+              product?._id ??
+              slug ??
+              index;
 
-              const productKey =
-                product?.id ??
-                product?.productId ??
-                product?._id ??
-                slug ??
-                index;
+            return (
+              <button
+                key={productKey}
+                type="button"
+                onClick={() => onProductClick(product)}
+                disabled={!slug}
+                className="
+                  flex
+                  w-full
+                  items-center
+                  gap-3
+                  rounded-xl
+                  p-3
+                  text-left
+                  transition-colors
+                  duration-200
+                  hover:bg-[#F7F7F7]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
 
-              return (
-                <button
-                  key={productKey}
-                  type="button"
-                  onClick={() =>
-                    onProductClick(product)
-                  }
-                  disabled={!slug}
-                  className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors duration-200 hover:bg-[#F7F7F7] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {image ? (
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E5E5E5] bg-white">
-                      <img
-                        src={image}
-                        alt={
-                          product?.name ||
-                          "Product"
-                        }
-                        className="h-full w-full object-contain p-1.5"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-14 w-14 shrink-0 rounded-lg border border-[#E5E5E5] bg-[#F7F7F7]" />
-                  )}
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-black uppercase text-[#111111]">
-                      {product?.name ||
+                {image ? (
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E5E5E5] bg-white">
+                    <img
+                      src={image}
+                      alt={
+                        product?.name ||
                         product?.title ||
-                        "Product"}
-                    </p>
-
-                    {product?.brand?.name && (
-                      <p className="mt-0.5 truncate text-[10px] text-[#737373]">
-                        {product.brand.name}
-                      </p>
-                    )}
+                        "Product"
+                      }
+                      className="h-full w-full object-contain p-1.5"
+                    />
                   </div>
+                ) : (
+                  <div className="h-14 w-14 shrink-0 rounded-lg border border-[#E5E5E5] bg-[#F7F7F7]" />
+                )}
 
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-[#A3A3A3]" />
-                </button>
-              );
-            }
-          )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-black uppercase text-[#111111]">
+                    {product?.name ||
+                      product?.title ||
+                      "Product"}
+                  </p>
+
+                  {product?.brand?.name && (
+                    <p className="mt-0.5 truncate text-[10px] text-[#737373]">
+                      {product.brand.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Arrow */}
+                <ArrowUpRight className="h-4 w-4 shrink-0 text-[#A3A3A3]" />
+              </button>
+            );
+          })}
         </div>
       )}
+
 
       {!loading && results.length > 0 && (
         <Link
           href={`/products?search=${encodeURIComponent(
             query.trim()
           )}`}
-          onClick={() => {
-            setTimeout(() => {
-              window.dispatchEvent(
-                new Event(
-                  "close-product-search"
-                )
-              );
-            }, 0);
-          }}
-          className="flex h-11 items-center justify-center border-t border-[#E5E5E5] text-[10px] font-black uppercase tracking-wide text-[#E52323] transition-colors hover:bg-[#F7F7F7]"
+          onClick={onClose}
+          className="
+            relative
+            z-10
+            flex
+            h-12
+            shrink-0
+            items-center
+            justify-center
+            border-t
+            border-[#E5E5E5]
+            bg-white
+            px-4
+            text-[10px]
+            font-black
+            uppercase
+            tracking-wide
+            text-[#E52323]
+            transition-colors
+            hover:bg-[#F7F7F7]
+          "
         >
           View All Search Results
         </Link>
