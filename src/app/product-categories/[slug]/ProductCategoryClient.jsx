@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -26,32 +26,12 @@ const createSlug = (value = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const normalizeCategoryResponse = (response) => {
-  if (!response) {
-    return null;
-  }
-
-  const source =
-    response?.data?.category ||
-    response?.category ||
-    response?.data ||
-    response;
-
-  if (!source || typeof source !== "object") {
-    return null;
-  }
-
-  const category = Array.isArray(source)
-    ? source[0]
-    : Array.isArray(source?.categories)
-      ? source.categories[0]
-      : source;
-
+const normalizeCategory = (category) => {
   if (!category || typeof category !== "object") {
     return null;
   }
 
-  const categorySlug =
+  const slug =
     category?.slug ||
     createSlug(
       category?.name ||
@@ -65,31 +45,50 @@ const normalizeCategoryResponse = (response) => {
       category?.categoryId ??
       category?._id ??
       null,
+
     title:
       category?.name ||
       category?.title ||
       category?.categoryName ||
       "Unnamed Category",
+
     description:
       category?.description ||
       category?.shortDescription ||
       "",
-    slug: categorySlug,
+
+    slug,
+
     image:
       category?.image ||
       category?.featuredimg ||
       category?.featuredImage ||
       category?.thumbnail ||
       null,
+
     children: Array.isArray(category?.children)
       ? category.children
       : [],
+
     productCount:
       category?.productCount ??
       category?.productsCount ??
       category?.count ??
       null,
   };
+};
+
+const normalizeCategoryResponse = (response) => {
+  if (!response) {
+    return null;
+  }
+
+  const category =
+    response?.category ||
+    response?.data?.category ||
+    null;
+
+  return normalizeCategory(category);
 };
 
 const normalizeCategories = (source) => {
@@ -105,48 +104,17 @@ const normalizeCategories = (source) => {
 
   return apiCategories
     .filter(Boolean)
-    .map((category) => {
-      const slug =
-        category?.slug ||
-        createSlug(
-          category?.name ||
-            category?.title ||
-            category?.categoryName
-        );
-
-      return {
-        id:
-          category?.id ??
-          category?.categoryId ??
-          category?._id ??
-          null,
-        title:
-          category?.name ||
-          category?.title ||
-          category?.categoryName ||
-          "Unnamed Category",
-        description:
-          category?.description ||
-          category?.shortDescription ||
-          "",
-        slug,
-        image:
-          category?.image ||
-          category?.featuredimg ||
-          category?.featuredImage ||
-          category?.thumbnail ||
-          null,
-        productCount:
-          category?.productCount ??
-          category?.productsCount ??
-          category?.count ??
-          null,
-      };
-    })
-    .filter((category) => category.slug);
+    .map(normalizeCategory)
+    .filter(
+      (category) =>
+        category?.slug
+    );
 };
 
-const getPageNumbers = (currentPage, totalPages) => {
+const getPageNumbers = (
+  currentPage,
+  totalPages
+) => {
   if (totalPages <= 1) {
     return [];
   }
@@ -180,42 +148,105 @@ const getPageNumbers = (currentPage, totalPages) => {
 
   const sortedPages = [...pages]
     .filter(
-      (page) => page >= 1 && page <= totalPages
+      (page) =>
+        page >= 1 &&
+        page <= totalPages
     )
     .sort((a, b) => a - b);
 
   const result = [];
 
-  sortedPages.forEach((page, index) => {
-    if (index > 0) {
-      const previous = sortedPages[index - 1];
+  sortedPages.forEach(
+    (page, index) => {
+      if (index > 0) {
+        const previous =
+          sortedPages[index - 1];
 
-      if (page - previous > 1) {
-        result.push("ellipsis-" + page);
+        if (page - previous > 1) {
+          result.push(
+            `ellipsis-${page}`
+          );
+        }
       }
-    }
 
-    result.push(page);
-  });
+      result.push(page);
+    }
+  );
 
   return result;
 };
 
-export default function ProductDetailsCategory({ initialCategory = null,initialSlug = "",}) {
+export default function ProductDetailsCategory({
+  initialCategory = null,
+  initialSlug = "",
+}) {
   const slug = initialSlug;
 
   const dispatch = useDispatch();
 
+  const initialCategoryObject =
+    initialCategory?.category ||
+    null;
+
   const [categoryData, setCategoryData] =
-    useState(initialCategory);
+    useState(
+      normalizeCategory(
+        initialCategoryObject
+      )
+    );
 
-  const [categoryApiLoading, setCategoryApiLoading] =
-    useState(!initialCategory);
+  const [categoryProducts, setCategoryProducts] =
+    useState(
+      Array.isArray(
+        initialCategory?.products
+      )
+        ? initialCategory.products
+        : []
+    );
 
-  const [categoryApiError, setCategoryApiError] =
-    useState(null);
+  const [pagination, setPagination] =
+    useState({
+      count:
+        Number(
+          initialCategory?.count
+        ) || 0,
 
-  const [currentPage, setCurrentPage] = useState(1);
+      total:
+        Number(
+          initialCategory?.total
+        ) || 0,
+
+      page:
+        Number(
+          initialCategory?.page
+        ) || 1,
+
+      totalPages:
+        Number(
+          initialCategory?.totalPages
+        ) || 1,
+    });
+
+  const [
+    categoryApiLoading,
+    setCategoryApiLoading,
+  ] = useState(
+    !initialCategory
+  );
+
+  const [
+    categoryApiError,
+    setCategoryApiError,
+  ] = useState(null);
+
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(
+    Number(
+      initialCategory?.page
+    ) || 1
+  );
 
   const productAdState = useSelector(
     (state) => state.productAd
@@ -238,29 +269,67 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
     error: productError,
   } = productState || {};
 
-  /*
-   * Load product ads/categories.
-   */
   useEffect(() => {
     if (!adsLoaded && !adsLoading) {
-      dispatch(getAllProductAds());
+      dispatch(
+        getAllProductAds()
+      );
     }
-  }, [dispatch, adsLoaded, adsLoading]);
+  }, [
+    dispatch,
+    adsLoaded,
+    adsLoading,
+  ]);
 
-  /*
-   * Category data:
-   *
-   * 1. Use server-provided category first.
-   * 2. Only call the API from the client when
-   *    the server did not provide category data.
-   *
-   * This prevents an unnecessary duplicate request
-   * on the normal page load.
-   */
   useEffect(() => {
     if (initialCategory) {
-      setCategoryData(initialCategory);
-      setCategoryApiLoading(false);
+      const category =
+        normalizeCategory(
+          initialCategory?.category
+        );
+
+      setCategoryData(category);
+
+      setCategoryProducts(
+        Array.isArray(
+          initialCategory?.products
+        )
+          ? initialCategory.products
+          : []
+      );
+
+      setPagination({
+        count:
+          Number(
+            initialCategory?.count
+          ) || 0,
+
+        total:
+          Number(
+            initialCategory?.total
+          ) || 0,
+
+        page:
+          Number(
+            initialCategory?.page
+          ) || 1,
+
+        totalPages:
+          Number(
+            initialCategory?.totalPages
+          ) || 1,
+      });
+
+      setCurrentPage(
+        Number(
+          initialCategory?.page
+        ) || 1
+      );
+
+      setCategoryApiLoading(
+        false
+      );
+
       setCategoryApiError(null);
 
       return;
@@ -268,6 +337,7 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
 
     if (!slug) {
       setCategoryData(null);
+      setCategoryProducts([]);
       setCategoryApiLoading(false);
       setCategoryApiError(
         "Category slug is missing."
@@ -278,116 +348,179 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
 
     let active = true;
 
-    const loadCategory = async () => {
-      try {
-        setCategoryApiLoading(true);
-        setCategoryApiError(null);
-
-        const response =
-          await getCategoryBySlug(slug);
-
-        if (!active) {
-          return;
-        }
-
-        const normalized =
-          normalizeCategoryResponse(response);
-
-        if (!normalized) {
-          setCategoryData(null);
-          setCategoryApiError(
-            "Category not found."
+    const loadCategory =
+      async () => {
+        try {
+          setCategoryApiLoading(
+            true
           );
 
-          return;
+          setCategoryApiError(
+            null
+          );
+
+          const response =
+            await getCategoryBySlug(
+              slug
+            );
+
+          if (!active) {
+            return;
+          }
+
+          const category =
+            normalizeCategoryResponse(
+              response
+            );
+
+          if (!category) {
+            setCategoryData(null);
+            setCategoryProducts([]);
+            setCategoryApiError(
+              "Category not found."
+            );
+
+            return;
+          }
+
+          setCategoryData(
+            category
+          );
+
+          setCategoryProducts(
+            Array.isArray(
+              response?.products
+            )
+              ? response.products
+              : []
+          );
+
+          setPagination({
+            count:
+              Number(
+                response?.count
+              ) || 0,
+
+            total:
+              Number(
+                response?.total
+              ) || 0,
+
+            page:
+              Number(
+                response?.page
+              ) || 1,
+
+            totalPages:
+              Number(
+                response?.totalPages
+              ) || 1,
+          });
+
+          setCurrentPage(
+            Number(
+              response?.page
+            ) || 1
+          );
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          console.error(
+            "getCategoryBySlug:",
+            error
+          );
+
+          setCategoryData(null);
+          setCategoryProducts([]);
+
+          setCategoryApiError(
+            error?.response?.data
+              ?.message ||
+              error?.message ||
+              "Failed to load category"
+          );
+        } finally {
+          if (active) {
+            setCategoryApiLoading(
+              false
+            );
+          }
         }
-
-        setCategoryData(normalized);
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-
-        console.error(
-          "getCategoryBySlug:",
-          error
-        );
-
-        setCategoryData(null);
-
-        setCategoryApiError(
-          error?.response?.data?.message ||
-            error?.message ||
-            "Failed to load category"
-        );
-      } finally {
-        if (active) {
-          setCategoryApiLoading(false);
-        }
-      }
-    };
+      };
 
     loadCategory();
 
     return () => {
       active = false;
     };
-  }, [slug, initialCategory]);
+  }, [
+    slug,
+    initialCategory,
+  ]);
 
-  /*
-   * Categories available from Redux.
-   */
-  const categories = normalizeCategories(
-    productCateogry ?? productCategory
-  );
+  const categories =
+    normalizeCategories(
+      productCateogry ??
+        productCategory
+    );
 
-  /*
-   * Normalize current slug for comparisons.
-   */
-  const normalizedSlug = String(slug || "")
-    .toLowerCase()
-    .trim();
+  const normalizedSlug =
+    String(slug || "")
+      .toLowerCase()
+      .trim();
 
-  /*
-   * Fallback category from Redux.
-   */
   const fallbackCategory =
-    slug && categories.length > 0
+    slug &&
+    categories.length > 0
       ? categories.find(
           (item) =>
-            String(item.slug).toLowerCase() ===
+            String(
+              item.slug
+            ).toLowerCase() ===
             normalizedSlug
         ) || null
       : null;
 
-  /*
-   * Server category has priority.
-   * Redux category is only the fallback.
-   */
   const category =
-    categoryData || fallbackCategory;
+    categoryData ||
+    fallbackCategory;
 
-  /*
-   * Resolve category ID.
-   */
   const categoryId =
-    category?.id ??
-    categoryData?.categoryId ??
-    categoryData?._id ??
-    null;
+    Number(
+      category?.id ??
+        category?.categoryId ??
+        category?._id
+    ) || null;
 
-  /*
-   * Reset pagination whenever the category changes.
-   */
   useEffect(() => {
-    setCurrentPage(1);
-  }, [categoryId]);
+    if (categoryId) {
+      setCurrentPage(
+        initialCategory
+          ? Number(
+              initialCategory?.page
+            ) || 1
+          : 1
+      );
+    }
+  }, [
+    categoryId,
+    initialCategory,
+  ]);
 
-  /*
-   * Load products for the selected category.
-   */
   useEffect(() => {
     if (!categoryId) {
+      return;
+    }
+
+    if (
+      initialCategory &&
+      currentPage ===
+        Number(
+          initialCategory?.page
+        )
+    ) {
       return;
     }
 
@@ -404,88 +537,93 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
     dispatch,
     categoryId,
     currentPage,
+    initialCategory,
   ]);
 
-  /*
-   * Normalize products from different API response shapes.
-   */
-  let products = [];
+  const reduxProducts =
+    Array.isArray(productList)
+      ? productList
+      : Array.isArray(
+          productList?.products
+        )
+        ? productList.products
+        : Array.isArray(
+            productList?.data
+          )
+          ? productList.data
+          : Array.isArray(
+              productList?.data
+                ?.products
+            )
+            ? productList.data
+                .products
+            : [];
 
-  if (Array.isArray(productList)) {
-    products = productList;
-  } else if (
-    Array.isArray(productList?.products)
-  ) {
-    products = productList.products;
-  } else if (
-    Array.isArray(productList?.data)
-  ) {
-    products = productList.data;
-  } else if (
-    Array.isArray(
-      productList?.data?.products
-    )
-  ) {
-    products =
-      productList.data.products;
-  }
+  const products =
+    initialCategory &&
+    currentPage ===
+      Number(
+        initialCategory?.page
+      )
+      ? categoryProducts
+      : reduxProducts;
 
-  /*
-   * Calculate total product count.
-   */
   const totalProducts =
-    productList?.total ??
-    productList?.count ??
-    productList?.totalProducts ??
-    category?.productCount ??
-    products.length;
+    initialCategory &&
+    currentPage ===
+      Number(
+        initialCategory?.page
+      )
+      ? pagination.total
+      : Number(
+          productList?.total ??
+            productList?.count ??
+            productList?.totalProducts ??
+            category?.productCount ??
+            products.length
+        ) || 0;
 
-  /*
-   * Calculate total pages.
-   */
   const totalPages =
-    Number(productList?.totalPages) ||
-    Math.ceil(
-      Number(totalProducts) / PAGE_SIZE
-    ) ||
-    1;
+    initialCategory &&
+    currentPage ===
+      Number(
+        initialCategory?.page
+      )
+      ? pagination.totalPages
+      : Number(
+          productList?.totalPages
+        ) ||
+        Math.max(
+          1,
+          Math.ceil(
+            totalProducts /
+              PAGE_SIZE
+          )
+        );
 
-  /*
-   * Current page returned by the API.
-   */
   const serverPage =
-    productList?.page ??
-    currentPage;
+    initialCategory &&
+    currentPage ===
+      Number(
+        initialCategory?.page
+      )
+      ? pagination.page
+      : Number(
+          productList?.page
+        ) || currentPage;
 
-  /*
-   * Other categories.
-   *
-   * Kept here in case this list is used elsewhere
-   * in the component/UI.
-   */
-  const otherCategories =
-    categories.filter(
-      (item) =>
-        item.slug &&
-        String(item.slug).toLowerCase() !==
-          normalizedSlug
+  const pageNumbers =
+    getPageNumbers(
+      serverPage,
+      totalPages
     );
 
-  /*
-   * Pagination buttons.
-   */
-  const pageNumbers = getPageNumbers(
-    Number(serverPage) || currentPage,
-    Number(totalPages) || 1
-  );
-
-  /*
-   * Handle pagination.
-   */
-  const handlePageChange = (page) => {
+  const handlePageChange = (
+    page
+  ) => {
     if (
       page < 1 ||
-      page > Number(totalPages) ||
+      page > totalPages ||
       page === currentPage ||
       productLoading
     ) {
@@ -500,9 +638,6 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
     });
   };
 
-  /*
-   * Category loading state.
-   */
   if (
     categoryApiLoading &&
     !category
@@ -517,28 +652,23 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({
               length: 8,
-            }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[320px] animate-pulse rounded-2xl bg-card"
-              />
-            ))}
+            }).map(
+              (_, index) => (
+                <div
+                  key={index}
+                  className="h-[320px] animate-pulse rounded-2xl bg-card"
+                />
+              )
+            )}
           </div>
         </div>
       </main>
     );
   }
 
-  /*
-   * Category not found.
-   */
   if (
     !categoryApiLoading &&
-    !category &&
-    (
-      categoryApiError ||
-      categories.length === 0
-    )
+    !category
   ) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface-muted px-5">
@@ -568,12 +698,8 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
     );
   }
 
-  /*
-   * Main category page.
-   */
   return (
     <main className="min-h-screen bg-surface-muted">
-      {/* Category Hero */}
       <section className="relative overflow-hidden border-b border-border bg-black">
         {category?.image && (
           <div
@@ -623,7 +749,6 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
         </div>
       </section>
 
-      {/* Products */}
       <section className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -650,23 +775,37 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
           </Link>
         </div>
 
-        {/* Product Loading */}
-        {productLoading && (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-            {Array.from({
-              length: PAGE_SIZE,
-            }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[330px] animate-pulse rounded-2xl border border-border bg-card"
-              />
-            ))}
-          </div>
-        )}
+        {productLoading &&
+          !(
+            initialCategory &&
+            currentPage ===
+              Number(
+                initialCategory?.page
+              )
+          ) && (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+              {Array.from({
+                length: PAGE_SIZE,
+              }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="h-[330px] animate-pulse rounded-2xl border border-border bg-card"
+                  />
+                )
+              )}
+            </div>
+          )}
 
-        {/* Product Error */}
         {!productLoading &&
-          productError && (
+          productError &&
+          !(
+            initialCategory &&
+            currentPage ===
+              Number(
+                initialCategory?.page
+              )
+          ) && (
             <div className="rounded-2xl border border-border bg-card p-8 text-center">
               <Package className="mx-auto h-10 w-10 text-primary" />
 
@@ -680,7 +819,6 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
             </div>
           )}
 
-        {/* No Products */}
         {!productLoading &&
           !productError &&
           products.length === 0 && (
@@ -692,8 +830,7 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
               </h3>
 
               <p className="mt-2 text-sm text-text-secondary">
-                There are currently no products available
-                in this category.
+                There are currently no products available in this category.
               </p>
 
               <Link
@@ -707,7 +844,6 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
             </div>
           )}
 
-        {/* Product Grid */}
         {!productLoading &&
           !productError &&
           products.length > 0 && (
@@ -728,98 +864,94 @@ export default function ProductDetailsCategory({ initialCategory = null,initialS
                 )}
               </div>
 
-              {/* Pagination */}
-              {Number(totalPages) > 1 && (
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePageChange(
-                        currentPage - 1
-                      )
-                    }
-                    disabled={
-                      currentPage <= 1 ||
-                      productLoading
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
+              {totalPages > 1 && (
+                <>
+                  <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handlePageChange(
+                          currentPage - 1
+                        )
+                      }
+                      disabled={
+                        currentPage <= 1 ||
+                        productLoading
+                      }
+                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
 
-                  {pageNumbers.map(
-                    (page) => {
-                      if (
-                        typeof page !==
-                        "number"
-                      ) {
+                    {pageNumbers.map(
+                      (page) => {
+                        if (
+                          typeof page !==
+                          "number"
+                        ) {
+                          return (
+                            <span
+                              key={page}
+                              className="flex h-10 w-10 items-center justify-center text-sm font-bold text-text-secondary"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+
+                        const active =
+                          page ===
+                          currentPage;
+
                         return (
-                          <span
+                          <button
                             key={page}
-                            className="flex h-10 w-10 items-center justify-center text-sm font-bold text-text-secondary"
+                            type="button"
+                            onClick={() =>
+                              handlePageChange(
+                                page
+                              )
+                            }
+                            disabled={
+                              productLoading
+                            }
+                            className={`flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-black transition ${
+                              active
+                                ? "bg-primary text-white"
+                                : "border border-border bg-card text-text-primary hover:border-primary hover:text-primary"
+                            }`}
                           >
-                            ...
-                          </span>
+                            {page}
+                          </button>
                         );
                       }
+                    )}
 
-                      const active =
-                        page ===
-                        currentPage;
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handlePageChange(
+                          currentPage + 1
+                        )
+                      }
+                      disabled={
+                        currentPage >=
+                          totalPages ||
+                        productLoading
+                      }
+                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
 
-                      return (
-                        <button
-                          key={page}
-                          type="button"
-                          onClick={() =>
-                            handlePageChange(
-                              page
-                            )
-                          }
-                          disabled={
-                            productLoading
-                          }
-                          className={`flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-black transition ${
-                            active
-                              ? "bg-primary text-white"
-                              : "border border-border bg-card text-text-primary hover:border-primary hover:text-primary"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    }
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePageChange(
-                        currentPage + 1
-                      )
-                    }
-                    disabled={
-                      currentPage >=
-                        Number(
-                          totalPages
-                        ) ||
-                      productLoading
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Page Indicator */}
-              {Number(totalPages) > 1 && (
-                <div className="mt-4 text-center text-xs font-bold uppercase tracking-wide text-text-secondary">
-                  Page {currentPage} of{" "}
-                  {totalPages}
-                </div>
+                  <div className="mt-4 text-center text-xs font-bold uppercase tracking-wide text-text-secondary">
+                    Page {currentPage} of{" "}
+                    {totalPages}
+                  </div>
+                </>
               )}
             </>
           )}

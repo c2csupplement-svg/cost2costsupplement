@@ -1,6 +1,7 @@
 // lib/seo.js
 
 export function getSEOMetadata(seo) {
+
   if (!seo) {
     console.warn("SEO data not provided");
     return {};
@@ -34,8 +35,8 @@ export function getSEOMetadata(seo) {
   }
 
   return {
-    title: seo.title || "",
-    description: seo.description || "",
+    title: seo.title ||seo.metaTitle|| "",
+    description: seo.description ||seo.metaDescription || "",
     keywords: seo.keywords || "",
 
     ...(seo.canonical && {

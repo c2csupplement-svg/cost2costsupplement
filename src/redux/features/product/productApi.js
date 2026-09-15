@@ -32,7 +32,6 @@ export const getProductFilterApi = async (
   limit = 20
 ) => {
 
-
   try {
     const params = {
       page,

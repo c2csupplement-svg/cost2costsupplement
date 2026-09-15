@@ -13,11 +13,11 @@ import {
 
 const shopLinks = [
   { label: "All Products", href: "/products" },
-  { label: "Sports Nutrition", href: "/product-categories/sports-nutrition" },
-  { label: "Amino Acid", href: "/product-categories/amino-acid" },
-  { label: "Healthy Foods", href: "/product-categories/healthy-foods" },
-  { label: "Trial Pack", href: "/product-categories/trial-pack" },
-  { label: "Hormonal Support", href: "/product-categories/hormonal-support" },
+  { label: "Pre Workout Energy", href: "/product-categories/pre-workout-energy" },
+  { label: "Vitamins Daily Health", href: "/product-categories/vitamins-daily-health" },
+  { label: "Liver Detox", href: "/product-categories/liver--detox" },
+  { label: "Muscle Strength", href: "/product-categories/muscle-strength" },
+  { label: "Weight Loss", href: "/product-categories/weight-loss" },
 ];
 
 const companyLinks = [

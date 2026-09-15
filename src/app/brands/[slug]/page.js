@@ -20,11 +20,7 @@ const getBrand = cache(async (slug) => {
       12
     );
 
-    return (
-      response?.data ??
-      response ??
-      null
-    );
+    return (response ??null);
   } catch (error) {
     console.error(
       "Failed to load brand:",

@@ -39,7 +39,7 @@ const getCategory = cache(async (slug) => {
   try {
     const response = await getCategoryBySlug(slug);
 
-    return normalizeCategoryResponse(response);
+    return response;
   } catch (error) {
     console.error(
       "Category detail error:",
@@ -60,8 +60,9 @@ export async function generateMetadata({ params }) {
     : resolvedParams?.slug;
 
   const category = await getCategory(slug);
+  const normalize = await normalizeCategoryResponse(category)
 
-  return getSEOMetadata(category?.seo);
+  return getSEOMetadata(normalize.seo);
 }
 
 export default async function CategoryDetailsPage({
