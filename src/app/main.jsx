@@ -9,6 +9,7 @@ import ShopByCategory from "@/components/home/ShopByCategory";
 import BrandsSection from "@/components/home/BrandsSection";
 import PromoBanner from "@/components/home/PromoBanner";
 import WhyC2C from "@/components/home/WhyC2C";
+import { ShortInform } from "@/components/home/ShortInform";
 
 import { productSections } from "@/data/productSections";
 import { getAllProductAds } from "../redux/features/adProducts/adProductAction";
@@ -181,6 +182,8 @@ export default function Home() {
           background="charcoal"
         />
       )}
+
+      <ShortInform/>
 
       <BrandsSection />
 
