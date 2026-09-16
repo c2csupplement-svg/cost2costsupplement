@@ -208,24 +208,33 @@ export default function OverviewSection({
                 </div>
               </div>
 
-              <div className="flex w-full gap-2.5 sm:w-auto ">
+              <div className="oxanium flex w-full flex-row items-center gap-2 sm:w-auto sm:gap-3">
+
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowProfileEdit(true)
-                  }
-                  className="oxanium cursor-pointer inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.08] px-5 text-sm font-bold text-white backdrop-blur transition hover:border-white/30 hover:bg-white hover:text-[#111] sm:w-auto"
+                  onClick={() => setShowProfileEdit(true)}
+                  className="group relative flex h-[48px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-[14px] border border-white/20 bg-white/[0.08] px-3 text-white backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white hover:text-[#111] hover:shadow-[0_8px_20px_rgba(255,255,255,0.15)] active:scale-[0.97] sm:h-[54px] sm:flex-none sm:w-[151px] sm:rounded-[17px] sm:px-4"
                 >
-                  <User className="h-4 w-4" />
-                  Edit Profile
+                  <User className="h-[15px] w-[15px] shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 sm:h-[17px] sm:w-[17px]" />
+                  <span className="text-center text-[13px] font-bold leading-[1.15] sm:text-[14px]">
+                    Edit
+                    <br className="hidden sm:block" />
+                    <span className="sm:hidden"> </span>
+                    Profile
+                  </span>
                 </button>
 
                 <Link
                   href="/products"
-                  className="oxanium cursor-pointer inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#e52323] px-5 text-sm font-bold text-white shadow-md shadow-[#e52323]/30 transition hover:bg-white hover:text-[#111] sm:w-auto"
+                  className="group relative flex h-[48px] flex-1 items-center justify-center overflow-hidden rounded-[14px] bg-[#ed2428] px-3 text-white shadow-[0_8px_20px_rgba(237,36,40,0.25)] transition-all duration-300 hover:bg-white hover:text-[#111] hover:shadow-[0_8px_24px_rgba(0,0,0,0.15)] active:scale-[0.97] sm:h-[54px] sm:flex-none sm:w-[142px] sm:rounded-[17px] sm:px-4"
                 >
-                  Shop Now
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="text-center text-[13px] font-bold leading-[1.15] pr-4 sm:pr-0 sm:text-[14px]">
+                    Shop
+                    <br className="hidden sm:block" />
+                    <span className="sm:hidden"> </span>
+                    Now
+                  </span>
+                  <ArrowRight className="absolute right-[14px] h-[15px] w-[15px] shrink-0 transition-transform duration-300 group-hover:translate-x-1.5 sm:right-[18px] sm:h-[17px] sm:w-[17px]" />
                 </Link>
               </div>
             </div>
@@ -305,8 +314,8 @@ export default function OverviewSection({
             </div>
           ) : (
             <div className="divide-y divide-black/5 cursor-pointer" onClick={() =>
-                setActiveSection("Orders")
-              }>
+              setActiveSection("Orders")
+            }>
               {recentOrders.map((order) => (
                 <OrderRow
                   key={order?.id}
@@ -651,17 +660,15 @@ function QuickAction({
 }) {
   return (
     <div
-      className={`group flex min-w-0 flex-1 flex-col rounded-xl border p-3 transition sm:rounded-2xl sm:p-6 ${
-        dark
+      className={`group flex min-w-0 flex-1 flex-col rounded-xl border p-3 transition sm:rounded-2xl sm:p-6 ${dark
           ? "border-[#111] bg-[#111] text-white hover:shadow-lg hover:shadow-black/10"
           : "border-black/10 bg-white text-[#111] hover:border-black/20 hover:shadow-sm"
-      }`}
+        }`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-xl ${
-            dark ? "bg-white/10 text-[#e52323]" : "bg-[#111] text-white"
-          }`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-xl ${dark ? "bg-white/10 text-[#e52323]" : "bg-[#111] text-white"
+            }`}
         >
           <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
@@ -672,9 +679,8 @@ function QuickAction({
       </div>
 
       <p
-        className={`oxanium mt-2 line-clamp-2 text-[11px] leading-4 sm:mt-3 sm:text-sm sm:leading-6 ${
-          dark ? "text-white/50" : "text-gray-500"
-        }`}
+        className={`oxanium mt-2 line-clamp-2 text-[11px] leading-4 sm:mt-3 sm:text-sm sm:leading-6 ${dark ? "text-white/50" : "text-gray-500"
+          }`}
       >
         {description}
       </p>
@@ -682,9 +688,8 @@ function QuickAction({
       <button
         type="button"
         onClick={onClick}
-        className={`oxanium cursor-pointer mt-auto inline-flex min-h-[36px] items-center gap-1.5 pt-3 text-xs font-bold transition active:opacity-70 sm:min-h-0 sm:gap-2 sm:pt-4 sm:text-sm sm:group-hover:gap-3 ${
-          dark ? "text-white" : "text-[#111]"
-        }`}
+        className={`oxanium cursor-pointer mt-auto inline-flex min-h-[36px] items-center gap-1.5 pt-3 text-xs font-bold transition active:opacity-70 sm:min-h-0 sm:gap-2 sm:pt-4 sm:text-sm sm:group-hover:gap-3 ${dark ? "text-white" : "text-[#111]"
+          }`}
       >
         <span className="truncate">{button}</span>
         <ArrowRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
