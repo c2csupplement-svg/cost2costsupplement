@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { ArrowRight, Star } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 
 import ProductCard from "@/components/products/ProductCard";
 
@@ -16,19 +16,22 @@ export default function ProductSlider({
   background = "beige",
 }) {
   const sliderRef = useRef(null);
-  const animationRef = useRef(null);
-  const pausedRef = useRef(false);
-  const lastTimeRef = useRef(0);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] =
+    useState(false);
+  const [canScrollRight, setCanScrollRight] =
+    useState(true);
 
   const backgrounds = {
     beige: {
       section:
         "bg-gradient-to-b from-white via-[#F3EFE7] to-[#E4DDCD]",
       edge: "#E4DDCD",
-     accent: "#DC2626",
-accentDark: "#B91C1C", 
-accentMid: "#EF4444",
-accentSoft: "#FECACA",
+      accent: "#DC2626",
+      accentDark: "#B91C1C",
+      accentMid: "#EF4444",
+      accentSoft: "#FECACA",
       glow: "bg-[#D4C4B0]/40",
       text: "text-[#4A3B2A]",
       textMuted: "text-[#8A7862]",
@@ -37,61 +40,97 @@ accentSoft: "#FECACA",
   };
 
   const theme =
-    backgrounds[background] ||
-    backgrounds.beige;
+    backgrounds[background] || backgrounds.beige;
 
-  useEffect(() => {
+  const updateScrollState = () => {
     const slider = sliderRef.current;
 
-    if (!slider || products.length <= 1) {
-      return;
-    }
+    if (!slider) return;
 
-    const speed = 35;
+    const {
+      scrollLeft,
+      scrollWidth,
+      clientWidth,
+    } = slider;
 
-    const animate = (time) => {
-      if (!lastTimeRef.current) {
-        lastTimeRef.current = time;
+    const maxScroll =
+      scrollWidth - clientWidth;
+
+    setCanScrollLeft(scrollLeft > 4);
+
+    setCanScrollRight(
+      scrollLeft < maxScroll - 4
+    );
+
+    setScrollProgress(
+      maxScroll > 0
+        ? scrollLeft / maxScroll
+        : 0
+    );
+  };
+
+  useEffect(() => {
+    updateScrollState();
+
+    const slider = sliderRef.current;
+
+    if (!slider) return;
+
+    slider.addEventListener(
+      "scroll",
+      updateScrollState,
+      {
+        passive: true,
       }
+    );
 
-      const delta =
-        time - lastTimeRef.current;
-
-      lastTimeRef.current = time;
-
-      if (!pausedRef.current) {
-        slider.scrollLeft +=
-          (delta / 1000) * speed;
-
-        const maxScroll =
-          slider.scrollWidth -
-          slider.clientWidth;
-
-        if (
-          maxScroll > 0 &&
-          slider.scrollLeft >= maxScroll
-        ) {
-          slider.scrollLeft = 0;
-        }
-      }
-
-      animationRef.current =
-        requestAnimationFrame(animate);
-    };
-
-    animationRef.current =
-      requestAnimationFrame(animate);
+    window.addEventListener(
+      "resize",
+      updateScrollState
+    );
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(
-          animationRef.current
-        );
-      }
+      slider.removeEventListener(
+        "scroll",
+        updateScrollState
+      );
 
-      lastTimeRef.current = 0;
+      window.removeEventListener(
+        "resize",
+        updateScrollState
+      );
     };
   }, [products.length]);
+
+  const scrollSlider = (direction) => {
+    const slider = sliderRef.current;
+
+    if (!slider) return;
+
+    const firstCard = slider.querySelector(
+      "[data-product-card]"
+    );
+
+    if (!firstCard) return;
+
+    const cardWidth =
+      firstCard.getBoundingClientRect().width;
+
+    const gap =
+      window.innerWidth >= 1024
+        ? 20
+        : window.innerWidth >= 640
+        ? 16
+        : 12;
+
+    slider.scrollBy({
+      left:
+        direction === "left"
+          ? -(cardWidth + gap)
+          : cardWidth + gap,
+      behavior: "smooth",
+    });
+  };
 
   if (
     !Array.isArray(products) ||
@@ -209,6 +248,19 @@ accentSoft: "#FECACA",
             >
               {title}
             </h2>
+
+            {description && (
+              <p
+                className={`
+                  mt-3
+                  max-w-2xl
+                  text-sm
+                  ${theme.textMuted}
+                `}
+              >
+                {description}
+              </p>
+            )}
           </div>
 
           <Link
@@ -220,6 +272,7 @@ accentSoft: "#FECACA",
               items-center
               gap-2
               rounded-lg
+              bg-red-600
               px-4
               py-3
               text-[10px]
@@ -227,23 +280,15 @@ accentSoft: "#FECACA",
               uppercase
               tracking-wide
               text-white
-              transition-colors
+              shadow-sm
+              transition-all
               duration-300
+              hover:-translate-y-0.5
+              hover:bg-red-700
+              hover:shadow-lg
+              hover:shadow-red-900/20
               sm:flex
-              bg-red-600
             "
-            // style={{
-            //   backgroundColor:
-            //     theme.accent,
-            // }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor =
-                theme.accentDark;
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor =
-                theme.accent;
-            }}
           >
             View All Products
 
@@ -259,37 +304,70 @@ accentSoft: "#FECACA",
           </Link>
         </div>
 
-        <div className="relative">
+        <div className="relative px-0">
+          <button
+            type="button"
+            onClick={() =>
+              scrollSlider("left")
+            }
+            aria-label="Previous products"
+            disabled={!canScrollLeft}
+            className="
+              absolute
+              left-2
+              top-1/2
+              z-30
+              flex
+              h-9
+              w-9
+              -translate-y-1/2
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-gray-200
+              bg-white
+              text-red-600
+              transition-all
+              duration-200
+              hover:scale-105
+              hover:bg-red-600
+              hover:text-white
+              active:scale-95
+              disabled:pointer-events-none
+              disabled:opacity-0
+              sm:left-3
+              sm:h-11
+              sm:w-11
+              lg:left-4
+              cursor-pointer
+            "
+          >
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
+
           <div
             ref={sliderRef}
-            onMouseEnter={() => {
-              pausedRef.current = true;
-            }}
-            onMouseLeave={() => {
-              pausedRef.current = false;
-            }}
-            onTouchStart={() => {
-              pausedRef.current = true;
-            }}
-            onTouchEnd={() => {
-              pausedRef.current = false;
-            }}
             className="
-              relative
               flex
               items-stretch
               gap-3
               overflow-x-auto
-              px-5
-              pb-1
-              active:cursor-grabbing
+              px-12
+              py-3
               sm:gap-4
-              sm:px-8
+              sm:px-16
+              sm:py-4
               lg:gap-5
-              lg:px-10
+              lg:px-20
+              lg:py-5
               [scrollbar-width:none]
               [-ms-overflow-style:none]
               [&::-webkit-scrollbar]:hidden
+              scroll-smooth
+              snap-x
+              snap-mandatory
+              touch-pan-x
             "
           >
             {products.map(
@@ -301,17 +379,17 @@ accentSoft: "#FECACA",
                     product?.slug ||
                     index
                   }
+                  data-product-card
                   className="
                     flex
                     h-auto
-                    items-stretch
-                    w-[calc((100vw-60px)/2)]
-                    min-w-[calc((100vw-60px)/2)]
+                    min-w-0
                     shrink-0
+                    snap-start
+                    items-stretch
+                    w-[calc((100vw-84px)/2)]
                     sm:w-[290px]
-                    sm:min-w-[290px]
                     lg:w-[310px]
-                    lg:min-w-[310px]
                   "
                 >
                   <div
@@ -319,6 +397,7 @@ accentSoft: "#FECACA",
                       flex
                       h-full
                       w-full
+                      min-w-0
                       [&>*]:h-full
                       [&>*]:w-full
                     "
@@ -331,6 +410,47 @@ accentSoft: "#FECACA",
               )
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              scrollSlider("right")
+            }
+            aria-label="Next products"
+            disabled={!canScrollRight}
+            className="
+              absolute
+              right-2
+              top-1/2
+              z-30
+              flex
+              h-9
+              w-9
+              -translate-y-1/2
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-gray-200
+              bg-white
+              text-red-600
+              transition-all
+              duration-200
+              hover:scale-105
+              hover:bg-red-600
+              hover:text-white
+              active:scale-95
+              disabled:pointer-events-none
+              disabled:opacity-0
+              sm:right-3
+              sm:h-11
+              sm:w-11
+              lg:right-4
+              cursor-pointer
+            "
+          >
+            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
         </div>
 
         <div
@@ -386,35 +506,28 @@ accentSoft: "#FECACA",
               tracking-wide
               text-red-600
             "
-            // style={{
-            //   color:
-            //     theme.accentDark,
-            // }}
           >
             <span
-              className="border-b-2 pb-1 text-red-600"
-              // style={{
-              //   borderColor:
-              //     theme.accent,
-              // }}
+              className="
+                border-b-2
+                border-red-600
+                pb-1
+              "
             >
               View All Products
             </span>
 
             <ArrowRight
               className="
+                mb-1
                 h-4
                 w-4
-                mb-1
+                text-red-600
                 transition-transform
                 duration-300
                 group-hover:translate-x-1
-                text-red-600
+                cursor-pointer
               "
-              // style={{
-              //   color:
-              //     theme.accentDark,
-              // }}
             />
           </Link>
         </div>
