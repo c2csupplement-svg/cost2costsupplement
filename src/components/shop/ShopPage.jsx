@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "next/navigation";
 
 import {
   ChevronDown,
@@ -52,7 +51,6 @@ const getSpecialProductKey = (search) => {
     return null;
   }
 
-
   return (
     SPECIAL_PRODUCT_KEYS[
     String(search).trim().toLowerCase()
@@ -90,10 +88,7 @@ const getProductsFromResponse = (response) => {
   return [];
 };
 
-const getTotalFromResponse = (
-  response,
-  fallback = 0
-) => {
+const getTotalFromResponse = (response, fallback = 0) => {
   const data = response?.data ?? response;
 
   const total =
@@ -104,9 +99,7 @@ const getTotalFromResponse = (
 
   const parsed = Number(total);
 
-  return Number.isFinite(parsed)
-    ? parsed
-    : fallback;
+  return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const getTotalPagesFromResponse = (
@@ -124,10 +117,7 @@ const getTotalPagesFromResponse = (
 
   const parsed = Number(totalPages);
 
-  if (
-    Number.isFinite(parsed) &&
-    parsed > 0
-  ) {
+  if (Number.isFinite(parsed) && parsed > 0) {
     return parsed;
   }
 
@@ -138,120 +128,162 @@ const getTotalPagesFromResponse = (
 };
 
 const getUniqueProducts = (products) => {
-  return products.filter(
-    (product, index, array) => {
-      const productId =
-        product?.id ??
-        product?.productId ??
-        product?._id ??
-        product?.slug;
+  return products.filter((product, index, array) => {
+    const productId =
+      product?.id ??
+      product?.productId ??
+      product?._id ??
+      product?.slug;
 
-      return (
-        array.findIndex((item) => {
-          const itemId =
-            item?.id ??
-            item?.productId ??
-            item?._id ??
-            item?.slug;
+    return (
+      array.findIndex((item) => {
+        const itemId =
+          item?.id ??
+          item?.productId ??
+          item?._id ??
+          item?.slug;
 
-          return (
-            String(itemId) ===
-            String(productId)
-          );
-        }) === index
-      );
-    }
-  );
+        return (
+          String(itemId) === String(productId)
+        );
+      }) === index
+    );
+  });
 };
 
-// Shared helper: compute a viewport-safe position for the category
-// flyout, anchored to the trigger element that was clicked.
 const computeDropdownPosition = (triggerEl) => {
   const rect = triggerEl.getBoundingClientRect();
+
   const dropdownWidth = 300;
   const estimatedHeight = 220;
   const gap = 8;
 
   const viewportWidth =
-    typeof window !== "undefined" ? window.innerWidth : 1024;
-  const viewportHeight =
-    typeof window !== "undefined" ? window.innerHeight : 768;
+    typeof window !== "undefined"
+      ? window.innerWidth
+      : 1024;
 
-  // Anchor horizontally to the trigger's left edge, but clamp so the
-  // panel never runs off either side of the viewport.
+  const viewportHeight =
+    typeof window !== "undefined"
+      ? window.innerHeight
+      : 768;
+
   let left = rect.left;
-  if (left + dropdownWidth > viewportWidth - gap) {
-    left = viewportWidth - dropdownWidth - gap;
+
+  if (
+    left + dropdownWidth >
+    viewportWidth - gap
+  ) {
+    left =
+      viewportWidth -
+      dropdownWidth -
+      gap;
   }
+
   left = Math.max(gap, left);
 
-  // Prefer opening below the trigger; flip above it if there isn't
-  // enough room beneath (e.g. trigger near the bottom of the screen).
   let top = rect.bottom + gap;
-  if (top + estimatedHeight > viewportHeight - gap) {
-    top = rect.top - estimatedHeight - gap;
+
+  if (
+    top + estimatedHeight >
+    viewportHeight - gap
+  ) {
+    top =
+      rect.top -
+      estimatedHeight -
+      gap;
   }
+
   top = Math.max(gap, top);
 
-  return { left, top };
+  return {
+    left,
+    top,
+  };
 };
 
 export default function ShopPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [openCategoryDropdown, setOpenCategoryDropdown] = useState(null);
-  const [categoryDropdownPosition, setCategoryDropdownPosition] = useState({
+
+  const [openCategoryDropdown, setOpenCategoryDropdown] =
+    useState(null);
+
+  const [
+    categoryDropdownPosition,
+    setCategoryDropdownPosition,
+  ] = useState({
     left: 0,
     top: 0,
   });
 
-  const searchQuery = (searchParams.get("search") || "").trim();
-  const specialProductKey = getSpecialProductKey(searchQuery);
+  const searchQuery = (
+    searchParams.get("search") || ""
+  ).trim();
+
+  const specialProductKey =
+    getSpecialProductKey(searchQuery);
+
   const pageSize = 20;
 
   const categoryDropdownRef = useRef(null);
 
-  const [selectedCategory, setSelectedCategory] = useState({
-    id: null,
-    name: "All Products",
-  });
+  const [selectedCategory, setSelectedCategory] =
+    useState({
+      id: null,
+      name: "All Products",
+    });
 
-  const [selectedBrand, setSelectedBrand] = useState({
-    id: null,
-    name: "All Brands",
-  });
+  const [selectedBrand, setSelectedBrand] =
+    useState({
+      id: null,
+      name: "All Brands",
+    });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target)
+        !categoryDropdownRef.current.contains(
+          event.target
+        )
       ) {
         setOpenCategoryDropdown(null);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
     };
   }, []);
 
-  // Close the flyout on scroll — it's `position: fixed`, so it won't
-  // track the trigger button if the page scrolls while it's open.
   useEffect(() => {
-    const handleScroll = () => setOpenCategoryDropdown(null);
+    if (openCategoryDropdown === null) {
+      return;
+    }
 
-    window.addEventListener("scroll", handleScroll, true);
+    const handlePageScroll = () => {
+      setOpenCategoryDropdown(null);
+    };
+
+    window.addEventListener("scroll", handlePageScroll, {
+      passive: true,
+    });
 
     return () => {
-      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("scroll", handlePageScroll);
     };
-  }, []);
+  }, [openCategoryDropdown]);
 
-  // Reposition (rather than just close) on resize, so a currently-open
-  // flyout stays anchored correctly if the viewport width changes.
   useEffect(() => {
     if (openCategoryDropdown === null) {
       return;
@@ -261,48 +293,95 @@ export default function ShopPage() {
       setOpenCategoryDropdown(null);
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
     };
   }, [openCategoryDropdown]);
 
-
   const [sortBy, setSortBy] = useState("");
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] =
+    useState(false);
+
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [searchProducts, setSearchProducts] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState(null);
+  const [searchProducts, setSearchProducts] =
+    useState([]);
 
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [filterLoading, setFilterLoading] = useState(false);
-  const [filterError, setFilterError] = useState(null);
-  const [filterTotal, setFilterTotal] = useState(0);
-  const [filterTotalPages, setFilterTotalPages] = useState(1);
+  const [searchLoading, setSearchLoading] =
+    useState(false);
 
-  const [sortedProducts, setSortedProducts] = useState([]);
-  const [sortLoading, setSortLoading] = useState(false);
-  const [sortError, setSortError] = useState(null);
-  const [sortTotal, setSortTotal] = useState(0);
-  const [sortTotalPages, setSortTotalPages] = useState(1);
+  const [searchError, setSearchError] =
+    useState(null);
 
-  const [loadedViewKey, setLoadedViewKey] = useState(null);
+  const [filteredProducts, setFilteredProducts] =
+    useState([]);
 
-  const productState = useSelector((state) => state.products || {});
-  const productAdState = useSelector((state) => state.productAd || {});
+  const [filterLoading, setFilterLoading] =
+    useState(false);
 
-  const productData = productState.productList
+  const [filterError, setFilterError] =
+    useState(null);
 
-  const productLoading = Boolean(productState.loading);
-  const productError = productState.error || null;
+  const [filterTotal, setFilterTotal] =
+    useState(0);
 
-  const adsLoading = Boolean(productAdState.loading);
-  const adsLoaded = Boolean(productAdState.loaded);
-  const adsError = productAdState.error || null;
+  const [filterTotalPages, setFilterTotalPages] =
+    useState(1);
 
+  const [sortedProducts, setSortedProducts] =
+    useState([]);
+
+  const [sortLoading, setSortLoading] =
+    useState(false);
+
+  const [sortError, setSortError] =
+    useState(null);
+
+  const [sortTotal, setSortTotal] =
+    useState(0);
+
+  const [sortTotalPages, setSortTotalPages] =
+    useState(1);
+
+  const [loadedViewKey, setLoadedViewKey] =
+    useState(null);
+
+  const productState = useSelector(
+    (state) => state.products || {}
+  );
+
+  const productAdState = useSelector(
+    (state) => state.productAd || {}
+  );
+
+  const productData =
+    productState.productList;
+
+  const productLoading = Boolean(
+    productState.loading
+  );
+
+  const productError =
+    productState.error || null;
+
+  const adsLoading = Boolean(
+    productAdState.loading
+  );
+
+  const adsLoaded = Boolean(
+    productAdState.loaded
+  );
+
+  const adsError =
+    productAdState.error || null;
 
   const productCategory =
     productAdState.productCateogry ??
@@ -320,14 +399,19 @@ export default function ShopPage() {
     ? productAdState[specialProductKey]
     : null;
 
-  const specialProducts = getProductsFromResponse(specialProduct);
+  const specialProducts =
+    getProductsFromResponse(
+      specialProduct
+    );
 
   const allProducts = (() => {
     if (Array.isArray(productData)) {
       return productData;
     }
 
-    if (Array.isArray(productData?.products)) {
+    if (
+      Array.isArray(productData?.products)
+    ) {
       return productData.products;
     }
 
@@ -335,11 +419,15 @@ export default function ShopPage() {
   })();
 
   const currentViewKey = searchQuery
-    ? `search:${searchQuery}:${specialProductKey || "normal"}`
+    ? `search:${searchQuery}:${specialProductKey || "normal"
+    }`
     : sortBy
       ? `sort:${sortBy}:${currentPage}`
-      : selectedCategory.id !== null || selectedBrand.id !== null
-        ? `filter:${selectedCategory.id ?? "all"}:${selectedBrand.id ?? "all"}:${currentPage}`
+      : selectedCategory.id !== null ||
+        selectedBrand.id !== null
+        ? `filter:${selectedCategory.id ?? "all"
+        }:${selectedBrand.id ?? "all"
+        }:${currentPage}`
         : `products:${currentPage}`;
 
   useEffect(() => {
@@ -361,15 +449,24 @@ export default function ShopPage() {
         setSearchLoading(true);
         setSearchError(null);
 
-        const response = await getProductSearchApi(searchQuery);
+        const response =
+          await getProductSearchApi(
+            searchQuery
+          );
 
         if (!active) {
           return;
         }
 
-        const products = getProductsFromResponse(response);
+        const products =
+          getProductsFromResponse(
+            response
+          );
 
-        setSearchProducts(getUniqueProducts(products));
+        setSearchProducts(
+          getUniqueProducts(products)
+        );
+
         setCurrentPage(1);
       } catch (error) {
         if (!active) {
@@ -386,7 +483,9 @@ export default function ShopPage() {
       } finally {
         if (active) {
           setSearchLoading(false);
-          setLoadedViewKey(currentViewKey);
+          setLoadedViewKey(
+            currentViewKey
+          );
         }
       }
     };
@@ -410,8 +509,11 @@ export default function ShopPage() {
       return;
     }
 
-    const hasCategory = selectedCategory.id !== null;
-    const hasBrand = selectedBrand.id !== null;
+    const hasCategory =
+      selectedCategory.id !== null;
+
+    const hasBrand =
+      selectedBrand.id !== null;
 
     if (!hasCategory && !hasBrand) {
       setFilteredProducts([]);
@@ -424,11 +526,18 @@ export default function ShopPage() {
 
       const loadProducts = async () => {
         try {
-          await dispatch(getProduct(currentPage, pageSize));
+          await dispatch(
+            getProduct(
+              currentPage,
+              pageSize
+            )
+          );
         } catch (error) {
         } finally {
           if (active) {
-            setLoadedViewKey(currentViewKey);
+            setLoadedViewKey(
+              currentViewKey
+            );
           }
         }
       };
@@ -442,72 +551,91 @@ export default function ShopPage() {
 
     let active = true;
 
-    const loadFilteredProducts = async () => {
-      const filters = {};
+    const loadFilteredProducts =
+      async () => {
+        const filters = {};
 
-      if (hasCategory) {
-        filters.categoryId = selectedCategory.id;
-      }
-
-      if (hasBrand) {
-        filters.brandId = selectedBrand.id;
-      }
-
-      try {
-        setFilterLoading(true);
-        setFilterError(null);
-
-        const response = await dispatch(
-          getProductFilter(
-            filters,
-            currentPage,
-            pageSize
-          )
-        );
-
-        if (!active) {
-          return;
+        if (hasCategory) {
+          filters.categoryId =
+            selectedCategory.id;
         }
 
-        const products = getProductsFromResponse(response);
-
-        const uniqueProducts = getUniqueProducts(products);
-
-        const total = getTotalFromResponse(
-          response,
-          uniqueProducts.length
-        );
-
-        const totalPages = getTotalPagesFromResponse(
-          response,
-          total,
-          pageSize
-        );
-
-        setFilteredProducts(uniqueProducts);
-        setFilterTotal(total);
-        setFilterTotalPages(totalPages);
-      } catch (error) {
-        if (!active) {
-          return;
+        if (hasBrand) {
+          filters.brandId =
+            selectedBrand.id;
         }
 
-        setFilteredProducts([]);
-        setFilterTotal(0);
-        setFilterTotalPages(1);
+        try {
+          setFilterLoading(true);
+          setFilterError(null);
 
-        setFilterError(
-          error?.response?.data?.message ||
-          error?.message ||
-          "Unable to filter products."
-        );
-      } finally {
-        if (active) {
-          setFilterLoading(false);
-          setLoadedViewKey(currentViewKey);
+          const response =
+            await dispatch(
+              getProductFilter(
+                filters,
+                currentPage,
+                pageSize
+              )
+            );
+
+          if (!active) {
+            return;
+          }
+
+          const products =
+            getProductsFromResponse(
+              response
+            );
+
+          const uniqueProducts =
+            getUniqueProducts(
+              products
+            );
+
+          const total =
+            getTotalFromResponse(
+              response,
+              uniqueProducts.length
+            );
+
+          const totalPages =
+            getTotalPagesFromResponse(
+              response,
+              total,
+              pageSize
+            );
+
+          setFilteredProducts(
+            uniqueProducts
+          );
+
+          setFilterTotal(total);
+          setFilterTotalPages(
+            totalPages
+          );
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          setFilteredProducts([]);
+          setFilterTotal(0);
+          setFilterTotalPages(1);
+
+          setFilterError(
+            error?.response?.data?.message ||
+            error?.message ||
+            "Unable to filter products."
+          );
+        } finally {
+          if (active) {
+            setFilterLoading(false);
+            setLoadedViewKey(
+              currentViewKey
+            );
+          }
         }
-      }
-    };
+      };
 
     loadFilteredProducts();
 
@@ -535,167 +663,332 @@ export default function ShopPage() {
 
     let active = true;
 
-    const loadSortedProducts = async () => {
-      try {
-        setSortLoading(true);
-        setSortError(null);
+    const loadSortedProducts =
+      async () => {
+        try {
+          setSortLoading(true);
+          setSortError(null);
 
-        const response = await ProductFilter(
-          {
-            sortBy,
-          },
-          currentPage,
-          pageSize
-        );
+          const response =
+            await ProductFilter(
+              {
+                sortBy,
+              },
+              currentPage,
+              pageSize
+            );
 
-        if (!active) {
-          return;
+          if (!active) {
+            return;
+          }
+
+          const products =
+            getProductsFromResponse(
+              response
+            );
+
+          const uniqueProducts =
+            getUniqueProducts(
+              products
+            );
+
+          const total =
+            getTotalFromResponse(
+              response,
+              uniqueProducts.length
+            );
+
+          const totalPages =
+            getTotalPagesFromResponse(
+              response,
+              total,
+              pageSize
+            );
+
+          setSortedProducts(
+            uniqueProducts
+          );
+
+          setSortTotal(total);
+          setSortTotalPages(
+            totalPages
+          );
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          setSortedProducts([]);
+          setSortTotal(0);
+          setSortTotalPages(1);
+
+          setSortError(
+            error?.response?.data?.message ||
+            error?.message ||
+            "Unable to sort products."
+          );
+        } finally {
+          if (active) {
+            setSortLoading(false);
+            setLoadedViewKey(
+              currentViewKey
+            );
+          }
         }
-
-        const products = getProductsFromResponse(response);
-
-        const uniqueProducts = getUniqueProducts(products);
-
-        const total = getTotalFromResponse(
-          response,
-          uniqueProducts.length
-        );
-
-        const totalPages = getTotalPagesFromResponse(
-          response,
-          total,
-          pageSize
-        );
-
-        setSortedProducts(uniqueProducts);
-        setSortTotal(total);
-        setSortTotalPages(totalPages);
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-
-        setSortedProducts([]);
-        setSortTotal(0);
-        setSortTotalPages(1);
-
-        setSortError(
-          error?.response?.data?.message ||
-          error?.message ||
-          "Unable to sort products."
-        );
-      } finally {
-        if (active) {
-          setSortLoading(false);
-          setLoadedViewKey(currentViewKey);
-        }
-      }
-    };
+      };
 
     loadSortedProducts();
 
     return () => {
       active = false;
     };
-  }, [sortBy, currentPage, searchQuery]);
+  }, [
+    sortBy,
+    currentPage,
+    searchQuery,
+  ]);
 
   useEffect(() => {
     if (!adsLoaded && !adsLoading) {
       dispatch(getAllProductAds());
     }
-  }, [dispatch, adsLoaded, adsLoading]);
+  }, [
+    dispatch,
+    adsLoaded,
+    adsLoading,
+  ]);
 
   const categories = (() => {
-    const apiCategories = Array.isArray(productCategory)
-      ? productCategory
-      : Array.isArray(productCategory?.categories)
-        ? productCategory.categories
-        : Array.isArray(productCategory?.data)
-          ? productCategory.data
-          : Array.isArray(productCategory?.data?.categories)
-            ? productCategory.data.categories
-            : [];
+    const apiCategories =
+      Array.isArray(productCategory)
+        ? productCategory
+        : Array.isArray(
+          productCategory?.categories
+        )
+          ? productCategory.categories
+          : Array.isArray(
+            productCategory?.data
+          )
+            ? productCategory.data
+            : Array.isArray(
+              productCategory?.data
+                ?.categories
+            )
+              ? productCategory.data
+                .categories
+              : [];
 
-    const normalizeCategory = (category) => {
-      const id = category?.id ?? category?.categoryId ?? category?._id ?? null;
-      const name = category?.name ?? category?.title ?? category?.categoryName ?? '';
-      const slug = category?.slug || String(name).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const children = Array.isArray(category?.children) ? category.children.map((child) => {
-        const childId = child?.id ?? child?.categoryId ?? child?._id ?? null;
-        const childName = child?.name ?? child?.title ?? child?.categoryName ?? '';
-        const childSlug = child?.slug || String(childName).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        return { ...child, id: childId, name: typeof childName === 'string' ? childName.trim() : String(childName || '').trim(), slug: childSlug };
-      }).filter((child) => child.id !== null && child.name) : [];
-      return { ...category, id, name: typeof name === 'string' ? name.trim() : String(name || '').trim(), slug, children };
-    };
-
-    const normalizedCategories = apiCategories.map(normalizeCategory).filter((category) => category.id !== null && category.name);
-    const uniqueCategories = normalizedCategories.filter((category, index, array) => array.findIndex((item) => String(item.id) === String(category.id)) === index);
-
-    return [{ id: null, name: 'All Products', slug: 'all', children: [] }, ...uniqueCategories.sort((a, b) => a.name.localeCompare(b.name))];
-  })();
-
-  const brands = (() => {
-    const apiBrands = Array.isArray(productBrands)
-      ? productBrands
-      : Array.isArray(productBrands?.brands)
-        ? productBrands.brands
-        : Array.isArray(productBrands?.data)
-          ? productBrands.data
-          : Array.isArray(productBrands?.data?.brands)
-            ? productBrands.data.brands
-            : [];
-
-    const normalizedBrands = apiBrands
-      .map((brand) => {
+    const normalizeCategory =
+      (category) => {
         const id =
-          brand?.id ??
-          brand?.brandId ??
-          brand?._id ??
+          category?.id ??
+          category?.categoryId ??
+          category?._id ??
           null;
 
         const name =
-          brand?.name ??
-          brand?.title ??
-          brand?.brandName ??
+          category?.name ??
+          category?.title ??
+          category?.categoryName ??
           "";
 
+        const slug =
+          category?.slug ||
+          String(name)
+            .toLowerCase()
+            .trim()
+            .replace(
+              /[^a-z0-9]+/g,
+              "-"
+            )
+            .replace(
+              /^-+|-+$/g,
+              "");
+
+        const children =
+          Array.isArray(
+            category?.children
+          )
+            ? category.children
+              .map((child) => {
+                const childId =
+                  child?.id ??
+                  child?.categoryId ??
+                  child?._id ??
+                  null;
+
+                const childName =
+                  child?.name ??
+                  child?.title ??
+                  child?.categoryName ??
+                  "";
+
+                const childSlug =
+                  child?.slug ||
+                  String(childName)
+                    .toLowerCase()
+                    .trim()
+                    .replace(
+                      /[^a-z0-9]+/g,
+                      "-"
+                    )
+                    .replace(
+                      /^-+|-+$/g,
+                      "");
+
+                return {
+                  ...child,
+                  id: childId,
+                  name:
+                    typeof childName ===
+                      "string"
+                      ? childName.trim()
+                      : String(
+                        childName || ""
+                      ).trim(),
+                  slug: childSlug,
+                };
+              })
+              .filter(
+                (child) =>
+                  child.id !== null &&
+                  child.name
+              )
+            : [];
+
         return {
+          ...category,
           id,
           name:
             typeof name === "string"
               ? name.trim()
               : String(name || "").trim(),
-          slug:
-            brand?.slug ||
-            brand?.name
-              ?.toLowerCase()
-              ?.trim()
-              ?.replace(/[^a-z0-9]+/g, "-")
-              ?.replace(/^[-]+|[-]+$/g, "") ||
-            "",
-          logo:
-            brand?.logo ||
-            brand?.image ||
-            brand?.imageUrl ||
-            null,
-          productCount:
-            Number(brand?.productCount) ||
-            Number(brand?._count?.products) ||
-            0,
+          slug,
+          children,
         };
-      })
-      .filter(
-        (brand) => brand.id !== null && brand.name
+      };
+
+    const normalizedCategories =
+      apiCategories
+        .map(normalizeCategory)
+        .filter(
+          (category) =>
+            category.id !== null &&
+            category.name
+        );
+
+    const uniqueCategories =
+      normalizedCategories.filter(
+        (category, index, array) =>
+          array.findIndex(
+            (item) =>
+              String(item.id) ===
+              String(category.id)
+          ) === index
       );
 
-    const uniqueBrands = normalizedBrands.filter(
-      (brand, index, array) =>
-        array.findIndex(
-          (item) =>
-            String(item.id) === String(brand.id)
-        ) === index
-    );
+    return [
+      {
+        id: null,
+        name: "All Products",
+        slug: "all",
+        children: [],
+      },
+      ...uniqueCategories.sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name
+          )
+      ),
+    ];
+  })();
+
+  const brands = (() => {
+    const apiBrands =
+      Array.isArray(productBrands)
+        ? productBrands
+        : Array.isArray(
+          productBrands?.brands
+        )
+          ? productBrands.brands
+          : Array.isArray(
+            productBrands?.data
+          )
+            ? productBrands.data
+            : Array.isArray(
+              productBrands?.data
+                ?.brands
+            )
+              ? productBrands.data
+                .brands
+              : [];
+
+    const normalizedBrands =
+      apiBrands
+        .map((brand) => {
+          const id =
+            brand?.id ??
+            brand?.brandId ??
+            brand?._id ??
+            null;
+
+          const name =
+            brand?.name ??
+            brand?.title ??
+            brand?.brandName ??
+            "";
+
+          return {
+            id,
+            name:
+              typeof name === "string"
+                ? name.trim()
+                : String(
+                  name || ""
+                ).trim(),
+            slug:
+              brand?.slug ||
+              brand?.name
+                ?.toLowerCase()
+                ?.trim()
+                ?.replace(
+                  /[^a-z0-9]+/g,
+                  "-"
+                )
+                ?.replace(
+                  /^[-]+|[-]+$/g,
+                  "") ||
+              "",
+            logo:
+              brand?.logo ||
+              brand?.image ||
+              brand?.imageUrl ||
+              null,
+            productCount:
+              Number(
+                brand?.productCount
+              ) ||
+              Number(
+                brand?._count?.products
+              ) ||
+              0,
+          };
+        })
+        .filter(
+          (brand) =>
+            brand.id !== null &&
+            brand.name
+        );
+
+    const uniqueBrands =
+      normalizedBrands.filter(
+        (brand, index, array) =>
+          array.findIndex(
+            (item) =>
+              String(item.id) ===
+              String(brand.id)
+          ) === index
+      );
 
     return [
       {
@@ -703,19 +996,28 @@ export default function ShopPage() {
         name: "All Brands",
         slug: "all",
         productCount:
-          Number(productData?.total) ||
-          Number(productData?.data?.total) ||
+          Number(
+            productData?.total
+          ) ||
+          Number(
+            productData?.data?.total
+          ) ||
           allProducts.length ||
           0,
       },
-      ...uniqueBrands.sort((a, b) =>
-        a.name.localeCompare(b.name)
+      ...uniqueBrands.sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name
+          )
       ),
     ];
   })();
 
   const normalizedSpecialProducts =
-    getUniqueProducts(specialProducts);
+    getUniqueProducts(
+      specialProducts
+    );
 
   const sourceProducts = searchQuery
     ? specialProductKey
@@ -730,119 +1032,170 @@ export default function ShopPage() {
         ? filteredProducts
         : allProducts;
 
-  const products = sourceProducts.map((product) => {
-    const price = Number(product?.price) || 0;
+  const products = sourceProducts.map(
+    (product) => {
+      const price =
+        Number(product?.price) || 0;
 
-    const salePrice =
-      product?.salePrice !== null &&
-        product?.salePrice !== undefined
-        ? Number(product.salePrice)
-        : null;
+      const salePrice =
+        product?.salePrice !== null &&
+          product?.salePrice !== undefined
+          ? Number(
+            product.salePrice
+          )
+          : null;
 
-    const originalPrice =
-      salePrice !== null && salePrice < price
-        ? price
-        : Number(product?.originalPrice) || 0;
-
-    const displayPrice =
-      salePrice !== null && salePrice > 0
-        ? salePrice
-        : price;
-
-    const discount =
-      originalPrice > 0 &&
+      const originalPrice =
         salePrice !== null &&
-        salePrice < originalPrice
-        ? Math.round(
-          ((originalPrice - salePrice) /
-            originalPrice) *
-          100
+          salePrice < price
+          ? price
+          : Number(
+            product?.originalPrice
+          ) || 0;
+
+      const displayPrice =
+        salePrice !== null &&
+          salePrice > 0
+          ? salePrice
+          : price;
+
+      const discount =
+        originalPrice > 0 &&
+          salePrice !== null &&
+          salePrice < originalPrice
+          ? Math.round(
+            ((originalPrice -
+              salePrice) /
+              originalPrice) *
+            100
+          )
+          : Number(
+            product?.discount
+          ) || 0;
+
+      let images = [];
+
+      if (
+        Array.isArray(
+          product?.images
         )
-        : Number(product?.discount) || 0;
+      ) {
+        images =
+          product.images.filter(
+            Boolean
+          );
+      } else if (
+        product?.images
+      ) {
+        images = [
+          product.images,
+        ];
+      }
 
-    let images = [];
+      if (
+        product?.featuredimg &&
+        !images.includes(
+          product.featuredimg
+        )
+      ) {
+        images.unshift(
+          product.featuredimg
+        );
+      }
 
-    if (Array.isArray(product?.images)) {
-      images = product.images.filter(Boolean);
-    } else if (product?.images) {
-      images = [product.images];
+      if (
+        product?.featuredImage &&
+        !images.includes(
+          product.featuredImage
+        )
+      ) {
+        images.unshift(
+          product.featuredImage
+        );
+      }
+
+      return {
+        ...product,
+        id:
+          product?.id ??
+          product?.productId ??
+          product?._id,
+        slug:
+          product?.slug || "",
+        name:
+          product?.name ||
+          product?.title ||
+          "",
+        brand:
+          product?.brand?.name ||
+          product?.brand ||
+          "",
+        category:
+          product?.category?.name ||
+          product?.category ||
+          "",
+        images,
+        price: displayPrice,
+        originalPrice,
+        discount,
+        rating:
+          Number(
+            product?.rating
+          ) ||
+          Number(
+            product?.averageRating
+          ) ||
+          0,
+        reviewCount:
+          product?._count?.reviews ||
+          product?.reviews?.length ||
+          Number(
+            product?.reviewCount
+          ) ||
+          0,
+        isFeatured:
+          getBooleanValue(
+            product?.isFeatured
+          ),
+        isPopular:
+          getBooleanValue(
+            product?.isPopular
+          ),
+        isTrending:
+          getBooleanValue(
+            product?.isTrending
+          ),
+        isTopRated:
+          getBooleanValue(
+            product?.isTopRated
+          ),
+        isRecent:
+          getBooleanValue(
+            product?.isRecent
+          ),
+        viewCount:
+          Number(
+            product?.viewCount
+          ) || 0,
+        stock:
+          Number(
+            product?.stock
+          ) || 0,
+        createdAt:
+          product?.createdAt ||
+          product?.created_at ||
+          null,
+        variants:
+          product?.variants || [],
+      };
     }
-
-    if (
-      product?.featuredimg &&
-      !images.includes(product.featuredimg)
-    ) {
-      images.unshift(product.featuredimg);
-    }
-
-    if (
-      product?.featuredImage &&
-      !images.includes(product.featuredImage)
-    ) {
-      images.unshift(product.featuredImage);
-    }
-
-    return {
-      ...product,
-      id:
-        product?.id ??
-        product?.productId ??
-        product?._id,
-      slug: product?.slug || "",
-      name:
-        product?.name ||
-        product?.title ||
-        "",
-      brand:
-        product?.brand?.name ||
-        product?.brand ||
-        "",
-      category:
-        product?.category?.name ||
-        product?.category ||
-        "",
-      images,
-      price: displayPrice,
-      originalPrice,
-      discount,
-      rating:
-        Number(product?.rating) ||
-        Number(product?.averageRating) ||
-        0,
-      reviewCount:
-        product?._count?.reviews ||
-        product?.reviews?.length ||
-        Number(product?.reviewCount) ||
-        0,
-      isFeatured: getBooleanValue(
-        product?.isFeatured
-      ),
-      isPopular: getBooleanValue(
-        product?.isPopular
-      ),
-      isTrending: getBooleanValue(
-        product?.isTrending
-      ),
-      isTopRated: getBooleanValue(
-        product?.isTopRated
-      ),
-      isRecent: getBooleanValue(
-        product?.isRecent
-      ),
-      viewCount: Number(product?.viewCount) || 0,
-      stock: Number(product?.stock) || 0,
-      createdAt:
-        product?.createdAt ||
-        product?.created_at ||
-        null,
-      variants: product?.variants || [],
-    };
-  });
-
-  const specialTotal = getTotalFromResponse(
-    specialProduct,
-    normalizedSpecialProducts.length
   );
+
+  const specialTotal =
+    getTotalFromResponse(
+      specialProduct,
+      normalizedSpecialProducts.length
+    );
 
   const totalProducts = searchQuery
     ? specialProductKey
@@ -851,12 +1204,18 @@ export default function ShopPage() {
       searchProducts.length
       : searchProducts.length
     : sortBy
-      ? sortTotal || sortedProducts.length
+      ? sortTotal ||
+      sortedProducts.length
       : selectedCategory.id !== null ||
         selectedBrand.id !== null
-        ? filterTotal || filteredProducts.length
-        : Number(productData?.total) ||
-        Number(productData?.data?.total) ||
+        ? filterTotal ||
+        filteredProducts.length
+        : Number(
+          productData?.total
+        ) ||
+        Number(
+          productData?.data?.total
+        ) ||
         allProducts.length;
 
   const totalPages = searchQuery
@@ -868,69 +1227,97 @@ export default function ShopPage() {
       )
       : Math.max(
         1,
-        Math.ceil(totalProducts / pageSize)
+        Math.ceil(
+          totalProducts /
+          pageSize
+        )
       )
     : sortBy
       ? sortTotalPages
       : selectedCategory.id !== null ||
         selectedBrand.id !== null
         ? filterTotalPages
-        : Number(productData?.totalPages) ||
-        Number(productData?.data?.totalPages) ||
+        : Number(
+          productData?.totalPages
+        ) ||
+        Number(
+          productData?.data
+            ?.totalPages
+        ) ||
         Math.max(
           1,
-          Math.ceil(totalProducts / pageSize)
+          Math.ceil(
+            totalProducts /
+            pageSize
+          )
         );
 
   const paginatedProducts =
-    searchQuery && !specialProductKey
+    searchQuery &&
+      !specialProductKey
       ? products.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
+        (currentPage - 1) *
+        pageSize,
+        currentPage *
+        pageSize
       )
       : products;
 
-  const isSpecialProductLoading = Boolean(
-    specialProductKey && productState.loading
-  );
+  const isSpecialProductLoading =
+    Boolean(
+      specialProductKey &&
+      productState.loading
+    );
 
-  const isProductsLoading = searchQuery
-    ? specialProductKey
-      ? isSpecialProductLoading || searchLoading
-      : searchLoading
-    : sortBy
-      ? sortLoading
-      : selectedCategory.id !== null ||
-        selectedBrand.id !== null
-        ? filterLoading
-        : productLoading;
+  const isProductsLoading =
+    searchQuery
+      ? specialProductKey
+        ? isSpecialProductLoading ||
+        searchLoading
+        : searchLoading
+      : sortBy
+        ? sortLoading
+        : selectedCategory.id !==
+          null ||
+          selectedBrand.id !==
+          null
+          ? filterLoading
+          : productLoading;
 
-  const isProductsError = searchQuery
-    ? specialProductKey
-      ? Boolean(
-        productState.error || searchError
-      )
-      : Boolean(searchError)
-    : sortBy
-      ? Boolean(sortError)
-      : selectedCategory.id !== null ||
-        selectedBrand.id !== null
-        ? Boolean(filterError)
-        : Boolean(productError);
+  const isProductsError =
+    searchQuery
+      ? specialProductKey
+        ? Boolean(
+          productState.error ||
+          searchError
+        )
+        : Boolean(searchError)
+      : sortBy
+        ? Boolean(sortError)
+        : selectedCategory.id !==
+          null ||
+          selectedBrand.id !==
+          null
+          ? Boolean(filterError)
+          : Boolean(productError);
 
   const isBrandsLoading =
     adsLoading && !adsLoaded;
 
-  const isBrandsError = Boolean(adsError);
+  const isBrandsError =
+    Boolean(adsError);
 
   const isInitialLoading =
-    loadedViewKey !== currentViewKey ||
+    loadedViewKey !==
+    currentViewKey ||
     isProductsLoading ||
-    (!searchQuery && isBrandsLoading);
+    (!searchQuery &&
+      isBrandsLoading);
 
   const isError =
     !isInitialLoading &&
-    (isProductsError || isBrandsError);
+    (isProductsError ||
+      isBrandsError);
 
   const error = searchQuery
     ? searchError ||
@@ -938,10 +1325,14 @@ export default function ShopPage() {
     adsError
     : sortBy
       ? sortError || adsError
-      : selectedCategory.id !== null ||
-        selectedBrand.id !== null
-        ? filterError || adsError
-        : productError || adsError;
+      : selectedCategory.id !==
+        null ||
+        selectedBrand.id !==
+        null
+        ? filterError ||
+        adsError
+        : productError ||
+        adsError;
 
   const hasActiveFilters =
     selectedCategory.id !== null ||
@@ -949,11 +1340,17 @@ export default function ShopPage() {
     Boolean(sortBy);
 
   const getSortLabel = () => {
-    if (sortBy === "price_low_high") {
+    if (
+      sortBy ===
+      "price_low_high"
+    ) {
       return "Price: Low to High";
     }
 
-    if (sortBy === "price_high_low") {
+    if (
+      sortBy ===
+      "price_high_low"
+    ) {
       return "Price: High to Low";
     }
 
@@ -961,7 +1358,10 @@ export default function ShopPage() {
       return "Stock Availability";
     }
 
-    if (sortBy === "most_discount") {
+    if (
+      sortBy ===
+      "most_discount"
+    ) {
       return "Best Discount";
     }
 
@@ -981,11 +1381,15 @@ export default function ShopPage() {
         setSearchError(null);
 
         const response =
-          await getProductSearchApi(searchQuery);
+          await getProductSearchApi(
+            searchQuery
+          );
 
         setSearchProducts(
           getUniqueProducts(
-            getProductsFromResponse(response)
+            getProductsFromResponse(
+              response
+            )
           )
         );
       } catch (err) {
@@ -996,7 +1400,9 @@ export default function ShopPage() {
         );
       } finally {
         setSearchLoading(false);
-        setLoadedViewKey(currentViewKey);
+        setLoadedViewKey(
+          currentViewKey
+        );
       }
 
       return;
@@ -1007,24 +1413,32 @@ export default function ShopPage() {
         setSortLoading(true);
         setSortError(null);
 
-        const response = await ProductFilter(
-          {
-            sortBy,
-          },
-          currentPage,
-          pageSize
+        const response =
+          await ProductFilter(
+            {
+              sortBy,
+            },
+            currentPage,
+            pageSize
+          );
+
+        const products =
+          getUniqueProducts(
+            getProductsFromResponse(
+              response
+            )
+          );
+
+        const total =
+          getTotalFromResponse(
+            response,
+            products.length
+          );
+
+        setSortedProducts(
+          products
         );
 
-        const products = getUniqueProducts(
-          getProductsFromResponse(response)
-        );
-
-        const total = getTotalFromResponse(
-          response,
-          products.length
-        );
-
-        setSortedProducts(products);
         setSortTotal(total);
 
         setSortTotalPages(
@@ -1042,24 +1456,36 @@ export default function ShopPage() {
         );
       } finally {
         setSortLoading(false);
-        setLoadedViewKey(currentViewKey);
+        setLoadedViewKey(
+          currentViewKey
+        );
       }
 
       return;
     }
 
     if (
-      selectedCategory.id !== null ||
-      selectedBrand.id !== null
+      selectedCategory.id !==
+      null ||
+      selectedBrand.id !==
+      null
     ) {
       const filters = {};
 
-      if (selectedCategory.id !== null) {
-        filters.categoryId = selectedCategory.id;
+      if (
+        selectedCategory.id !==
+        null
+      ) {
+        filters.categoryId =
+          selectedCategory.id;
       }
 
-      if (selectedBrand.id !== null) {
-        filters.brandId = selectedBrand.id;
+      if (
+        selectedBrand.id !==
+        null
+      ) {
+        filters.brandId =
+          selectedBrand.id;
       }
 
       try {
@@ -1081,7 +1507,9 @@ export default function ShopPage() {
         );
       } finally {
         setFilterLoading(false);
-        setLoadedViewKey(currentViewKey);
+        setLoadedViewKey(
+          currentViewKey
+        );
       }
 
       return;
@@ -1095,10 +1523,14 @@ export default function ShopPage() {
         )
       );
     } finally {
-      setLoadedViewKey(currentViewKey);
+      setLoadedViewKey(
+        currentViewKey
+      );
     }
 
-    dispatch(getAllProductAds());
+    dispatch(
+      getAllProductAds()
+    );
   };
 
   const clearAllFilters = () => {
@@ -1136,7 +1568,10 @@ export default function ShopPage() {
     setLoadedViewKey(null);
     setCurrentPage(page);
 
-    if (typeof window !== "undefined") {
+    if (
+      typeof window !==
+      "undefined"
+    ) {
       window.scrollTo({
         top: 0,
         behavior: "smooth",
@@ -1145,10 +1580,18 @@ export default function ShopPage() {
   };
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (
+      currentPage >
+      totalPages
+    ) {
+      setCurrentPage(
+        totalPages
+      );
     }
-  }, [currentPage, totalPages]);
+  }, [
+    currentPage,
+    totalPages,
+  ]);
 
   useEffect(() => {
     setMobileFiltersOpen(false);
@@ -1162,13 +1605,17 @@ export default function ShopPage() {
       page <= totalPages;
       page += 1
     ) {
-      paginationPages.push(page);
+      paginationPages.push(
+        page
+      );
     }
   } else {
     paginationPages.push(1);
 
     if (currentPage > 4) {
-      paginationPages.push("...");
+      paginationPages.push(
+        "..."
+      );
     }
 
     const start = Math.max(
@@ -1186,51 +1633,63 @@ export default function ShopPage() {
       page <= end;
       page += 1
     ) {
-      paginationPages.push(page);
+      paginationPages.push(
+        page
+      );
     }
 
     if (
       currentPage <
       totalPages - 3
     ) {
-      paginationPages.push("...");
+      paginationPages.push(
+        "..."
+      );
     }
 
-    paginationPages.push(totalPages);
+    paginationPages.push(
+      totalPages
+    );
   }
 
-  const router = useRouter();
+  const handleRemoveFilter =
+    () => {
+      setLoadedViewKey(null);
 
-  const handleRemoveFilter = () => {
-    setLoadedViewKey(null);
+      setSelectedBrand({
+        id: null,
+        name: "All Brands",
+      });
 
-    setSelectedBrand({
-      id: null,
-      name: "All Brands",
-    });
+      setSortBy("");
+      setCurrentPage(1);
 
-    setSortBy("");
-    setCurrentPage(1);
+      setSelectedCategory({
+        id: null,
+        name: "All Products",
+      });
 
-    setSelectedCategory({
-      id: null,
-      name: "All Products",
-    });
+      router.replace(
+        "/products"
+      );
+    };
 
-    router.replace("/products");
-  };
+  const handleFilterChange =
+    () => {
+      setLoadedViewKey(null);
 
-  const handleFilterChange = () => {
-    setLoadedViewKey(null);
-    router.replace("/products", {
-      scroll: false,
-    });
-  };
+      router.replace(
+        "/products",
+        {
+          scroll: false,
+        }
+      );
+    };
 
   return (
     <section className="min-h-screen bg-[#FAFAFA]">
       <div className="border-b border-[#E5E5E5]">
-        <div className="flex justify-between items-center mx-auto max-w-[1440px] px-5 py-4 sm:px-8 lg:px-10">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em]">
             <span className="text-[#E52323]">
               Home
@@ -1244,8 +1703,10 @@ export default function ShopPage() {
           </div>
 
           <button
-            className="bg-red-600 cursor-pointer py-1 px-3 rounded-xl text-[12px] sm:py-1 sm:px-4 sm:text-[14px]"
-            onClick={handleRemoveFilter}
+            className="cursor-pointer rounded-xl bg-red-600 px-3 py-1 text-[12px] sm:px-4 sm:text-[14px]"
+            onClick={
+              handleRemoveFilter
+            }
           >
             Remove Filter
           </button>
@@ -1273,12 +1734,13 @@ export default function ShopPage() {
       </div>
 
       <div
-        ref={categoryDropdownRef}
+        ref={
+          categoryDropdownRef
+        }
         className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-10"
       >
         <div className="w-full overflow-x-auto overflow-y-visible scrollbar-hide">
           <div className="flex w-max min-w-full items-center gap-2 py-2">
-
             <button
               type="button"
               onClick={() => {
@@ -1292,7 +1754,9 @@ export default function ShopPage() {
                 setSortBy("");
                 setCurrentPage(1);
                 setLoadedViewKey(null);
-                setOpenCategoryDropdown(null);
+                setOpenCategoryDropdown(
+                  null
+                );
 
                 handleFilterChange();
 
@@ -1302,91 +1766,148 @@ export default function ShopPage() {
                 });
               }}
               className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${!selectedCategory?.id
-                ? "border-[#E52323] bg-[#E52323] text-white"
-                : "border-[#E5E5E5] bg-white text-[#737373] hover:border-[#E52323] hover:text-[#E52323]"
+                  ? "border-[#E52323] bg-[#E52323] text-white"
+                  : "border-[#E5E5E5] bg-white text-[#737373] hover:border-[#E52323] hover:text-[#E52323]"
                 }`}
             >
               All Products
             </button>
 
-
             {categories
-              .filter((category) => category.id !== null)
+              .filter(
+                (category) =>
+                  category.id !==
+                  null
+              )
               .map((category) => {
                 const hasChildren =
-                  Array.isArray(category.children) &&
-                  category.children.length > 0;
+                  Array.isArray(
+                    category.children
+                  ) &&
+                  category.children
+                    .length > 0;
 
                 const isParentSelected =
-                  String(selectedCategory?.id) === String(category.id) &&
+                  String(
+                    selectedCategory?.id
+                  ) ===
+                  String(
+                    category.id
+                  ) &&
                   !selectedCategory?.parentId;
 
                 const isDropdownOpen =
-                  String(openCategoryDropdown) === String(category.id);
+                  String(
+                    openCategoryDropdown
+                  ) ===
+                  String(
+                    category.id
+                  );
 
                 return (
                   <div
-                    key={category.id}
+                    key={
+                      category.id
+                    }
                     className="relative flex shrink-0 items-center"
                   >
                     <div className="group flex items-center">
-
                       <button
                         type="button"
-                        onClick={(event) => {
+                        onClick={(
+                          event
+                        ) => {
                           event.stopPropagation();
 
-                          if (hasChildren) {
+                          if (
+                            hasChildren
+                          ) {
                             setCategoryDropdownPosition(
-                              computeDropdownPosition(event.currentTarget)
+                              computeDropdownPosition(
+                                event.currentTarget
+                              )
                             );
 
-                            setOpenCategoryDropdown((prev) =>
-                              String(prev) === String(category.id)
-                                ? null
-                                : category.id
+                            setOpenCategoryDropdown(
+                              (prev) =>
+                                String(
+                                  prev
+                                ) ===
+                                  String(
+                                    category.id
+                                  )
+                                  ? null
+                                  : category.id
                             );
 
                             return;
                           }
 
-                          setSelectedCategory(category);
-                          setSortBy("");
-                          setCurrentPage(1);
-                          setLoadedViewKey(null);
-                          setOpenCategoryDropdown(null);
+                          setSelectedCategory(
+                            category
+                          );
+
+                          setSortBy(
+                            ""
+                          );
+
+                          setCurrentPage(
+                            1
+                          );
+
+                          setLoadedViewKey(
+                            null
+                          );
+
+                          setOpenCategoryDropdown(
+                            null
+                          );
 
                           handleFilterChange();
 
                           window.scrollTo({
                             top: 0,
-                            behavior: "smooth",
+                            behavior:
+                              "smooth",
                           });
                         }}
-                        className={`cursor-pointer h-[37px] px-4 py-2 text-sm font-medium transition ${hasChildren ? "rounded-l-full border border-r-0" : "rounded-full border"
+                        className={`h-[37px] cursor-pointer px-4 py-2 text-sm font-medium transition ${hasChildren
+                            ? "rounded-l-full border border-r-0"
+                            : "rounded-full border"
                           } ${isParentSelected
                             ? "border-[#E52323] bg-[#E52323] text-white"
                             : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
                           }`}
                       >
-                        {category.name}
+                        {
+                          category.name
+                        }
                       </button>
 
-                      {/* ARROW */}
                       {hasChildren && (
                         <button
                           type="button"
-                          onClick={(event) => {
+                          onClick={(
+                            event
+                          ) => {
                             event.stopPropagation();
 
                             setCategoryDropdownPosition(
-                              computeDropdownPosition(event.currentTarget)
+                              computeDropdownPosition(
+                                event.currentTarget
+                              )
                             );
 
-                            setOpenCategoryDropdown((prev) =>
-                              String(prev) === String(category.id)
-                                ? null
-                                : category.id
+                            setOpenCategoryDropdown(
+                              (prev) =>
+                                String(
+                                  prev
+                                ) ===
+                                  String(
+                                    category.id
+                                  )
+                                  ? null
+                                  : category.id
                             );
                           }}
                           className={`flex h-[37px] cursor-pointer items-center justify-center rounded-r-full border border-l-0 px-2 transition ${isParentSelected
@@ -1394,10 +1915,14 @@ export default function ShopPage() {
                               : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
                             }`}
                           aria-label={`Show ${category.name} child categories`}
-                          aria-expanded={isDropdownOpen}
+                          aria-expanded={
+                            isDropdownOpen
+                          }
                         >
                           <ChevronDown
-                            className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                            className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen
+                                ? "rotate-180"
+                                : ""
                               }`}
                           />
                         </button>
@@ -1409,95 +1934,109 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* CHILD CATEGORY DROPDOWN */}
-        {openCategoryDropdown !== null && (
-          <div
-            className="fixed z-[99999] w-[300px] overflow-hidden rounded-xl border border-[#E5E5E5] bg-white p-2 shadow-2xl"
-            style={{
-              left: `${categoryDropdownPosition.left}px`,
-              top: `${categoryDropdownPosition.top}px`,
-            }}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-          >
-            {categories
-              .filter(
-                (category) =>
-                  String(category.id) ===
-                  String(openCategoryDropdown)
-              )
-              .map((category) => {
-                if (
-                  !Array.isArray(category.children) ||
-                  category.children.length === 0
-                ) {
-                  return null;
-                }
+        {openCategoryDropdown !==
+          null && (
+            <div
+              className="fixed z-[99999] w-[300px] overflow-hidden rounded-xl border border-[#E5E5E5] bg-white p-2 shadow-2xl"
+              style={{
+                left: `${categoryDropdownPosition.left}px`,
+                top: `${categoryDropdownPosition.top}px`,
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {categories
+                .filter(
+                  (category) =>
+                    String(
+                      category.id
+                    ) ===
+                    String(
+                      openCategoryDropdown
+                    )
+                )
+                .map(
+                  (category) => {
+                    if (
+                      !Array.isArray(
+                        category.children
+                      ) ||
+                      category.children
+                        .length === 0
+                    ) {
+                      return null;
+                    }
 
-                return (
-                  <div key={category.id}>
+                    return (
+                      <div
+                        key={
+                          category.id
+                        }
+                      >
+                        <div className="mb-1 border-b border-[#F0F0F0] px-3 py-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[#999999]">
+                            {
+                              category.name
+                            }
+                          </p>
+                        </div>
 
-                    {/* CATEGORY NAME */}
-                    <div className="mb-1 border-b border-[#F0F0F0] px-3 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-[#999999]">
-                        {category.name}
-                      </p>
-                    </div>
+                        <div
+                          className="max-h-64 overflow-y-auto overscroll-contain"
+                        >
+                          {category.children.map((child) => {
+                            const isChildSelected =
+                              String(selectedCategory?.id) ===
+                              String(child.id) &&
+                              String(selectedCategory?.parentId) ===
+                              String(category.id);
 
-                    {/* CHILDREN */}
-                    <div className="max-h-64 overflow-y-auto">
-                      {category.children.map((child) => {
-                        const isChildSelected =
-                          String(selectedCategory?.id) ===
-                          String(child.id) &&
-                          String(selectedCategory?.parentId) ===
-                          String(category.id);
+                            return (
+                              <button
+                                key={child.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCategory({
+                                    ...child,
+                                    parentId: category.id,
+                                    parentName: category.name,
+                                  });
 
-                        return (
-                          <button
-                            key={child.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedCategory({
-                                ...child,
-                                parentId: category.id,
-                                parentName: category.name,
-                              });
+                                  setSortBy("");
+                                  setCurrentPage(1);
+                                  setLoadedViewKey(null);
+                                  setOpenCategoryDropdown(null);
 
-                              setSortBy("");
-                              setCurrentPage(1);
-                              setLoadedViewKey(null);
-                              setOpenCategoryDropdown(null);
+                                  handleFilterChange();
 
-                              handleFilterChange();
+                                  window.scrollTo({
+                                    top: 0,
+                                    behavior: "smooth",
+                                  });
+                                }}
+                                className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${isChildSelected
+                                    ? "bg-[#E52323]/10 font-semibold text-[#E52323]"
+                                    : "text-[#555555] hover:bg-[#F7F7F7] hover:text-[#E52323]"
+                                  }`}
+                              >
+                                <span className="truncate pr-3">
+                                  {child.name}
+                                </span>
 
-                              window.scrollTo({
-                                top: 0,
-                                behavior: "smooth",
-                              });
-                            }}
-                            className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${isChildSelected
-                              ? "bg-[#E52323]/10 font-semibold text-[#E52323]"
-                              : "text-[#555555] hover:bg-[#F7F7F7] hover:text-[#E52323]"
-                              }`}
-                          >
-                            <span className="truncate pr-3">
-                              {child.name}
-                            </span>
-
-                            {isChildSelected && (
-                              <ChevronRight className="h-4 w-4 shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        )}
+                                {isChildSelected && (
+                                  <ChevronRight className="h-4 w-4 shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+            </div>
+          )}
       </div>
 
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
@@ -1507,7 +2046,9 @@ export default function ShopPage() {
               <p className="text-sm text-[#737373]">
                 Showing{" "}
                 <span className="font-semibold text-[#111111]">
-                  {paginatedProducts.length}
+                  {
+                    paginatedProducts.length
+                  }
                 </span>{" "}
                 of{" "}
                 <span className="font-semibold text-[#111111]">
@@ -1527,57 +2068,99 @@ export default function ShopPage() {
 
               {hasActiveFilters && (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {selectedCategory.id !== null && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoadedViewKey(null);
-                        setSelectedCategory({
-                          id: null,
-                          name: "All Products",
-                        });
-                        handleFilterChange();
-                        setCurrentPage(1);
-                      }}
-                      className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
-                    >
-                      {selectedCategory.name}
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
+                  {selectedCategory.id !==
+                    null && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoadedViewKey(
+                            null
+                          );
 
-                  {selectedBrand.id !== null && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoadedViewKey(null);
-                        setSelectedBrand({
-                          id: null,
-                          name: "All Brands",
-                        });
-                        setCurrentPage(1);
-                      }}
-                      className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
-                    >
-                      {selectedBrand.name}
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
+                          setSelectedCategory(
+                            {
+                              id: null,
+                              name: "All Products",
+                            }
+                          );
+
+                          handleFilterChange();
+                          setCurrentPage(
+                            1
+                          );
+                        }}
+                        className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
+                      >
+                        {
+                          selectedCategory.name
+                        }
+
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+
+                  {selectedBrand.id !==
+                    null && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoadedViewKey(
+                            null
+                          );
+
+                          setSelectedBrand(
+                            {
+                              id: null,
+                              name: "All Brands",
+                            }
+                          );
+
+                          setCurrentPage(
+                            1
+                          );
+                        }}
+                        className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
+                      >
+                        {
+                          selectedBrand.name
+                        }
+
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
 
                   {sortBy && (
                     <button
                       type="button"
                       onClick={() => {
-                        setLoadedViewKey(null);
-                        setSortBy("");
-                        setSortedProducts([]);
-                        setSortTotal(0);
-                        setSortTotalPages(1);
-                        setCurrentPage(1);
+                        setLoadedViewKey(
+                          null
+                        );
+
+                        setSortBy(
+                          ""
+                        );
+
+                        setSortedProducts(
+                          []
+                        );
+
+                        setSortTotal(
+                          0
+                        );
+
+                        setSortTotalPages(
+                          1
+                        );
+
+                        setCurrentPage(
+                          1
+                        );
                       }}
                       className="flex items-center gap-1 rounded-full border border-[#D4D4D4] bg-white px-3 py-1 text-xs text-black"
                     >
                       {getSortLabel()}
+
                       <X className="h-3 w-3" />
                     </button>
                   )}
@@ -1589,7 +2172,9 @@ export default function ShopPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setMobileFiltersOpen(true)
+                  setMobileFiltersOpen(
+                    true
+                  )
                 }
                 className="flex h-11 shrink-0 items-center gap-2 rounded-md border border-[#D4D4D4] bg-white px-4 text-sm font-medium text-black lg:hidden"
               >
@@ -1601,12 +2186,23 @@ export default function ShopPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => {
-                    setLoadedViewKey(null);
-                    setSortBy(e.target.value);
-                    setCurrentPage(1);
-                    setSortError(null);
-                    // setFilteredProducts([]);
-                    handleFilterChange()
+                    setLoadedViewKey(
+                      null
+                    );
+
+                    setSortBy(
+                      e.target.value
+                    );
+
+                    setCurrentPage(
+                      1
+                    );
+
+                    setSortError(
+                      null
+                    );
+
+                    handleFilterChange();
                   }}
                   className="h-11 appearance-none rounded-md border border-[#D4D4D4] bg-white pl-4 pr-10 text-sm text-black outline-none focus:border-[#E52323]"
                 >
@@ -1644,34 +2240,66 @@ export default function ShopPage() {
         <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <FilterSidebar
-              categories={categories}
+              categories={
+                categories
+              }
               brands={brands}
-              selectedBrand={selectedBrand}
-              setSelectedBrand={(value) => {
-                setLoadedViewKey(null);
-                setSelectedBrand(value);
+              selectedBrand={
+                selectedBrand
+              }
+              setSelectedBrand={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setSelectedBrand(
+                  value
+                );
               }}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={(value) => {
-                setLoadedViewKey(null);
-                setSelectedCategory(value);
+              selectedCategory={
+                selectedCategory
+              }
+              setSelectedCategory={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setSelectedCategory(
+                  value
+                );
               }}
-              setCurrentPage={(value) => {
-                setLoadedViewKey(null);
-                setCurrentPage(value);
+              setCurrentPage={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setCurrentPage(
+                  value
+                );
               }}
               setSortBy={(value) => {
-                setLoadedViewKey(null);
-                setSortBy(value);
+                setLoadedViewKey(
+                  null
+                );
+                setSortBy(
+                  value
+                );
               }}
-              handleFilterChange={handleFilterChange}
+              handleFilterChange={
+                handleFilterChange
+              }
             />
           </aside>
 
           <div>
             {isInitialLoading ? (
               <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3 2xl:grid-cols-4">
-                {Array.from({ length: 8 }).map(
+                {Array.from({
+                  length: 8,
+                }).map(
                   (_, index) => (
                     <div
                       key={index}
@@ -1687,7 +2315,8 @@ export default function ShopPage() {
                 </h3>
 
                 <p className="mt-2 text-sm text-[#737373]">
-                  {error?.data?.message ||
+                  {error?.data
+                    ?.message ||
                     error?.message ||
                     error ||
                     "Something went wrong."}
@@ -1701,7 +2330,8 @@ export default function ShopPage() {
                   Try Again
                 </button>
               </div>
-            ) : paginatedProducts.length > 0 ? (
+            ) : paginatedProducts.length >
+              0 ? (
               <div className="relative">
                 {isProductsLoading && (
                   <div className="absolute inset-0 z-20 flex items-start justify-center bg-white/40 pt-10 backdrop-blur-[1px]">
@@ -1712,12 +2342,18 @@ export default function ShopPage() {
                 )}
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-                  {paginatedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                    />
-                  ))}
+                  {paginatedProducts.map(
+                    (product) => (
+                      <ProductCard
+                        key={
+                          product.id
+                        }
+                        product={
+                          product
+                        }
+                      />
+                    )
+                  )}
                 </div>
               </div>
             ) : (
@@ -1756,16 +2392,20 @@ export default function ShopPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      goToPage(currentPage - 1)
+                      goToPage(
+                        currentPage - 1
+                      )
                     }
                     disabled={
-                      currentPage === 1 ||
+                      currentPage ===
+                      1 ||
                       isProductsLoading
                     }
                     aria-label="Previous page"
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#D4D4D4] bg-white text-[#111111] transition-all duration-200 hover:border-[#E52323] hover:text-[#E52323] disabled:pointer-events-none disabled:opacity-40 sm:w-auto sm:px-4"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180 sm:mr-1.5" />
+
                     <span className="hidden sm:inline">
                       Previous
                     </span>
@@ -1773,8 +2413,14 @@ export default function ShopPage() {
 
                   <div className="hidden flex-nowrap items-center gap-1.5 sm:flex sm:gap-2">
                     {paginationPages.map(
-                      (page, index) => {
-                        if (page === "...") {
+                      (
+                        page,
+                        index
+                      ) => {
+                        if (
+                          page ===
+                          "..."
+                        ) {
                           return (
                             <span
                               key={`desktop-ellipsis-${index}`}
@@ -1790,17 +2436,23 @@ export default function ShopPage() {
                             key={`desktop-page-${page}`}
                             type="button"
                             onClick={() =>
-                              goToPage(page)
+                              goToPage(
+                                page
+                              )
                             }
-                            disabled={isProductsLoading}
+                            disabled={
+                              isProductsLoading
+                            }
                             aria-current={
-                              currentPage === page
+                              currentPage ===
+                                page
                                 ? "page"
                                 : undefined
                             }
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage === page
-                              ? "border-[#E52323] bg-[#E52323] text-white"
-                              : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
+                                page
+                                ? "border-[#E52323] bg-[#E52323] text-white"
+                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                               } disabled:pointer-events-none disabled:opacity-40`}
                           >
                             {page}
@@ -1812,47 +2464,80 @@ export default function ShopPage() {
 
                   <div className="flex flex-nowrap items-center gap-1.5 sm:hidden">
                     {(() => {
-                      const mobilePages = [];
+                      const mobilePages =
+                        [];
 
-                      if (currentPage > 2) {
-                        mobilePages.push(1);
+                      if (
+                        currentPage >
+                        2
+                      ) {
+                        mobilePages.push(
+                          1
+                        );
 
-                        if (currentPage > 3) {
-                          mobilePages.push("...");
+                        if (
+                          currentPage >
+                          3
+                        ) {
+                          mobilePages.push(
+                            "..."
+                          );
                         }
                       }
 
-                      if (currentPage > 1) {
+                      if (
+                        currentPage >
+                        1
+                      ) {
                         mobilePages.push(
-                          currentPage - 1
+                          currentPage -
+                          1
                         );
                       }
 
-                      mobilePages.push(currentPage);
+                      mobilePages.push(
+                        currentPage
+                      );
 
-                      if (currentPage < totalPages) {
+                      if (
+                        currentPage <
+                        totalPages
+                      ) {
                         mobilePages.push(
-                          currentPage + 1
+                          currentPage +
+                          1
                         );
                       }
 
                       if (
                         currentPage <
-                        totalPages - 1
+                        totalPages -
+                        1
                       ) {
                         if (
                           currentPage <
-                          totalPages - 2
+                          totalPages -
+                          2
                         ) {
-                          mobilePages.push("...");
+                          mobilePages.push(
+                            "..."
+                          );
                         }
 
-                        mobilePages.push(totalPages);
+                        mobilePages.push(
+                          totalPages
+                        );
                       }
 
                       return mobilePages.map(
-                        (page, index) => {
-                          if (page === "...") {
+                        (
+                          page,
+                          index
+                        ) => {
+                          if (
+                            page ===
+                            "..."
+                          ) {
                             return (
                               <span
                                 key={`mobile-ellipsis-${index}`}
@@ -1868,17 +2553,23 @@ export default function ShopPage() {
                               key={`mobile-page-${page}`}
                               type="button"
                               onClick={() =>
-                                goToPage(page)
+                                goToPage(
+                                  page
+                                )
                               }
-                              disabled={isProductsLoading}
+                              disabled={
+                                isProductsLoading
+                              }
                               aria-current={
-                                currentPage === page
+                                currentPage ===
+                                  page
                                   ? "page"
                                   : undefined
                               }
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage === page
-                                ? "border-[#E52323] bg-[#E52323] text-white"
-                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
+                                  page
+                                  ? "border-[#E52323] bg-[#E52323] text-white"
+                                  : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                                 } disabled:pointer-events-none disabled:opacity-40`}
                             >
                               {page}
@@ -1892,10 +2583,13 @@ export default function ShopPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      goToPage(currentPage + 1)
+                      goToPage(
+                        currentPage + 1
+                      )
                     }
                     disabled={
-                      currentPage === totalPages ||
+                      currentPage ===
+                      totalPages ||
                       isProductsLoading
                     }
                     aria-label="Next page"
@@ -1930,7 +2624,9 @@ export default function ShopPage() {
             type="button"
             aria-label="Close filters"
             onClick={() =>
-              setMobileFiltersOpen(false)
+              setMobileFiltersOpen(
+                false
+              )
             }
             className="absolute inset-0 bg-black/70"
           />
@@ -1950,7 +2646,9 @@ export default function ShopPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setMobileFiltersOpen(false)
+                  setMobileFiltersOpen(
+                    false
+                  )
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-full border"
               >
@@ -1959,27 +2657,57 @@ export default function ShopPage() {
             </div>
 
             <FilterSidebar
-              categories={categories}
+              categories={
+                categories
+              }
               brands={brands}
-              selectedBrand={selectedBrand}
-              setSelectedBrand={(value) => {
-                setLoadedViewKey(null);
-                setSelectedBrand(value);
+              selectedBrand={
+                selectedBrand
+              }
+              setSelectedBrand={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setSelectedBrand(
+                  value
+                );
               }}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={(value) => {
-                setLoadedViewKey(null);
-                setSelectedCategory(value);
+              selectedCategory={
+                selectedCategory
+              }
+              setSelectedCategory={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setSelectedCategory(
+                  value
+                );
               }}
-              setCurrentPage={(value) => {
-                setLoadedViewKey(null);
-                setCurrentPage(value);
+              setCurrentPage={(
+                value
+              ) => {
+                setLoadedViewKey(
+                  null
+                );
+                setCurrentPage(
+                  value
+                );
               }}
               setSortBy={(value) => {
-                setLoadedViewKey(null);
-                setSortBy(value);
+                setLoadedViewKey(
+                  null
+                );
+                setSortBy(
+                  value
+                );
               }}
-              handleFilterChange={handleFilterChange}
+              handleFilterChange={
+                handleFilterChange
+              }
             />
           </div>
         </div>
@@ -1988,25 +2716,58 @@ export default function ShopPage() {
   );
 }
 
-function FilterSidebar({ categories, brands, selectedBrand, setSelectedBrand, selectedCategory, setSelectedCategory, setCurrentPage, setSortBy, handleFilterChange }) {
+function FilterSidebar({
+  categories,
+  brands,
+  selectedBrand,
+  setSelectedBrand,
+  selectedCategory,
+  setSelectedCategory,
+  setCurrentPage,
+  setSortBy,
+  handleFilterChange,
+}) {
   const router = useRouter();
-  const handleRemoveFilter = () => router.replace('/products');
-  const selectCategory = (category) => {
-    setSelectedCategory(category);
-    setSortBy('');
-    setCurrentPage(1);
-    handleFilterChange();
 
-    if (typeof window !== "undefined") {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
-  };
+  const handleRemoveFilter =
+    () => {
+      router.replace(
+        "/products"
+      );
+    };
+
+  const selectCategory =
+    (category) => {
+      setSelectedCategory(
+        category
+      );
+
+      setSortBy("");
+      setCurrentPage(1);
+
+      handleFilterChange();
+
+      if (
+        typeof window !==
+        "undefined"
+      ) {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    };
+
   return (
     <div className="rounded-xl border border-[#E5E5E5] bg-white p-5 shadow-[0_6px_25px_rgba(0,0,0,0.04)]">
-      <div className="mb-6 flex items-center gap-2"><ListFilter className="h-4 w-4 text-[#E52323]" /><h2 className="text-sm font-bold uppercase tracking-[0.12em]">Filters</h2></div>
+      <div className="mb-6 flex items-center gap-2">
+        <ListFilter className="h-4 w-4 text-[#E52323]" />
+
+        <h2 className="text-sm font-bold uppercase tracking-[0.12em]">
+          Filters
+        </h2>
+      </div>
+
       <div>
         <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#AAAAAA]">
           Brands
@@ -2015,41 +2776,57 @@ function FilterSidebar({ categories, brands, selectedBrand, setSelectedBrand, se
         <div className="space-y-2">
           {brands.map((brand) => {
             const active =
-              String(selectedBrand?.id) === String(brand.id);
+              String(
+                selectedBrand?.id
+              ) ===
+              String(brand.id);
 
             return (
               <button
-                key={brand.id ?? "all"}
+                key={
+                  brand.id ??
+                  "all"
+                }
                 type="button"
                 onClick={() => {
-                  setSelectedBrand({
-                    ...brand,
-                    id: brand.id,
-                    name: brand.name,
-                  });
+                  setSelectedBrand(
+                    {
+                      ...brand,
+                      id: brand.id,
+                      name: brand.name,
+                    }
+                  );
 
                   setSortBy("");
-                  setCurrentPage(1);
+                  setCurrentPage(
+                    1
+                  );
 
                   handleFilterChange();
 
-                  if (typeof window !== "undefined") {
-                    window.scrollTo({
-                      top: 0,
-                      behavior: "smooth",
-                    });
+                  if (
+                    typeof window !==
+                    "undefined"
+                  ) {
+                    window.scrollTo(
+                      {
+                        top: 0,
+                        behavior:
+                          "smooth",
+                      }
+                    );
                   }
                 }}
                 className={`flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm transition ${active
-                  ? "font-semibold text-[#E52323]"
-                  : "text-[#525252] hover:text-[#E52323]"
+                    ? "font-semibold text-[#E52323]"
+                    : "text-[#525252] hover:text-[#E52323]"
                   }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active
-                      ? "border-[#E52323] bg-[#E52323]"
-                      : "border-[#A3A3A3]"
+                        ? "border-[#E52323] bg-[#E52323]"
+                        : "border-[#A3A3A3]"
                       }`}
                   >
                     {active && (
@@ -2057,14 +2834,46 @@ function FilterSidebar({ categories, brands, selectedBrand, setSelectedBrand, se
                     )}
                   </span>
 
-                  <span>{brand.name}</span>
+                  <span>
+                    {
+                      brand.name
+                    }
+                  </span>
                 </div>
               </button>
             );
           })}
         </div>
       </div>
-      <button type="button" onClick={() => { setSelectedCategory({ id: null, name: 'All Products', slug: 'all', children: [] }); setSelectedBrand({ id: null, name: 'All Brands' }); setSortBy(''); setCurrentPage(1); handleRemoveFilter(); }} className="mt-7 w-full rounded-md border border-[#333333] py-2.5 text-xs font-semibold uppercase tracking-wide text-[#737373] transition hover:border-[#E52323] hover:text-[#E52323]">Clear All Filters</button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedCategory(
+            {
+              id: null,
+              name: "All Products",
+              slug: "all",
+              children: [],
+            }
+          );
+
+          setSelectedBrand(
+            {
+              id: null,
+              name: "All Brands",
+            }
+          );
+
+          setSortBy("");
+          setCurrentPage(1);
+
+          handleRemoveFilter();
+        }}
+        className="mt-7 w-full rounded-md border border-[#333333] py-2.5 text-xs font-semibold uppercase tracking-wide text-[#737373] transition hover:border-[#E52323] hover:text-[#E52323]"
+      >
+        Clear All Filters
+      </button>
     </div>
   );
 }
