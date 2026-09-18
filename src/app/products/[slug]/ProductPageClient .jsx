@@ -1924,7 +1924,7 @@ export default function ProductDetailsPage({
               product={product}
             />
 
-            <div className="mt-8 max-w-5xl">
+            <div className="mt-8 max-w-5xl mb-8">
               <div className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6">
                 <div className="flex items-start gap-3">
                   <div>
@@ -1944,24 +1944,9 @@ export default function ProductDetailsPage({
               </div>
             </div>
 
-            <ProductReviews
-              product={product}
-            />
 
-            <FAQSection
-              faqs={
-                Array.isArray(
-                  product.faqs
-                )
-                  ? product.faqs
-                  : []
-              }
-            />
-          </div>
-        </section>
-
-        {isRelatedLoading && (
-          <section className="border-t border-[#E5E5E5] bg-white">
+            {isRelatedLoading && (
+          <section className="border-t border-[#E5E5E5] bg-white mt-10">
             <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
               <div className="mb-5">
                 <div className="h-3 w-28 animate-pulse rounded bg-[#E5E5E5]" />
@@ -2010,6 +1995,24 @@ export default function ProductDetailsPage({
               </div>
             </section>
           )}
+
+          <FAQSection
+              faqs={
+                Array.isArray(
+                  product.faqs
+                )
+                  ? product.faqs
+                  : []
+              }
+            />
+
+            <ProductReviews
+              product={product}
+            />
+          </div>
+        </section>
+
+
       </main>
 
       {isZoomOpen && (
