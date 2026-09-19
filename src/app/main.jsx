@@ -14,7 +14,7 @@ import { ShortInform } from "@/components/home/ShortInform";
 import { productSections } from "@/data/productSections";
 import { getAllProductAds } from "../redux/features/adProducts/adProductAction";
 
-export default function Home() {
+export default function Home({ initialBanners }) {
   const dispatch = useDispatch();
 
   const {
@@ -28,7 +28,7 @@ export default function Home() {
     topSellingProduct,
     recentProduct,
     comboProduct,
-  } = useSelector((state) => state.productAd);
+  } = useSelector((state) => state.productAd || {});
 
   useEffect(() => {
     if (!loaded && !loading) {
@@ -64,11 +64,14 @@ export default function Home() {
   const recentProducts = getProducts(recentProduct);
   const comboProducts = getProducts(comboProduct);
 
-  const isLoading = loading && !loaded;
+  // Pehle render se hi true rehta hai, jab tak data na aa jaaye.
+  // Error aane par false ho jaata hai, taaki skeleton hamesha na dikhe.
+  const isLoading = !loaded && !error;
 
   return (
     <main className="min-h-screen bg-[#0B0B0B]">
-      <Hero />
+      {/* initialBanners agle step mein page.jsx se server par aayenge */}
+      <Hero initialBanners={initialBanners} />
 
       {error && (
         <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -78,44 +81,32 @@ export default function Home() {
         </div>
       )}
 
-      {isLoading && (
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="h-64 animate-pulse rounded-2xl bg-white/5 sm:h-72"
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Screen par sabse pehle dikhne waale do sections: loading ke dauraan
+          inka apna skeleton dikhta hai, isliye neeche ka page nahi khisakta.
+          Products na hon to ProductSlider khud null return kar deta hai. */}
+      <ProductSlider
+        eyebrow="Trending"
+        title={
+          productSections.trendingProducts?.title ||
+          "Trending Products"
+        }
+        description={
+          productSections.trendingProducts?.description ||
+          "Discover the products everyone is loving right now"
+        }
+        products={trendingProducts}
+        loading={isLoading}
+        background="dark"
+      />
 
-      {!isLoading && trendingProducts.length > 0 && (
-        <ProductSlider
-          eyebrow="Trending"
-          title={
-            productSections.trendingProducts?.title ||
-            "Trending Products"
-          }
-          description={
-            productSections.trendingProducts?.description ||
-            "Discover the products everyone is loving right now"
-          }
-          products={trendingProducts}
-          background="dark"
-        />
-      )}
-
-      {!isLoading && comboProducts.length > 0 && (
-        <ProductSlider
-          eyebrow="Combo"
-          title="Best Combo Offer"
-          description="Handpicked supplements selected for you"
-          products={comboProducts}
-          background="charcoal"
-        />
-      )}
+      <ProductSlider
+        eyebrow="Combo"
+        title="Must-Have Combos"
+        description="Handpicked supplements selected for you"
+        products={comboProducts}
+        loading={isLoading}
+        background="charcoal"
+      />
 
       <ShopByCategory />
 
@@ -183,7 +174,7 @@ export default function Home() {
         />
       )}
 
-      <ShortInform/>
+      <ShortInform />
 
       <BrandsSection />
 

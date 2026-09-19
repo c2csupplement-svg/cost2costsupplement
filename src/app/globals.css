@@ -2,22 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@font-face {
-  font-family: "Bebas Neue";
-  src: url("/fonts/BebasNeue-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Oxanium";
-  src: url("/fonts/Oxanium-VariableFont_wght.ttf") format("truetype");
-  font-weight: 200 800;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* Oxanium aur Bebas Neue ab layout.jsx mein next/font/local se load hote hain,
+   isliye yahan @font-face ki zarurat nahi hai */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -25,8 +11,8 @@
    COST2COST DESIGN SYSTEM
    ========================================================= */
 @theme {
-  --font-bebas: "Bebas Neue", sans-serif;
-  --font-oxanium: "Oxanium", sans-serif;
+  --font-bebas: var(--font-bebas-local), sans-serif;
+  --font-oxanium: var(--font-oxanium-local), sans-serif;
 }
 @theme inline {
   /* Core */
@@ -89,9 +75,9 @@
   --color-chart-1: var(--chart-1);
 
   /* Typography */
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-oxanium-local), sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-heading: var(--font-oxanium-local), sans-serif;
 
   /* Radius */
   --radius-sm: calc(var(--radius) * 0.6);

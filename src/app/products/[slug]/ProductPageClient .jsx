@@ -1327,7 +1327,7 @@ export default function ProductDetailsPage({
                             }
                             alt={`${product?.name || "Product"} ${index + 1}`}
                             fill
-                            sizes="96px"
+                           sizes="(max-width: 640px) 35vw, 300px"
                             className="object-contain p-2"
                             onError={(
                               event

@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 
@@ -9,14 +9,22 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Self-hosted fonts next/font se: ye preload hote hain aur fallback font
+// ka size adjust ho jaata hai, isliye font badalte waqt text kam khisakta hai
+const oxanium = localFont({
+  src: "../../public/fonts/Oxanium-VariableFont_wght.ttf",
+  variable: "--font-oxanium-local",
+  weight: "200 800",
+  style: "normal",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const bebas = localFont({
+  src: "../../public/fonts/BebasNeue-Regular.ttf",
+  variable: "--font-bebas-local",
+  weight: "400",
+  style: "normal",
+  display: "swap",
 });
 
 const GTM_ID = "GTM-KKX5KXQ5";
@@ -37,8 +45,13 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${oxanium.variable} ${bebas.variable} h-full antialiased`}
     >
+      <head>
+        {/* Banner images Cloudinary se aati hain, connection pehle se ready rahe */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+      </head>
+
       <body className="font-oxanium min-h-full flex flex-col">
         {/* Google Tag Manager (noscript) */}
         <noscript>

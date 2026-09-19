@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowRight } from "lucide-react";
+import { cld } from "@/lib/cloudinary";
 
 import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
+import Image from "next/image";
 
 export default function BrandsSection() {
   const dispatch = useDispatch();
@@ -126,7 +128,7 @@ export default function BrandsSection() {
           </div>
 
           <h2 className="text-4xl font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-5xl">
-            Top Brands
+          SHOP BY  Top Brands
           </h2>
 
           <p className="mt-4 text-sm leading-6 text-text-secondary">
@@ -197,19 +199,19 @@ function BrandCard({ brand }) {
       className="group relative flex h-[100px] w-[180px] min-w-[180px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border px-8 shadow-[0_6px_25px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-[0_16px_35px_rgba(229,35,35,0.10)] sm:h-[105px] sm:w-[180px] sm:min-w-[180px]"
     >
       <div className="absolute right-0 top-0 h-12 w-12 translate-x-6 -translate-y-6 rotate-45 bg-primary/0 transition-all duration-300 group-hover:bg-primary" />
-
-      {brand.logo ? (
-        <img
-          src={brand.logo}
-          alt={brand.name}
-          className="max-h-14 max-w-[165px] object-contain transition-all duration-500 group-hover:scale-105 sm:max-h-16 sm:max-w-[180px]"
-        />
-      ) : (
-        <span className="text-center text-sm font-black uppercase text-text-primary transition-colors group-hover:text-primary">
-          {brand.name}
-        </span>
-      )}
-
+{brand.logo ? (
+  <Image
+    src={cld(brand.logo, 330)}
+    alt={brand.name}
+    width={330}
+    height={100}
+    className="max-h-14 max-w-[165px] object-contain transition-all duration-500 group-hover:scale-105 sm:max-h-16 sm:max-w-[180px]"
+  />
+) : (
+  <span className="text-center text-sm font-black uppercase text-text-primary transition-colors group-hover:text-primary">
+    {brand.name}
+  </span>
+)}
       <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary transition-all duration-500 group-hover:w-full" />
     </Link>
   );

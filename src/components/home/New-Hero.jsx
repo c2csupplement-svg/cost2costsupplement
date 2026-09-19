@@ -5,64 +5,50 @@ import { useDispatch, useSelector } from "react-redux";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-import {
-  Swiper,
-  SwiperSlide,
-} from "swiper/react";
-import {
-  Autoplay,
-  Navigation,
-  EffectFade,
-} from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation, EffectFade } from "swiper/modules";
 
 import { getBanner } from "@/redux/features/banner/bannerAction";
 
 import "swiper/css";
 import "swiper/css/effect-fade";
 
-export default function Hero() {
-  const dispatch = useDispatch();
+// Cloudinary URL mein resize + auto format + auto quality jodta hai
+const cld = (url, width) =>
+  url?.includes("res.cloudinary.com") && url.includes("/upload/")
+    ? url.replace("/upload/", `/upload/f_auto,q_auto,c_limit,w_${width}/`)
+    : url;
 
-  const {
-    bannerList,
-    loading,
-    loaded,
-    error,
-  } = useSelector(
-    (state) => state.banners || {}
-  );
+// Alag-alag widths ka srcSet banata hai; non-Cloudinary URL waisa hi rehta hai
+const cldSrcSet = (url, widths) =>
+  url?.includes("res.cloudinary.com") && url.includes("/upload/")
+    ? widths.map((w) => `${cld(url, w)} ${w}w`).join(", ")
+    : url;
 
+// API response kisi bhi shape mein ho, usme se banners ka array nikaalta hai
+const getBanners = (data) => {
+  if (Array.isArray(data)) {
+    return data;
+  }
 
-  const [activeSlide, setActiveSlide] =
-    useState(0);
+  if (Array.isArray(data?.banners)) {
+    return data.banners;
+  }
 
-  useEffect(() => {
-    if (!loaded && !loading) {
-      dispatch(getBanner());
-    }
-  }, [dispatch, loaded, loading]);
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
 
-  const getBanners = (data) => {
-    if (Array.isArray(data)) {
-      return data;
-    }
+  if (Array.isArray(data?.data?.banners)) {
+    return data.data.banners;
+  }
 
-    if (Array.isArray(data?.banners)) {
-      return data.banners;
-    }
+  return [];
+};
 
-    if (Array.isArray(data?.data)) {
-      return data.data;
-    }
-
-    if (Array.isArray(data?.data?.banners)) {
-      return data.data.banners;
-    }
-
-    return [];
-  };
-
-  const slides = getBanners(bannerList)
+// Sirf active banners, order ke hisaab se
+const prepareSlides = (data) =>
+  getBanners(data)
     .filter((banner) => {
       return (
         banner?.isActive === true ||
@@ -70,21 +56,42 @@ export default function Hero() {
         banner?.isActive === "true"
       );
     })
-    .sort(
-      (a, b) =>
-        Number(a?.order || 0) -
-        Number(b?.order || 0)
-    );
+    .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0));
 
-  if (loading && !loaded) {
+export default function Hero({ initialBanners }) {
+  const dispatch = useDispatch();
+
+  const { bannerList, loading, loaded, error } = useSelector(
+    (state) => state.banners || {},
+  );
+
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    if (!loaded && !loading) {
+      dispatch(getBanner());
+    }
+  }, [dispatch, loaded, loading]);
+
+  // Server (page.jsx) se aaye banners pehle HTML mein hi hote hain, isliye
+  // pehla banner turant download hona shuru ho jaata hai (LCP fast).
+  // Redux ka data aa jaane ke baad wahi use hota hai.
+  const reduxSlides = prepareSlides(bannerList);
+  const slides = reduxSlides.length
+    ? reduxSlides
+    : prepareSlides(initialBanners);
+
+  // Na server se banners aaye, na Redux se: tab tak skeleton, taaki page na khisake (CLS)
+  if (!slides.length && !loaded && !error) {
     return (
       <section className="w-full bg-[#101010]">
         <div
           className="
-            h-[190px]
+            aspect-[1700/1760]
             w-full
             animate-pulse
             bg-[#151515]
+            sm:aspect-auto
             sm:h-[280px]
             md:h-[360px]
             lg:h-[500px]
@@ -94,10 +101,7 @@ export default function Hero() {
     );
   }
 
-  if (error && !slides.length) {
-    return null;
-  }
-
+  // Error aaye ya koi active banner na ho
   if (!slides.length) {
     return null;
   }
@@ -105,11 +109,7 @@ export default function Hero() {
   return (
     <section className="relative w-full overflow-hidden bg-[#101010]">
       <Swiper
-        modules={[
-          Autoplay,
-          Navigation,
-          EffectFade,
-        ]}
+        modules={[Autoplay, Navigation, EffectFade]}
         effect="fade"
         fadeEffect={{
           crossFade: true,
@@ -126,59 +126,55 @@ export default function Hero() {
           nextEl: ".hero-next",
         }}
         onSlideChange={(swiper) => {
-          setActiveSlide(
-            swiper.realIndex
-          );
+          setActiveSlide(swiper.realIndex);
         }}
         className="hero-swiper w-full"
       >
-        {slides.map((slide) => {
+        {slides.map((slide, index) => {
           const mobileImage =
-            slide?.mobileImage ||
-            slide?.image ||
-            slide?.desktopImage;
+            slide?.mobileImage || slide?.image || slide?.desktopImage;
 
           const desktopImage =
-            slide?.desktopImage ||
-            slide?.image ||
-            slide?.mobileImage;
+            slide?.desktopImage || slide?.image || slide?.mobileImage;
 
-          if (
-            !mobileImage &&
-            !desktopImage
-          ) {
+          if (!mobileImage && !desktopImage) {
             return null;
           }
 
-          return (
-            <SwiperSlide
-              key={slide?.id}
-            >
-              <div className="relative w-full overflow-hidden">
-                <Link href={`${slide?.link}`}>
-                  <picture className="block w-full">
-                    <source
-                      media="(max-width: 639px)"
-                      srcSet={mobileImage}
-                    />
+          const isFirst = index === 0;
 
-                    <img
-                      src={desktopImage}
-                      alt={
-                        slide?.title ||
-                        `Cost2Cost banner ${slide?.id || ""
-                        }`
-                      }
-                      className="
-                      block
-                      h-auto
-                      w-full
-                      object-contain
-                      object-center
-                    "
-                    />
-                  </picture>
-                </Link>
+          const bannerImage = (
+            <picture className="block w-full">
+              {/* Mobile (639px tak): screen ke size ki optimized image */}
+              <source
+                media="(max-width: 639px)"
+                srcSet={cldSrcSet(mobileImage, [480, 800, 1200, 1600])}
+                sizes="100vw"
+                width={1700}
+                height={1760}
+              />
+
+              {/* Tablet/desktop: bade sizes bhi, taaki image blur na ho */}
+              <img
+                src={cld(desktopImage, 1920)}
+                srcSet={cldSrcSet(desktopImage, [800, 1200, 1600, 1920, 2560])}
+                sizes="100vw"
+                alt={slide?.title || `Cost2Cost banner ${slide?.id || ""}`}
+                loading={isFirst ? "eager" : "lazy"}
+                fetchPriority={isFirst ? "high" : "auto"}
+                className="block h-auto w-full object-contain object-center"
+              />
+            </picture>
+          );
+
+          return (
+            <SwiperSlide key={slide?.id ?? index}>
+              <div className="relative w-full overflow-hidden">
+                {slide?.link ? (
+                  <Link href={slide.link}>{bannerImage}</Link>
+                ) : (
+                  bannerImage
+                )}
               </div>
             </SwiperSlide>
           );
@@ -272,9 +268,7 @@ export default function Hero() {
           >
             <div className="flex items-baseline">
               <span className="bebas text-3xl text-white sm:text-5xl">
-                {String(
-                  activeSlide + 1
-                ).padStart(2, "0")}
+                {String(activeSlide + 1).padStart(2, "0")}
               </span>
 
               <span className="bebas mx-1.5 text-lg text-white/40 sm:mx-2 sm:text-2xl">
@@ -282,9 +276,7 @@ export default function Hero() {
               </span>
 
               <span className="bebas text-lg text-white/40 sm:text-2xl">
-                {String(
-                  slides.length
-                ).padStart(2, "0")}
+                {String(slides.length).padStart(2, "0")}
               </span>
             </div>
           </div>

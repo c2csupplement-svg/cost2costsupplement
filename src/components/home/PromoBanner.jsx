@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { getBanner } from "@/redux/features/banner/bannerAction";
+import { cld } from "@/lib/cloudinary";
 
 export default function PromoBanner() {
   const dispatch = useDispatch();
@@ -91,17 +92,16 @@ export default function PromoBanner() {
               "
             />
 
-            <img
-              src={mobileSrc}
-              alt={altText}
-              className="
-                block
-                h-110
-                w-full
-                object-cover
-                sm:hidden
-              "
-            />
+         <img
+  src={cld(mobileSrc, 1200)}
+  srcSet={[600, 900, 1200]
+    .map((w) => `${cld(mobileSrc, w)} ${w}w`)
+    .join(", ")}
+  sizes="100vw"
+  alt={altText}
+  loading="lazy"
+  className="block h-110 w-full object-cover sm:hidden"
+/>
 
             <div className="pointer-events-none absolute inset-0 bg-black/5" />
           </div>

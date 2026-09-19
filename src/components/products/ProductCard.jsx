@@ -4,45 +4,31 @@ import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag, Star } from "lucide-react";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { addToCart } from "@/redux/features/cart/cartActions";
 
 export default function ProductCard({ product }) {
+  const dispatch = useDispatch();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const {
-    toggleWishlist,
-    isInWishlist,
-  } = useShop();
+  const { toggleWishlist, isInWishlist } = useShop();
 
-  const wishlistActive = isInWishlist(
-    product?.id
-  );
+  const wishlistActive = isInWishlist(product?.id);
 
   const imageSrc = (() => {
-    const featuredImage =
-      product?.featuredImage ||
-      product?.featuredimg;
+    const featuredImage = product?.featuredImage || product?.featuredimg;
 
-    if (
-      typeof featuredImage === "string" &&
-      featuredImage.trim()
-    ) {
+    if (typeof featuredImage === "string" && featuredImage.trim()) {
       return featuredImage.trim();
     }
 
-    if (
-      featuredImage &&
-      typeof featuredImage === "object"
-    ) {
-      if (
-        typeof featuredImage.url === "string" &&
-        featuredImage.url.trim()
-      ) {
+    if (featuredImage && typeof featuredImage === "object") {
+      if (typeof featuredImage.url === "string" && featuredImage.url.trim()) {
         return featuredImage.url.trim();
       }
 
-      if (
-        typeof featuredImage.src === "string" &&
-        featuredImage.src.trim()
-      ) {
+      if (typeof featuredImage.src === "string" && featuredImage.src.trim()) {
         return featuredImage.src.trim();
       }
 
@@ -64,50 +50,32 @@ export default function ProductCard({ product }) {
     return "";
   })();
 
-  const {
-    price,
-    originalPrice,
-    discount,
-  } = (() => {
-    const productPrice =
-      Number(product?.price) || 0;
+  const { price, originalPrice, discount } = (() => {
+    const productPrice = Number(product?.price) || 0;
 
-    const productSalePrice =
-      Number(product?.salePrice) || 0;
+    const productSalePrice = Number(product?.salePrice) || 0;
 
-    if (
-      productSalePrice > 0 &&
-      productPrice > productSalePrice
-    ) {
+    if (productSalePrice > 0 && productPrice > productSalePrice) {
       return {
         price: productSalePrice,
         originalPrice: productPrice,
         discount: Math.round(
-          ((productPrice -
-            productSalePrice) /
-            productPrice) *
-            100
+          ((productPrice - productSalePrice) / productPrice) * 100,
         ),
       };
     }
 
     if (productPrice > 0) {
-      const original =
-        Number(product?.originalPrice) || 0;
+      const original = Number(product?.originalPrice) || 0;
 
-      const productDiscount =
-        Number(product?.discount) || 0;
+      const productDiscount = Number(product?.discount) || 0;
 
       const calculatedDiscount =
         productDiscount > 0
           ? productDiscount
           : original > productPrice
-          ? Math.round(
-              ((original - productPrice) /
-                original) *
-                100
-            )
-          : 0;
+            ? Math.round(((original - productPrice) / original) * 100)
+            : 0;
 
       return {
         price: productPrice,
@@ -116,18 +84,14 @@ export default function ProductCard({ product }) {
       };
     }
 
-    const variants = Array.isArray(
-      product?.variants
-    )
-      ? product.variants
-      : [];
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
 
     const variant =
       variants.find(
         (item) =>
           Number(item?.discountedPrice) > 0 ||
           Number(item?.salePrice) > 0 ||
-          Number(item?.price) > 0
+          Number(item?.price) > 0,
       ) || variants[0];
 
     if (!variant) {
@@ -138,64 +102,89 @@ export default function ProductCard({ product }) {
       };
     }
 
-    const basePrice =
-      Number(variant?.price) || 0;
+    const basePrice = Number(variant?.price) || 0;
 
     const discountedPrice =
-      Number(
-        variant?.discountedPrice
-      ) > 0
-        ? Number(
-            variant.discountedPrice
-          )
-        : Number(
-            variant?.salePrice
-          ) > 0
-        ? Number(variant.salePrice)
-        : null;
+      Number(variant?.discountedPrice) > 0
+        ? Number(variant.discountedPrice)
+        : Number(variant?.salePrice) > 0
+          ? Number(variant.salePrice)
+          : null;
 
-    const displayPrice =
-      discountedPrice !== null
-        ? discountedPrice
-        : basePrice;
+    const displayPrice = discountedPrice !== null ? discountedPrice : basePrice;
 
     const variantOriginalPrice =
-      discountedPrice !== null &&
-      discountedPrice < basePrice
-        ? basePrice
-        : 0;
+      discountedPrice !== null && discountedPrice < basePrice ? basePrice : 0;
 
     const variantDiscount =
-      variantOriginalPrice > 0 &&
-      discountedPrice !== null
+      variantOriginalPrice > 0 && discountedPrice !== null
         ? Math.round(
-            ((variantOriginalPrice -
-              discountedPrice) /
-              variantOriginalPrice) *
-              100
+            ((variantOriginalPrice - discountedPrice) / variantOriginalPrice) *
+              100,
           )
-        : Number(
-            variant?.discount
-          ) || 0;
+        : Number(variant?.discount) || 0;
 
     return {
       price: displayPrice,
-      originalPrice:
-        variantOriginalPrice,
+      originalPrice: variantOriginalPrice,
       discount: variantDiscount,
     };
   })();
 
+  const selectedVariant =
+    product?.variants?.find(
+      (v) => Number(v?.stockQuantity ?? v?.stock ?? 0) > 0,
+    ) ?? product?.variants?.[0];
+
+  const inStock =
+    Number(
+      selectedVariant?.stockQuantity ??
+        selectedVariant?.stock ??
+        product?.stockQuantity ??
+        product?.stock ??
+        0,
+    ) > 0;
+  addToCart({
+    product: product.id,
+    variantId: selectedVariant.id,
+    quantity: 1,
+  });
+
+  const handleAddToCart = async (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    if (!product || !inStock || isAddingToCart) return;
+
+    if (!product.id || !selectedVariant?.id) {
+      console.error("Product ID or Variant ID is missing");
+      return;
+    }
+
+    try {
+      setIsAddingToCart(true);
+      await dispatch(
+        addToCart({
+          product: product.id,
+          variantId: selectedVariant.id,
+          quantity: 1,
+        }),
+      );
+    } catch (error) {
+      console.error("Add to cart:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
   const productSlug =
-    typeof product?.slug === "string" &&
-    product.slug.trim()
+    typeof product?.slug === "string" && product.slug.trim()
       ? product.slug.trim()
       : product?.id
-      ? String(product.id)
-      : "";
+        ? String(product.id)
+        : "";
 
-  const productName =
-    product?.name || "Product";
+  const productName = product?.name || "Product";
 
   const brandName =
     typeof product?.brand === "string"
@@ -207,29 +196,20 @@ export default function ProductCard({ product }) {
       ? product.category
       : product?.category?.name || "";
 
-const reviewCount = product?.reviewCount;
+  const reviewCount = product?.reviewCount;
 
-const rating = product?.avgRating || 0.0
-
+  const rating = product?.avgRating || 0.0;
 
   const formattedPrice =
-    Number(price) > 0
-      ? Number(price).toLocaleString(
-          "en-IN"
-        )
-      : "0";
+    Number(price) > 0 ? Number(price).toLocaleString("en-IN") : "0";
 
   const formattedOriginalPrice =
     Number(originalPrice) > 0
-      ? Number(
-          originalPrice
-        ).toLocaleString("en-IN")
+      ? Number(originalPrice).toLocaleString("en-IN")
       : "0";
 
   const productHref = productSlug
-    ? `/products/${encodeURIComponent(
-        productSlug
-      )}`
+    ? `/products/${encodeURIComponent(productSlug)}`
     : "/products";
 
   const handleWishlist = (event) => {
@@ -288,11 +268,7 @@ const rating = product?.avgRating || 0.0
         </div>
       )}
 
-
-      <Link
-        href={productHref}
-        className="block shrink-0"
-      >
+      <Link href={productHref} className="block shrink-0">
         <div
           className="
             relative
@@ -365,15 +341,12 @@ const rating = product?.avgRating || 0.0
               sm:tracking-[0.2em]
             "
           >
-            {brandName ||
-              categoryName ||
-              "Supplement"}
+            {brandName || categoryName || "Supplement"}
           </p>
 
-          {categoryName &&
-            brandName && (
-              <span
-                className="
+          {categoryName && brandName && (
+            <span
+              className="
                   hidden
                   truncate
                   text-[9px]
@@ -383,16 +356,13 @@ const rating = product?.avgRating || 0.0
                   text-text-muted
                   sm:block
                 "
-              >
-                {categoryName}
-              </span>
-            )}
+            >
+              {categoryName}
+            </span>
+          )}
         </div>
 
-        <Link
-          href={productHref}
-          className="mt-1 block"
-        >
+        <Link href={productHref} className="mt-1 block">
           <h3
             className="
               line-clamp-2
@@ -436,8 +406,7 @@ const rating = product?.avgRating || 0.0
                   sm:h-3.5
                   sm:w-3.5
                   ${
-                    index <
-                    Math.round(rating)
+                    index < Math.round(rating)
                       ? "fill-[#F7B84B] text-[#F7B84B]"
                       : "text-border"
                   }
@@ -454,9 +423,7 @@ const rating = product?.avgRating || 0.0
               sm:text-[11px]
             "
           >
-            {rating > 0
-              ? rating.toFixed(1)
-              : "0.0"}
+            {rating > 0 ? rating.toFixed(1) : "0.0"}
           </span>
 
           {reviewCount > 0 && (
@@ -484,10 +451,10 @@ const rating = product?.avgRating || 0.0
           "
         >
           <div className="mt-2 flex w-full items-end justify-between gap-3 sm:mt-4">
-  <div className="min-w-0">
-    <div className="flex items-baseline gap-1 sm:gap-2">
-      <span
-        className="
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1 sm:gap-2">
+                <span
+                  className="
           whitespace-nowrap
           text-[14px]
           font-black
@@ -495,13 +462,13 @@ const rating = product?.avgRating || 0.0
           text-text-primary
           sm:text-xl
         "
-      >
-        ₹{formattedPrice}
-      </span>
+                >
+                  ₹{formattedPrice}
+                </span>
 
-      {originalPrice > price && (
-        <span
-          className="
+                {originalPrice > price && (
+                  <span
+                    className="
             hidden
             text-xs
             font-medium
@@ -509,15 +476,15 @@ const rating = product?.avgRating || 0.0
             line-through
             sm:inline
           "
-        >
-          ₹{formattedOriginalPrice}
-        </span>
-      )}
-    </div>
+                  >
+                    ₹{formattedOriginalPrice}
+                  </span>
+                )}
+              </div>
 
-    {discount > 0 && (
-      <p
-        className="
+              {discount > 0 && (
+                <p
+                  className="
           mt-0.5
           text-[6px]
           font-bold
@@ -527,46 +494,36 @@ const rating = product?.avgRating || 0.0
           sm:mt-1
           sm:text-[9px]
         "
-      >
-        Save {discount}%
-      </p>
-    )}
-  </div>
+                >
+                  Save {discount}%
+                </p>
+              )}
+            </div>
 
-  <Link
-    href={productHref}
-    className="
-    cursor-pointer
-      shrink-0
-      rounded-lg
-      border
-      border-primary/30
-      bg-primary/5
-      px-3
-      py-2
-      text-[8px]
-      font-black
-      uppercase
-      tracking-[0.12em]
-      text-primary
-      transition-all
-      duration-200
-      hover:border-primary
-      hover:bg-primary
-      hover:text-white
-      hover:shadow-sm
-      active:scale-95
-      sm:rounded-xl
-      sm:px-4
-      sm:py-2.5
-      sm:text-[10px]
-    "
-  >
-    View
-  </Link>
-</div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={!inStock || isAddingToCart}
+              className="
+    shrink-0 cursor-pointer rounded-lg border border-primary/30 bg-primary
+    px-3 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-black
+    transition-all duration-200
+    hover:border-primary hover:bg-primary/5 hover:text-black hover:shadow-sm
+    active:scale-95
+    disabled:cursor-not-allowed disabled:opacity-50
+    sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-[10px]
+  "
+            >
+              {!inStock
+                ? "Out of Stock"
+                : isAddingToCart
+                  ? "Adding..."
+                  : "Add To Cart"}
+            </button>
+          </div>
         </div>
       </div>
+      
     </article>
   );
 }

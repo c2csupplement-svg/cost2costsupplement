@@ -6,27 +6,62 @@ import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 
 import ProductCard from "@/components/products/ProductCard";
 
+// Data aane tak card jaisa placeholder, taaki section ki height pehle se reserve rahe
+function ProductCardSkeleton() {
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white/80">
+      <div className="aspect-square w-full animate-pulse bg-[#EAE4D9]" />
+
+      <div className="flex min-h-[130px] flex-1 flex-col gap-2 p-3">
+        <div className="h-2.5 w-1/3 animate-pulse rounded bg-[#EAE4D9]" />
+        <div className="h-3 w-full animate-pulse rounded bg-[#EAE4D9]" />
+        <div className="h-3 w-2/3 animate-pulse rounded bg-[#EAE4D9]" />
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+          <div className="h-4 w-14 animate-pulse rounded bg-[#EAE4D9]" />
+          <div className="h-8 w-20 animate-pulse rounded-lg bg-[#EAE4D9]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const SKELETON_COUNT = 4;
+
+const CARD_WRAPPER_CLASS = `
+  flex
+  h-auto
+  min-w-0
+  shrink-0
+  snap-start
+  items-stretch
+  w-[calc((100vw-84px)/2)]
+  sm:w-[290px]
+  lg:w-[310px]
+`;
+
 export default function ProductSlider({
   eyebrow,
   title,
   description,
   products = [],
-  sectionClassName =
-    "pt-8 pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
+  loading = false,
+  sectionClassName = "pt-8 pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
   background = "beige",
 }) {
   const sliderRef = useRef(null);
 
+  const list = Array.isArray(products) ? products : [];
+
+  const viewAllHref = `/products?search=${encodeURIComponent(eyebrow || "")}`;
+
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] =
-    useState(false);
-  const [canScrollRight, setCanScrollRight] =
-    useState(true);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const backgrounds = {
     beige: {
-      section:
-        "bg-gradient-to-b from-white via-[#F3EFE7] to-[#E4DDCD]",
+      section: "bg-gradient-to-b from-white via-[#F3EFE7] to-[#E4DDCD]",
       edge: "#E4DDCD",
       accent: "#DC2626",
       accentDark: "#B91C1C",
@@ -39,34 +74,20 @@ export default function ProductSlider({
     },
   };
 
-  const theme =
-    backgrounds[background] || backgrounds.beige;
+  const theme = backgrounds[background] || backgrounds.beige;
 
   const updateScrollState = () => {
     const slider = sliderRef.current;
 
     if (!slider) return;
 
-    const {
-      scrollLeft,
-      scrollWidth,
-      clientWidth,
-    } = slider;
+    const { scrollLeft, scrollWidth, clientWidth } = slider;
 
-    const maxScroll =
-      scrollWidth - clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
 
     setCanScrollLeft(scrollLeft > 4);
-
-    setCanScrollRight(
-      scrollLeft < maxScroll - 4
-    );
-
-    setScrollProgress(
-      maxScroll > 0
-        ? scrollLeft / maxScroll
-        : 0
-    );
+    setCanScrollRight(scrollLeft < maxScroll - 4);
+    setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
   };
 
   useEffect(() => {
@@ -76,66 +97,40 @@ export default function ProductSlider({
 
     if (!slider) return;
 
-    slider.addEventListener(
-      "scroll",
-      updateScrollState,
-      {
-        passive: true,
-      }
-    );
+    slider.addEventListener("scroll", updateScrollState, {
+      passive: true,
+    });
 
-    window.addEventListener(
-      "resize",
-      updateScrollState
-    );
+    window.addEventListener("resize", updateScrollState);
 
     return () => {
-      slider.removeEventListener(
-        "scroll",
-        updateScrollState
-      );
-
-      window.removeEventListener(
-        "resize",
-        updateScrollState
-      );
+      slider.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
     };
-  }, [products.length]);
+  }, [list.length, loading]);
 
   const scrollSlider = (direction) => {
     const slider = sliderRef.current;
 
     if (!slider) return;
 
-    const firstCard = slider.querySelector(
-      "[data-product-card]"
-    );
+    const firstCard = slider.querySelector("[data-product-card]");
 
     if (!firstCard) return;
 
-    const cardWidth =
-      firstCard.getBoundingClientRect().width;
+    const cardWidth = firstCard.getBoundingClientRect().width;
 
     const gap =
-      window.innerWidth >= 1024
-        ? 20
-        : window.innerWidth >= 640
-        ? 16
-        : 12;
+      window.innerWidth >= 1024 ? 20 : window.innerWidth >= 640 ? 16 : 12;
 
     slider.scrollBy({
-      left:
-        direction === "left"
-          ? -(cardWidth + gap)
-          : cardWidth + gap,
+      left: direction === "left" ? -(cardWidth + gap) : cardWidth + gap,
       behavior: "smooth",
     });
   };
 
-  if (
-    !Array.isArray(products) ||
-    products.length === 0
-  ) {
+  // Loading khatam ho chuki hai aur koi product nahi hai, tabhi section hatao
+  if (!loading && list.length === 0) {
     return null;
   }
 
@@ -212,8 +207,7 @@ export default function ProductSlider({
                   sm:w-11
                 "
                 style={{
-                  backgroundColor:
-                    theme.accent,
+                  backgroundColor: theme.accent,
                 }}
               />
 
@@ -226,8 +220,7 @@ export default function ProductSlider({
                   sm:text-xs
                 "
                 style={{
-                  color:
-                    theme.accentDark,
+                  color: theme.accentDark,
                 }}
               >
                 {eyebrow}
@@ -264,7 +257,7 @@ export default function ProductSlider({
           </div>
 
           <Link
-            href={`/products?search=${eyebrow}`}
+            href={viewAllHref}
             className="
               group
               hidden
@@ -305,46 +298,46 @@ export default function ProductSlider({
         </div>
 
         <div className="relative px-0">
-          <button
-            type="button"
-            onClick={() =>
-              scrollSlider("left")
-            }
-            aria-label="Previous products"
-            disabled={!canScrollLeft}
-            className="
-              absolute
-              left-2
-              top-1/2
-              z-30
-              flex
-              h-9
-              w-9
-              -translate-y-1/2
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-gray-200
-              bg-white
-              text-red-600
-              transition-all
-              duration-200
-              hover:scale-105
-              hover:bg-red-600
-              hover:text-white
-              active:scale-95
-              disabled:pointer-events-none
-              disabled:opacity-0
-              sm:left-3
-              sm:h-11
-              sm:w-11
-              lg:left-4
-              cursor-pointer
-            "
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
+          {!loading && (
+            <button
+              type="button"
+              onClick={() => scrollSlider("left")}
+              aria-label="Previous products"
+              disabled={!canScrollLeft}
+              className="
+                absolute
+                left-2
+                top-1/2
+                z-30
+                flex
+                h-9
+                w-9
+                -translate-y-1/2
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-gray-200
+                bg-white
+                text-red-600
+                transition-all
+                duration-200
+                hover:scale-105
+                hover:bg-red-600
+                hover:text-white
+                active:scale-95
+                disabled:pointer-events-none
+                disabled:opacity-0
+                sm:left-3
+                sm:h-11
+                sm:w-11
+                lg:left-4
+                cursor-pointer
+              "
+            >
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          )}
 
           <div
             ref={sliderRef}
@@ -370,87 +363,83 @@ export default function ProductSlider({
               touch-pan-x
             "
           >
-            {products.map(
-              (product, index) => (
-                <div
-                  key={
-                    product?.id ||
-                    product?.productId ||
-                    product?.slug ||
-                    index
-                  }
-                  data-product-card
-                  className="
-                    flex
-                    h-auto
-                    min-w-0
-                    shrink-0
-                    snap-start
-                    items-stretch
-                    w-[calc((100vw-84px)/2)]
-                    sm:w-[290px]
-                    lg:w-[310px]
-                  "
-                >
+            {loading
+              ? Array.from({ length: SKELETON_COUNT }).map((_, index) => (
                   <div
-                    className="
-                      flex
-                      h-full
-                      w-full
-                      min-w-0
-                      [&>*]:h-full
-                      [&>*]:w-full
-                    "
+                    key={`skeleton-${index}`}
+                    aria-hidden="true"
+                    className={CARD_WRAPPER_CLASS}
                   >
-                    <ProductCard
-                      product={product}
-                    />
+                    <ProductCardSkeleton />
                   </div>
-                </div>
-              )
-            )}
+                ))
+              : list.map((product, index) => (
+                  <div
+                    key={
+                      product?.id ||
+                      product?.productId ||
+                      product?.slug ||
+                      index
+                    }
+                    data-product-card
+                    className={CARD_WRAPPER_CLASS}
+                  >
+                    <div
+                      className="
+                        flex
+                        h-full
+                        w-full
+                        min-w-0
+                        [&>*]:h-full
+                        [&>*]:w-full
+                      "
+                    >
+                      <ProductCard product={product} />
+                    </div>
+                  </div>
+                ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              scrollSlider("right")
-            }
-            aria-label="Next products"
-            disabled={!canScrollRight}
-            className="
-              absolute
-              right-2
-              top-1/2
-              z-30
-              flex
-              h-9
-              w-9
-              -translate-y-1/2
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-gray-200
-              bg-white
-              text-red-600
-              transition-all
-              duration-200
-              hover:scale-105
-              hover:bg-red-600
-              hover:text-white
-              active:scale-95
-              disabled:pointer-events-none
-              disabled:opacity-0
-              sm:right-3
-              sm:h-11
-              sm:w-11
-              lg:right-4
-              cursor-pointer
-            "
-          >
-            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
+          {!loading && (
+            <button
+              type="button"
+              onClick={() => scrollSlider("right")}
+              aria-label="Next products"
+              disabled={!canScrollRight}
+              className="
+                absolute
+                right-2
+                top-1/2
+                z-30
+                flex
+                h-9
+                w-9
+                -translate-y-1/2
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-gray-200
+                bg-white
+                text-red-600
+                transition-all
+                duration-200
+                hover:scale-105
+                hover:bg-red-600
+                hover:text-white
+                active:scale-95
+                disabled:pointer-events-none
+                disabled:opacity-0
+                sm:right-3
+                sm:h-11
+                sm:w-11
+                lg:right-4
+                cursor-pointer
+              "
+            >
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          )}
         </div>
 
         <div
@@ -465,9 +454,7 @@ export default function ProductSlider({
           "
         >
           <div className="flex items-center gap-0.5">
-            {Array.from({
-              length: 5,
-            }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <Star
                 key={index}
                 className="
@@ -494,7 +481,7 @@ export default function ProductSlider({
 
         <div className="mt-3 px-5 sm:hidden">
           <Link
-            href={`/products?search=${eyebrow}`}
+            href={viewAllHref}
             className="
               group
               inline-flex

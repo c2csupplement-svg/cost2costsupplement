@@ -2082,7 +2082,7 @@ function CartItem({
                   src={image}
                   alt={name}
                   fill
-                  sizes="96px"
+                 sizes="(max-width: 640px) 35vw, 300px"
                   className="object-contain p-2 transition duration-300 group-hover:scale-105"
                 />
               ) : (

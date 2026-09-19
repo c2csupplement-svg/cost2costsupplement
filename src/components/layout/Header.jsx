@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import Image from "next/image";
 import {
   ShoppingCart,
   Heart,
@@ -450,11 +451,15 @@ export default function Header() {
               href="/"
               className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
             >
-              <img
-                src="/images/c2c-logo-black.png"
-                alt="C2C Supplement"
-                className="h-10 w-auto object-contain sm:h-11 xl:h-13"
-              />
+          <Image
+  src="/images/c2c-logo-black.png"
+  alt="C2C Supplement"
+  width={499}
+  height={199}
+  sizes="(min-width: 1280px) 131px, (min-width: 640px) 111px, 100px"
+  loading="eager"
+  className="h-10 w-auto object-contain sm:h-11 xl:h-13"
+/>
             </Link>
 
             <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-2 xl:gap-5">
