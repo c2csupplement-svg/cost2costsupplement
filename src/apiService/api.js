@@ -65,11 +65,6 @@ export const getProductSearchApi = async (
   pageSize = 20
 ) => {
   try {
-    console.log("Search API:", {
-      query,
-      currentPage,
-      pageSize,
-    });
 
     const response = await axios.get(
       `${API_BASE_URL}/products/search`,
@@ -82,7 +77,7 @@ export const getProductSearchApi = async (
       }
     );
 
-    console.log("Search response:", response.data);
+
 
     return response.data;
   } catch (err) {
