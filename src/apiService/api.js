@@ -59,26 +59,57 @@ export const getCategoryBySlug = async (slug, page = 1, limit = 20) => {
     }
 }
 
-export const getProductSearchApi = async (query) => {
-    try {
+export const getProductSearchApi = async (
+  query,
+  currentPage = 1,
+  pageSize = 20
+) => {
+  try {
+    console.log("Search API:", {
+      query,
+      currentPage,
+      pageSize,
+    });
 
-        const response = await axios.get(`${API_BASE_URL}/products/search?q=${query}`);
+    const response = await axios.get(
+      `${API_BASE_URL}/products/search`,
+      {
+        params: {
+          q: query,
+          page: currentPage,
+          pageSize: pageSize,
+        },
+      }
+    );
 
-        return response.data
+    console.log("Search response:", response.data);
+
+    return response.data;
+  } catch (err) {
+    if (err.response) {
+      console.error(
+        "err Status:",
+        err.response.status
+      );
+
+      console.error(
+        "Response:",
+        err.response.data
+      );
+    } else if (err.request) {
+      console.error(
+        "No response received from server"
+      );
+    } else {
+      console.error(
+        "err:",
+        err.message
+      );
     }
-    catch (err) {
-        if (err.response) {
-            console.error("err Status:", err.response.status);
-            console.error("Response:", err.response.data);
-        } else if (err.request) {
-            console.error("No response received from server");
-        } else {
-            console.error("err:", err.message);
-        }
 
-        throw err;
-    }
-}
+    throw err;
+  }
+};
 
 export const getProductByGoal = async (query) => {
     try {

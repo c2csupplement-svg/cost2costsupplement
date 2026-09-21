@@ -312,14 +312,12 @@ export default function ShopPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [searchProducts, setSearchProducts] =
-    useState([]);
+  const [searchProducts, setSearchProducts] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
-  const [searchLoading, setSearchLoading] =
-    useState(false);
-
-  const [searchError, setSearchError] =
-    useState(null);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchTotalPages, setSearchTotalPages] = useState(1);
 
   const [filteredProducts, setFilteredProducts] =
     useState([]);
@@ -439,6 +437,8 @@ export default function ShopPage() {
       setSearchProducts([]);
       setSearchError(null);
       setSearchLoading(false);
+      setSearchTotal(0);
+      setSearchTotalPages(1);
       return;
     }
 
@@ -449,31 +449,44 @@ export default function ShopPage() {
         setSearchLoading(true);
         setSearchError(null);
 
-        const response =
-          await getProductSearchApi(
-            searchQuery
-          );
-
-        if (!active) {
-          return;
-        }
-
-        const products =
-          getProductsFromResponse(
-            response
-          );
-
-        setSearchProducts(
-          getUniqueProducts(products)
+        const response = await getProductSearchApi(
+          searchQuery,
+          currentPage,
+          pageSize
         );
 
-        setCurrentPage(1);
+        if (!active) return;
+
+        const products = getProductsFromResponse(response);
+
+        const uniqueProducts = getUniqueProducts(products);
+
+        const total = getTotalFromResponse(
+          response,
+          uniqueProducts.length
+        );
+
+        const totalPages = getTotalPagesFromResponse(
+          response,
+          total,
+          pageSize
+        );
+
+        setSearchProducts(uniqueProducts);
+        setSearchTotal(total);
+        setSearchTotalPages(totalPages);
+
       } catch (error) {
-        if (!active) {
-          return;
-        }
+        if (!active) return;
+
+        console.error(
+          "Search products error:",
+          error?.response?.data || error?.message || error
+        );
 
         setSearchProducts([]);
+        setSearchTotal(0);
+        setSearchTotalPages(1);
 
         setSearchError(
           error?.response?.data?.message ||
@@ -483,9 +496,7 @@ export default function ShopPage() {
       } finally {
         if (active) {
           setSearchLoading(false);
-          setLoadedViewKey(
-            currentViewKey
-          );
+          setLoadedViewKey(currentViewKey);
         }
       }
     };
@@ -495,7 +506,11 @@ export default function ShopPage() {
     return () => {
       active = false;
     };
-  }, [searchQuery]);
+  }, [
+    searchQuery,
+    currentPage,
+    pageSize,
+  ]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -1202,21 +1217,16 @@ export default function ShopPage() {
       ? specialTotal ||
       normalizedSpecialProducts.length ||
       searchProducts.length
-      : searchProducts.length
+      : searchTotal
     : sortBy
-      ? sortTotal ||
-      sortedProducts.length
+      ? sortTotal || sortedProducts.length
       : selectedCategory.id !== null ||
         selectedBrand.id !== null
-        ? filterTotal ||
-        filteredProducts.length
-        : Number(
-          productData?.total
-        ) ||
-        Number(
-          productData?.data?.total
-        ) ||
+        ? filterTotal || filteredProducts.length
+        : Number(productData?.total) ||
+        Number(productData?.data?.total) ||
         allProducts.length;
+
 
   const totalPages = searchQuery
     ? specialProductKey
@@ -1225,43 +1235,20 @@ export default function ShopPage() {
         totalProducts,
         pageSize
       )
-      : Math.max(
-        1,
-        Math.ceil(
-          totalProducts /
-          pageSize
-        )
-      )
+      : searchTotalPages
     : sortBy
       ? sortTotalPages
       : selectedCategory.id !== null ||
         selectedBrand.id !== null
         ? filterTotalPages
-        : Number(
-          productData?.totalPages
-        ) ||
-        Number(
-          productData?.data
-            ?.totalPages
-        ) ||
+        : Number(productData?.totalPages) ||
+        Number(productData?.data?.totalPages) ||
         Math.max(
           1,
-          Math.ceil(
-            totalProducts /
-            pageSize
-          )
+          Math.ceil(totalProducts / pageSize)
         );
 
-  const paginatedProducts =
-    searchQuery &&
-      !specialProductKey
-      ? products.slice(
-        (currentPage - 1) *
-        pageSize,
-        currentPage *
-        pageSize
-      )
-      : products;
+  const paginatedProducts = products;
 
   const isSpecialProductLoading =
     Boolean(
@@ -1382,7 +1369,9 @@ export default function ShopPage() {
 
         const response =
           await getProductSearchApi(
-            searchQuery
+            searchQuery,
+            currentPage,
+            pageSize
           );
 
         setSearchProducts(
@@ -1766,8 +1755,8 @@ export default function ShopPage() {
                 });
               }}
               className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${!selectedCategory?.id
-                  ? "border-[#E52323] bg-[#E52323] text-white"
-                  : "border-[#E5E5E5] bg-white text-[#737373] hover:border-[#E52323] hover:text-[#E52323]"
+                ? "border-[#E52323] bg-[#E52323] text-white"
+                : "border-[#E5E5E5] bg-white text-[#737373] hover:border-[#E52323] hover:text-[#E52323]"
                 }`}
             >
               All Products
@@ -1872,8 +1861,8 @@ export default function ShopPage() {
                           });
                         }}
                         className={`h-[37px] cursor-pointer px-4 py-2 text-sm font-medium transition ${hasChildren
-                            ? "rounded-l-full border border-r-0"
-                            : "rounded-full border"
+                          ? "rounded-l-full border border-r-0"
+                          : "rounded-full border"
                           } ${isParentSelected
                             ? "border-[#E52323] bg-[#E52323] text-white"
                             : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
@@ -1911,8 +1900,8 @@ export default function ShopPage() {
                             );
                           }}
                           className={`flex h-[37px] cursor-pointer items-center justify-center rounded-r-full border border-l-0 px-2 transition ${isParentSelected
-                              ? "border-[#E52323] bg-[#E52323] text-white"
-                              : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
+                            ? "border-[#E52323] bg-[#E52323] text-white"
+                            : "border-[#E5E5E5] bg-white text-[#737373] group-hover:border-[#E52323] group-hover:text-[#E52323]"
                             }`}
                           aria-label={`Show ${category.name} child categories`}
                           aria-expanded={
@@ -1921,8 +1910,8 @@ export default function ShopPage() {
                         >
                           <ChevronDown
                             className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         </button>
@@ -2016,8 +2005,8 @@ export default function ShopPage() {
                                   });
                                 }}
                                 className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${isChildSelected
-                                    ? "bg-[#E52323]/10 font-semibold text-[#E52323]"
-                                    : "text-[#555555] hover:bg-[#F7F7F7] hover:text-[#E52323]"
+                                  ? "bg-[#E52323]/10 font-semibold text-[#E52323]"
+                                  : "text-[#555555] hover:bg-[#F7F7F7] hover:text-[#E52323]"
                                   }`}
                               >
                                 <span className="truncate pr-3">
@@ -2450,9 +2439,9 @@ export default function ShopPage() {
                                 : undefined
                             }
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
-                                page
-                                ? "border-[#E52323] bg-[#E52323] text-white"
-                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                              page
+                              ? "border-[#E52323] bg-[#E52323] text-white"
+                              : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                               } disabled:pointer-events-none disabled:opacity-40`}
                           >
                             {page}
@@ -2567,9 +2556,9 @@ export default function ShopPage() {
                                   : undefined
                               }
                               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition-all duration-200 ${currentPage ===
-                                  page
-                                  ? "border-[#E52323] bg-[#E52323] text-white"
-                                  : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
+                                page
+                                ? "border-[#E52323] bg-[#E52323] text-white"
+                                : "border-[#D4D4D4] bg-white text-[#111111] hover:border-[#E52323] hover:text-[#E52323]"
                                 } disabled:pointer-events-none disabled:opacity-40`}
                             >
                               {page}
@@ -2818,15 +2807,15 @@ function FilterSidebar({
                   }
                 }}
                 className={`flex w-full items-center justify-between gap-3 py-1.5 text-left text-sm transition ${active
-                    ? "font-semibold text-[#E52323]"
-                    : "text-[#525252] hover:text-[#E52323]"
+                  ? "font-semibold text-[#E52323]"
+                  : "text-[#525252] hover:text-[#E52323]"
                   }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active
-                        ? "border-[#E52323] bg-[#E52323]"
-                        : "border-[#A3A3A3]"
+                      ? "border-[#E52323] bg-[#E52323]"
+                      : "border-[#A3A3A3]"
                       }`}
                   >
                     {active && (
