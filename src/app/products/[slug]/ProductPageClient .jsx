@@ -1709,7 +1709,7 @@ export default function ProductDetailsPage({
                     </div>
                   )}
 
-                <div className="mt-7 flex flex-row gap-3">
+                <div className="mt-2 md:mt-7 flex flex-row gap-3">
                   <div className="flex h-10 flex-1 items-center justify-between rounded-lg border border-[#D4D4D4] bg-white sm:h-14">
                     <button
                       type="button"
@@ -1784,7 +1784,7 @@ export default function ProductDetailsPage({
                   </button>
                 </div>
 
-                <div className="mt-3 flex flex-row gap-3">
+                <div className="mt-1 md:mt-3 flex flex-row gap-3">
                   <button
                     type="button"
                     disabled={
@@ -1794,7 +1794,7 @@ export default function ProductDetailsPage({
                     onClick={
                       handleAddToCart
                     }
-                    className="flex cursor-pointer h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
+                    className="flex cursor-pointer h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#E52323] px-6 text-[10px] md:text-sm font-black uppercase tracking-wide text-white transition hover:bg-[#c91d1d] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
                   >
                     <ShoppingCart className="h-5 w-5" />
 
@@ -1813,7 +1813,7 @@ export default function ProductDetailsPage({
                     onClick={
                       handleBuyNow
                     }
-                    className="flex cursor-pointer h-10 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
+                    className="flex cursor-pointer h-10 w-full items-center justify-center rounded-lg border border-[#111111] bg-[#111111] px-6 text-[10px] md:text-sm font-black uppercase tracking-wide text-white transition hover:bg-transparent hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40 sm:h-14 sm:flex-1"
                   >
                     {isBuyingNow
                       ? "Processing..."
@@ -1821,7 +1821,7 @@ export default function ProductDetailsPage({
                   </button>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="mt-2 md:mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   <div className="flex items-center justify-center gap-2 rounded-lg border border-[#E5E5E5] bg-white px-1 py-3 sm:block sm:p-4">
                     <Truck className="h-5 w-5 text-[#E52323]" />
 
@@ -1865,7 +1865,7 @@ export default function ProductDetailsPage({
                   </div>
                 </div>
 
-                <div className="mt-7 rounded-xl border border-[#E5E5E5] bg-white p-5">
+                <div className="mt-2 py-3 md:py-7 rounded-xl border border-[#E5E5E5] bg-white px-2">
                   <div className="space-y-3 text-sm">
                     <div className="flex gap-3">
                       <span className="w-24 shrink-0 text-[#000000]">
@@ -1913,21 +1913,21 @@ export default function ProductDetailsPage({
         </section>
 
         <section className="border-y border-[#E5E5E5] bg-[#F5F5F5]">
-          <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
+          <div className="mx-auto max-w-[1440px] px-5 py-3 md:py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
             <ProductDescription
               product={product}
             />
 
-            <div className="mt-8 max-w-5xl mb-8">
-              <div className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6">
+            <div className="mt-1 md:mt-8 max-w-5xl mb-2 md:mb-8">
+              <div className="rounded-xl border border-border bg-card px-2 md:px-5 py-2 md:py-4 sm:px-6">
                 <div className="flex items-start gap-3">
                   <div>
                     <p className="w-full">
-                      <span className="text-xs font-bold uppercase tracking-wide text-red-600">
+                      <span className="text-[7px] md:text-xs  font-bold uppercase tracking-wide text-red-600">
                         Disclaimer:{" "}
                       </span>
 
-                      <span className="mt-1.5 text-xs leading-5 text-text-secondary">
+                      <span className="mt-1.5 text-[7px] md:text-xs  md:leading-5 text-text-secondary">
                         This statement has not been evaluated by the Food and Drug
                         Administration. This product is not intended to diagnose,
                         treat, cure, or prevent any disease.
