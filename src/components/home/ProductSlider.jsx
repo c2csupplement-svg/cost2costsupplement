@@ -45,7 +45,7 @@ export default function ProductSlider({
   description,
   products = [],
   loading = false,
-  sectionClassName = "pt-8 pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
+  sectionClassName = "pt-2 md:pt-8 pb-2 md:pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
   background = "beige",
 }) {
   const sliderRef = useRef(null);
@@ -212,7 +212,8 @@ export default function ProductSlider({
 
               <p
                 className="
-                  text-[10px]
+                text-[7px]
+                  md:text-[10px]
                   font-black
                   uppercase
                   tracking-[0.28em]
@@ -228,7 +229,8 @@ export default function ProductSlider({
 
             <h2
               className={`
-                text-3xl
+                text-[18px]
+                text-lg
                 font-black
                 uppercase
                 leading-[0.95]
@@ -267,7 +269,8 @@ export default function ProductSlider({
               bg-red-600
               px-4
               py-3
-              text-[10px]
+              text-[6px]
+              md:text-[10px]
               font-black
               uppercase
               tracking-wide
@@ -478,7 +481,7 @@ export default function ProductSlider({
           </span>
         </div>
 
-        <div className="mt-3 px-5 sm:hidden">
+        <div className="mt-1 md:mt-3 px-5 sm:hidden">
           <Link
             href={viewAllHref}
             className="

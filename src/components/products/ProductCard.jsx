@@ -3,7 +3,7 @@
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, ShoppingCart, Star } from "lucide-react";
+import { Heart, ShoppingBag, ShoppingCart, Star,Plus } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@/redux/features/cart/cartActions";
@@ -297,22 +297,21 @@ export default function ProductCard({ product }) {
               ₹{formattedPrice}
             </span>
           </div>
-
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={!inStock || isAddingToCart}
-            aria-label={inStock ? `Add ${productName} to cart` : "Out of stock"}
-            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold text-black transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
-          >
-            <ShoppingCart className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
-            <span className="text-white">
-              {!inStock ? "Sold out" : isAddingToCart ? "Adding…" : "Add"}
-              <span className="hidden sm:inline">
-                {inStock && !isAddingToCart ? " to cart" : ""}
-              </span>
-            </span>
-          </button>
+<button
+  type="button"
+  onClick={handleAddToCart}
+  disabled={!inStock || isAddingToCart}
+  aria-label={inStock ? `Add ${productName} to cart` : "Out of stock"}
+  className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 py-2 text-[11px] font-bold text-black transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
+>
+  {inStock && !isAddingToCart && (
+    <Plus className="h-3 w-3 text-white sm:hidden" strokeWidth={2.5} />
+  )}
+  <ShoppingCart className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
+  <span className="hidden text-white sm:inline">
+    {!inStock ? "Sold out" : isAddingToCart ? "Adding…" : "Add to cart"}
+  </span>
+</button>
         </div>
       </div>
     </article>
