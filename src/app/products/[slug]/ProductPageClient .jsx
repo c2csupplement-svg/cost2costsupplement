@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import ProductSlider from "@/components/home/ProductSlider";
+import SkeletonProductCard from "@/components/products/SkeletonProductCard";
 
 import { getProductBySlug } from "@/redux/features/product/productApi";
 import { getProduct } from "@/redux/features/product/productAction";
@@ -325,14 +326,14 @@ export default function ProductDetailsPage({
 
   const productList = normalizeProductList(
     productState?.productList ??
-      productState?.products ??
-      productState?.data
+    productState?.products ??
+    productState?.data
   );
 
   const productSummary = slug
     ? productList.find(
-        (item) => item?.slug === slug
-      ) || null
+      (item) => item?.slug === slug
+    ) || null
     : null;
 
   useEffect(() => {
@@ -457,9 +458,9 @@ export default function ProductDetailsPage({
       attributes.find((item) => {
         const name = String(
           item?.attribute?.name ??
-            item?.attribute?.slug ??
-            item?.attributeName ??
-            ""
+          item?.attribute?.slug ??
+          item?.attributeName ??
+          ""
         )
           .trim()
           .toLowerCase();
@@ -488,25 +489,25 @@ export default function ProductDetailsPage({
       .map((item) => {
         const name = String(
           item?.attribute?.name ??
-            item?.attribute?.label ??
-            item?.attribute?.slug ??
-            item?.attributeName ??
-            ""
+          item?.attribute?.label ??
+          item?.attribute?.slug ??
+          item?.attributeName ??
+          ""
         ).trim();
 
         const slug = String(
           item?.attribute?.slug ??
-            item?.attributeName ??
-            name
+          item?.attributeName ??
+          name
         )
           .trim()
           .toLowerCase();
 
         const value = String(
           item?.value ??
-            item?.attributeValue ??
-            item?.label ??
-            ""
+          item?.attributeValue ??
+          item?.label ??
+          ""
         ).trim();
 
         if (!name || !value) {
@@ -555,14 +556,14 @@ export default function ProductDetailsPage({
       return (
         (!selectedFlavour ||
           variantFlavour.toLowerCase() ===
-            String(
-              selectedFlavour
-            ).toLowerCase()) &&
+          String(
+            selectedFlavour
+          ).toLowerCase()) &&
         (!selectedSize ||
           variantSize.toLowerCase() ===
-            String(
-              selectedSize
-            ).toLowerCase())
+          String(
+            selectedSize
+          ).toLowerCase())
       );
     }) ||
     variants[0] ||
@@ -666,27 +667,27 @@ export default function ProductDetailsPage({
     const priceValue =
       discountedPrice !==
         undefined &&
-      discountedPrice !== null
+        discountedPrice !== null
         ? discountedPrice
         : variantPrice !==
-            undefined &&
+          undefined &&
           variantPrice !== null
-        ? variantPrice
-        : topLevelPrice;
+          ? variantPrice
+          : topLevelPrice;
 
     const originalValue =
       discountedPrice !==
-          undefined &&
+        undefined &&
         discountedPrice !== null &&
         variantPrice !==
-          undefined &&
+        undefined &&
         variantPrice !== null &&
         Number(variantPrice) >
-          Number(discountedPrice)
+        Number(discountedPrice)
         ? variantPrice
         : apiProduct?.originalPrice ??
-          apiProduct?.mrp ??
-          null;
+        apiProduct?.mrp ??
+        null;
 
     const stockQuantity =
       selectedVariant?.stockQuantity ??
@@ -706,9 +707,9 @@ export default function ProductDetailsPage({
         .map((review) =>
           Number(
             review?.rating ??
-              review?.starRating ??
-              review?.stars ??
-              0
+            review?.starRating ??
+            review?.stars ??
+            0
           )
         )
         .filter(
@@ -720,17 +721,17 @@ export default function ProductDetailsPage({
     const calculatedRating =
       validReviewRatings.length > 0
         ? validReviewRatings.reduce(
-            (sum, value) =>
-              sum + value,
-            0
-          ) /
-          validReviewRatings.length
+          (sum, value) =>
+            sum + value,
+          0
+        ) /
+        validReviewRatings.length
         : Number(
-            apiProduct?.averageRating ??
-              apiProduct?.average_rating ??
-              apiProduct?.rating ??
-              0
-          );
+          apiProduct?.averageRating ??
+          apiProduct?.average_rating ??
+          apiProduct?.rating ??
+          0
+        );
 
     const reviewCount =
       apiProduct?._count?.reviews ??
@@ -746,9 +747,9 @@ export default function ProductDetailsPage({
     const brandName =
       apiProduct?.brand?.name ||
       brandsById[
-        String(
-          apiProduct?.brandId
-        )
+      String(
+        apiProduct?.brandId
+      )
       ] ||
       apiProduct?.brandName ||
       "Cost2Cost";
@@ -757,7 +758,7 @@ export default function ProductDetailsPage({
       apiProduct?.category?.name ||
       apiProduct?.categoryName ||
       (typeof apiProduct?.category ===
-      "string"
+        "string"
         ? apiProduct.category
         : "Uncategorized");
 
@@ -770,7 +771,7 @@ export default function ProductDetailsPage({
         Number(priceValue) || 0,
       originalPrice:
         originalValue !== null &&
-        originalValue !== undefined
+          originalValue !== undefined
           ? Number(originalValue) || 0
           : 0,
       rating: Number(
@@ -791,16 +792,16 @@ export default function ProductDetailsPage({
 
   const wishlistActive = product?.id
     ? wishlistItems.some((item) => {
-        const wishlistProductId =
-          getWishlistProductId(item);
+      const wishlistProductId =
+        getWishlistProductId(item);
 
-        return (
-          String(
-            wishlistProductId
-          ) ===
-          String(product.id)
-        );
-      })
+      return (
+        String(
+          wishlistProductId
+        ) ===
+        String(product.id)
+      );
+    })
     : false;
 
   useEffect(() => {
@@ -848,7 +849,7 @@ export default function ProductDetailsPage({
                   id !== undefined &&
                   id !== null &&
                   String(id) !==
-                    currentProductId
+                  currentProductId
                 );
               }
             );
@@ -890,15 +891,15 @@ export default function ProductDetailsPage({
           console.error(
             "Related products error:",
             error?.response?.data ||
-              error?.message
+            error?.message
           );
 
           setRelatedProductsData([]);
           setRelatedError(
             error?.response?.data
               ?.message ||
-              error?.message ||
-              "Unable to load related products."
+            error?.message ||
+            "Unable to load related products."
           );
         } finally {
           if (active) {
@@ -954,17 +955,17 @@ export default function ProductDetailsPage({
 
   const discount =
     product?.originalPrice > 0 &&
-    product?.price <
+      product?.price <
       product.originalPrice
       ? Math.round(
-          ((product.originalPrice -
-            product.price) /
-            product.originalPrice) *
-            100
-        )
+        ((product.originalPrice -
+          product.price) /
+          product.originalPrice) *
+        100
+      )
       : Number(
-          product?.discount
-        ) || 0;
+        product?.discount
+      ) || 0;
 
   const handleAddToCart =
     async () => {
@@ -1042,8 +1043,8 @@ export default function ProductDetailsPage({
         variantId:
           selectedVariant?.id
             ? Number(
-                selectedVariant.id
-              )
+              selectedVariant.id
+            )
             : null,
         quantity:
           Number(quantity) || 1,
@@ -1057,24 +1058,24 @@ export default function ProductDetailsPage({
         variant:
           selectedVariant
             ? {
-                id:
-                  selectedVariant.id,
-                flavour:
-                  selectedVariant.flavour ??
-                  selectedVariant.flavor ??
-                  null,
-                size:
-                  selectedVariant.size ??
-                  selectedVariant.servings ??
-                  selectedVariant.serving ??
-                  null,
-                attributes:
-                  Array.isArray(
-                    selectedVariant.attributes
-                  )
-                    ? selectedVariant.attributes
-                    : [],
-              }
+              id:
+                selectedVariant.id,
+              flavour:
+                selectedVariant.flavour ??
+                selectedVariant.flavor ??
+                null,
+              size:
+                selectedVariant.size ??
+                selectedVariant.servings ??
+                selectedVariant.serving ??
+                null,
+              attributes:
+                Array.isArray(
+                  selectedVariant.attributes
+                )
+                  ? selectedVariant.attributes
+                  : [],
+            }
             : null,
       };
 
@@ -1114,11 +1115,11 @@ export default function ProductDetailsPage({
           toggleItem(
             product.id,
             selectedVariant?.id ??
-              null,
+            null,
             selectedFlavour ||
-              null,
+            null,
             selectedSize ||
-              null
+            null
           )
         );
       } catch (error) {
@@ -1136,9 +1137,9 @@ export default function ProductDetailsPage({
       const stock =
         Number(
           selectedVariant?.stockQuantity ??
-            selectedVariant?.stock ??
-            product?.stockQuantity ??
-            0
+          selectedVariant?.stock ??
+          product?.stockQuantity ??
+          0
         ) || 0;
 
       setQuantity((current) => {
@@ -1195,7 +1196,7 @@ export default function ProductDetailsPage({
 
   const selectedZoomImage =
     product?.images?.[
-      selectedImage
+    selectedImage
     ] ||
     product?.images?.[0] ||
     PLACEHOLDER_IMAGE;
@@ -1313,12 +1314,11 @@ export default function ProductDetailsPage({
                               index
                             )
                           }
-                          className={`relative h-20 w-20 min-w-20 shrink-0 overflow-hidden rounded-xl border bg-white transition-all sm:h-24 sm:w-24 sm:min-w-24 md:h-24 md:w-24 md:min-w-24 ${
-                            selectedImage ===
-                            index
+                          className={`relative h-20 w-20 min-w-20 shrink-0 overflow-hidden rounded-xl border bg-white transition-all sm:h-24 sm:w-24 sm:min-w-24 md:h-24 md:w-24 md:min-w-24 ${selectedImage ===
+                              index
                               ? "border-[#E52323] ring-2 ring-[#E52323]/20"
                               : "border-[#E5E5E5] hover:border-[#111111]"
-                          }`}
+                            }`}
                         >
                           <Image
                             src={
@@ -1327,7 +1327,7 @@ export default function ProductDetailsPage({
                             }
                             alt={`${product?.name || "Product"} ${index + 1}`}
                             fill
-                           sizes="(max-width: 640px) 35vw, 300px"
+                            sizes="(max-width: 640px) 35vw, 300px"
                             className="object-contain p-2"
                             onError={(
                               event
@@ -1439,30 +1439,30 @@ export default function ProductDetailsPage({
 
                       {product.images
                         .length > 1 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={
-                              previousImage
-                            }
-                            className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white/90 shadow-sm transition hover:border-[#E52323] hover:text-[#E52323]"
-                            aria-label="Previous image"
-                          >
-                            <ArrowLeft className="h-4 w-4" />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={
+                                previousImage
+                              }
+                              className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white/90 shadow-sm transition hover:border-[#E52323] hover:text-[#E52323]"
+                              aria-label="Previous image"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={
-                              nextImage
-                            }
-                            className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white/90 shadow-sm transition hover:border-[#E52323] hover:text-[#E52323]"
-                            aria-label="Next image"
-                          >
-                            <ArrowRight className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
+                            <button
+                              type="button"
+                              onClick={
+                                nextImage
+                              }
+                              className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white/90 shadow-sm transition hover:border-[#E52323] hover:text-[#E52323]"
+                              aria-label="Next image"
+                            >
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -1475,20 +1475,19 @@ export default function ProductDetailsPage({
                   </span>
 
                   <span
-                    className={`rounded-full px-3 py-1 ${
-                      Number(
-                        selectedVariant?.stockQuantity ??
-                          selectedVariant?.stock ??
-                          0
-                      ) > 0
+                    className={`rounded-full px-3 py-1 ${Number(
+                      selectedVariant?.stockQuantity ??
+                      selectedVariant?.stock ??
+                      0
+                    ) > 0
                         ? "bg-green-50 text-green-700"
                         : "bg-red-50 text-red-600"
-                    }`}
+                      }`}
                   >
                     {Number(
                       selectedVariant?.stockQuantity ??
-                        selectedVariant?.stock ??
-                        0
+                      selectedVariant?.stock ??
+                      0
                     ) > 0
                       ? "In stock"
                       : "Out of stock"}
@@ -1501,7 +1500,7 @@ export default function ProductDetailsPage({
 
                 {product.title &&
                   product.title !==
-                    product.name && (
+                  product.name && (
                     <p className="mt-2 text-sm leading-6 text-[#737373]">
                       {product.title}
                     </p>
@@ -1515,14 +1514,13 @@ export default function ProductDetailsPage({
                       (_, index) => (
                         <Star
                           key={index}
-                          className={`h-4 w-4 ${
-                            index <
-                            Math.round(
-                              product.rating
-                            )
+                          className={`h-4 w-4 ${index <
+                              Math.round(
+                                product.rating
+                              )
                               ? "fill-[#F7B84B] text-[#F7B84B]"
                               : "text-[#D4D4D4]"
-                          }`}
+                            }`}
                         />
                       )
                     )}
@@ -1530,17 +1528,17 @@ export default function ProductDetailsPage({
 
                   <span className="text-sm font-bold">
                     {product.rating >
-                    0
+                      0
                       ? product.rating.toFixed(
-                          1
-                        )
+                        1
+                      )
                       : "0.0"}
                   </span>
 
                   <span className="text-sm text-[#737373]">
                     ({product.reviewCount}{" "}
                     {product.reviewCount ===
-                    1
+                      1
                       ? "review"
                       : "reviews"}
                     )
@@ -1557,13 +1555,13 @@ export default function ProductDetailsPage({
 
                   {product.originalPrice >
                     product.price && (
-                    <span className="pb-1 text-base text-[#999999] line-through">
-                      ₹
-                      {formatPrice(
-                        product.originalPrice
-                      )}
-                    </span>
-                  )}
+                      <span className="pb-1 text-base text-[#999999] line-through">
+                        ₹
+                        {formatPrice(
+                          product.originalPrice
+                        )}
+                      </span>
+                    )}
 
                   {discount > 0 && (
                     <span className="rounded-md bg-[#E52323]/10 px-2 py-1 text-xs font-black text-[#E52323]">
@@ -1574,144 +1572,142 @@ export default function ProductDetailsPage({
 
                 {flavours.length >
                   0 && (
-                  <div className="mt-7">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm font-black uppercase tracking-wide">
-                        Flavour
-                      </span>
-                    </div>
+                    <div className="mt-7">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-sm font-black uppercase tracking-wide">
+                          Flavour
+                        </span>
+                      </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {flavours.map(
-                        (
-                          flavour
-                        ) => {
-                          const hasAvailableSize =
-                            variants.some(
-                              (
-                                variant
-                              ) =>
-                                getVariantFlavour(
+                      <div className="flex flex-wrap gap-2">
+                        {flavours.map(
+                          (
+                            flavour
+                          ) => {
+                            const hasAvailableSize =
+                              variants.some(
+                                (
                                   variant
-                                ) ===
-                                flavour
-                            );
-
-                          return (
-                            <button
-                              key={
-                                flavour
-                              }
-                              type="button"
-                              disabled={
-                                !hasAvailableSize
-                              }
-                              onClick={() =>
-                                setSelectedFlavour(
+                                ) =>
+                                  getVariantFlavour(
+                                    variant
+                                  ) ===
                                   flavour
-                                )
-                              }
-                              className={`rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
-                                selectedFlavour ===
-                                flavour
-                                  ? "border-[#E52323] bg-[#E52323] text-white"
-                                  : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323]"
-                              } disabled:cursor-not-allowed disabled:opacity-40`}
-                            >
-                              {
-                                flavour
-                              }
-                            </button>
-                          );
-                        }
-                      )}
+                              );
+
+                            return (
+                              <button
+                                key={
+                                  flavour
+                                }
+                                type="button"
+                                disabled={
+                                  !hasAvailableSize
+                                }
+                                onClick={() =>
+                                  setSelectedFlavour(
+                                    flavour
+                                  )
+                                }
+                                className={`rounded-lg border px-4 py-2.5 text-sm font-bold transition ${selectedFlavour ===
+                                    flavour
+                                    ? "border-[#E52323] bg-[#E52323] text-white"
+                                    : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323]"
+                                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                              >
+                                {
+                                  flavour
+                                }
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {sizes.length >
                   0 && (
-                  <div className="mt-6">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm font-black uppercase tracking-wide">
-                        Size
-                      </span>
+                    <div className="mt-6">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-sm font-black uppercase tracking-wide">
+                          Size
+                        </span>
 
-                      <span className="text-sm text-[#737373]">
-                        {
-                          selectedSize
-                        }
-                      </span>
-                    </div>
+                        <span className="text-sm text-[#737373]">
+                          {
+                            selectedSize
+                          }
+                        </span>
+                      </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {sizes.map(
-                        (size) => {
-                          const matchingVariant =
-                            variants.find(
-                              (
-                                variant
-                              ) => {
-                                const variantFlavour =
-                                  getVariantFlavour(
-                                    variant
-                                  );
+                      <div className="flex flex-wrap gap-2">
+                        {sizes.map(
+                          (size) => {
+                            const matchingVariant =
+                              variants.find(
+                                (
+                                  variant
+                                ) => {
+                                  const variantFlavour =
+                                    getVariantFlavour(
+                                      variant
+                                    );
 
-                                const variantSize =
-                                  getVariantSize(
-                                    variant
-                                  );
+                                  const variantSize =
+                                    getVariantSize(
+                                      variant
+                                    );
 
-                                return (
-                                  variantSize ===
+                                  return (
+                                    variantSize ===
                                     size &&
-                                  (!selectedFlavour ||
-                                    !variantFlavour ||
-                                    variantFlavour ===
+                                    (!selectedFlavour ||
+                                      !variantFlavour ||
+                                      variantFlavour ===
                                       selectedFlavour)
-                                );
-                              }
-                            );
+                                  );
+                                }
+                              );
 
-                          const stock =
-                            Number(
-                              matchingVariant?.stockQuantity ??
+                            const stock =
+                              Number(
+                                matchingVariant?.stockQuantity ??
                                 matchingVariant?.stock ??
                                 0
-                            );
+                              );
 
-                          const isAvailable =
-                            stock > 0;
+                            const isAvailable =
+                              stock > 0;
 
-                          return (
-                            <button
-                              key={size}
-                              type="button"
-                              disabled={
-                                !isAvailable
-                              }
-                              onClick={() =>
-                                setSelectedSize(
+                            return (
+                              <button
+                                key={size}
+                                type="button"
+                                disabled={
+                                  !isAvailable
+                                }
+                                onClick={() =>
+                                  setSelectedSize(
+                                    size
+                                  )
+                                }
+                                className={`rounded-lg border px-4 py-2.5 text-sm font-bold transition ${selectedSize ===
+                                    size
+                                    ? "border-[#E52323] bg-[#E52323] text-white"
+                                    : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323]"
+                                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                              >
+                                {
                                   size
-                                )
-                              }
-                              className={`rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
-                                selectedSize ===
-                                size
-                                  ? "border-[#E52323] bg-[#E52323] text-white"
-                                  : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323]"
-                              } disabled:cursor-not-allowed disabled:opacity-40`}
-                            >
-                              {
-                                size
-                              }
-                            </button>
-                          );
-                        }
-                      )}
+                                }
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="mt-7 flex flex-row gap-3">
                   <div className="flex h-10 flex-1 items-center justify-between rounded-lg border border-[#D4D4D4] bg-white sm:h-14">
@@ -1740,9 +1736,9 @@ export default function ProductDetailsPage({
                       }
                       disabled={
                         product.stockQuantity >
-                          0 &&
+                        0 &&
                         quantity >=
-                          product.stockQuantity
+                        product.stockQuantity
                       }
                       className="flex h-full cursor-pointer w-12 items-center justify-center text-[#525252] transition hover:text-[#E52323] disabled:opacity-40"
                       aria-label="Increase quantity"
@@ -1762,21 +1758,19 @@ export default function ProductDetailsPage({
                     aria-busy={
                       wishlistLoading
                     }
-                    className={`flex cursor-pointer h-10 flex-1 items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:h-14 ${
-                      wishlistActive
+                    className={`flex cursor-pointer h-10 flex-1 items-center justify-center gap-2 rounded-lg border text-sm font-bold transition sm:h-14 ${wishlistActive
                         ? "border-[#E52323] bg-[#E52323]/10 text-[#E52323]"
                         : "border-[#D4D4D4] bg-white text-[#525252] hover:border-[#E52323] hover:text-[#E52323]"
-                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {wishlistLoading ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : (
                       <Heart
-                        className={`h-5 w-5 ${
-                          wishlistActive
+                        className={`h-5 w-5 ${wishlistActive
                             ? "fill-current"
                             : ""
-                        }`}
+                          }`}
                       />
                     )}
 
@@ -1946,57 +1940,53 @@ export default function ProductDetailsPage({
 
 
             {isRelatedLoading && (
-          <section className="border-t border-[#E5E5E5] bg-white mt-10">
-            <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
-              <div className="mb-5">
-                <div className="h-3 w-28 animate-pulse rounded bg-[#E5E5E5]" />
+              <section className="border-t border-[#E5E5E5] bg-white mt-10">
+                <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
+                  <div className="mb-5">
+                    <div className="skeleton-shimmer h-3 w-28 rounded bg-[#EDEDED]" />
+                    <div className="skeleton-shimmer mt-2 h-8 w-56 rounded bg-[#EDEDED]" />
+                  </div>
 
-                <div className="mt-2 h-8 w-56 animate-pulse rounded bg-[#E5E5E5]" />
-              </div>
+                  <div className="flex gap-4 overflow-x-auto pb-1">
+                    {[1, 2, 3, 4].map((item) => (
+                      <div key={item} className="min-w-[220px] sm:min-w-[280px]">
+                        <SkeletonProductCard />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
 
-              <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3, 4].map(
-                  (item) => (
-                    <div
-                      key={item}
-                      className="h-[330px] min-w-[220px] animate-pulse rounded-xl bg-[#F0F0F0] sm:min-w-[280px]"
-                    />
-                  )
-                )}
-              </div>
-            </div>
-          </section>
-        )}
+            {!isRelatedLoading &&
+              relatedProductsData.length >
+              0 && (
+                <ProductSlider
+                  eyebrow="You May Also Like"
+                  title="Related Products"
+                  description="Discover products that pair well with your selection"
+                  products={
+                    relatedProductsData
+                  }
+                  background="soft"
+                />
+              )}
 
-        {!isRelatedLoading &&
-          relatedProductsData.length >
-            0 && (
-            <ProductSlider
-              eyebrow="You May Also Like"
-              title="Related Products"
-              description="Discover products that pair well with your selection"
-              products={
-                relatedProductsData
-              }
-              background="soft"
-            />
-          )}
+            {!isRelatedLoading &&
+              relatedError &&
+              relatedProductsData.length ===
+              0 && (
+                <section className="border-t border-[#E5E5E5] bg-white">
+                  <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
+                    <p className="text-sm text-[#737373]">
+                      No related products
+                      available right now.
+                    </p>
+                  </div>
+                </section>
+              )}
 
-        {!isRelatedLoading &&
-          relatedError &&
-          relatedProductsData.length ===
-            0 && (
-            <section className="border-t border-[#E5E5E5] bg-white">
-              <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
-                <p className="text-sm text-[#737373]">
-                  No related products
-                  available right now.
-                </p>
-              </div>
-            </section>
-          )}
-
-          <FAQSection
+            <FAQSection
               faqs={
                 Array.isArray(
                   product.faqs
@@ -2036,18 +2026,18 @@ export default function ProductDetailsPage({
 
           {product.images.length >
             1 && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                previousImage();
-              }}
-              className="absolute left-3 top-1/2 z-[110] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#111111] transition hover:bg-[#E52323] hover:text-white sm:left-6"
-              aria-label="Previous image"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  previousImage();
+                }}
+                className="absolute left-3 top-1/2 z-[110] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#111111] transition hover:bg-[#E52323] hover:text-white sm:left-6"
+                aria-label="Previous image"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
 
           <div
             className="relative h-[82vh] w-[92vw] max-w-6xl"
@@ -2080,18 +2070,18 @@ export default function ProductDetailsPage({
 
           {product.images.length >
             1 && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                nextImage();
-              }}
-              className="absolute right-3 top-1/2 z-[110] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#111111] transition hover:bg-[#E52323] hover:text-white sm:right-6"
-              aria-label="Next image"
-            >
-              <ArrowRight className="h-5 w-5" />
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-3 top-1/2 z-[110] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#111111] transition hover:bg-[#E52323] hover:text-white sm:right-6"
+                aria-label="Next image"
+              >
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            )}
         </div>
       )}
     </>
