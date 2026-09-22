@@ -69,7 +69,7 @@ export default function Home({ initialBanners }) {
   const isLoading = !loaded && !error;
 
   return (
-    <main className="min-h-screen bg-[#0B0B0B]">
+    <main className="min-h-screen bg-white">
       {/* initialBanners agle step mein page.jsx se server par aayenge */}
       <Hero initialBanners={initialBanners} />
       <ShopByCategory />

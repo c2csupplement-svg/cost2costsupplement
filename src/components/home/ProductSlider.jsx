@@ -45,7 +45,7 @@ export default function ProductSlider({
   description,
   products = [],
   loading = false,
-  sectionClassName = "pt-2 md:pt-8 pb-2 md:pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
+  sectionClassName = "pt-2 md:pt-8 pb-2 md:pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12 my-2",
   background = "beige",
 }) {
   const sliderRef = useRef(null);
