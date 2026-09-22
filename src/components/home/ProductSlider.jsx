@@ -137,6 +137,7 @@ export default function ProductSlider({
     <section
       className={`
         relative
+        py-2
         overflow-hidden
         ${theme.section}
         ${sectionClassName}
@@ -185,7 +186,8 @@ export default function ProductSlider({
           className="
             relative
             z-10
-            mb-6
+            mb-2
+            md:mb-6
             flex
             items-end
             justify-between

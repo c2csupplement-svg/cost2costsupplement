@@ -58,7 +58,8 @@ function CategoryCard({ category }) {
             <h3
               className="
                 line-clamp-2
-                text-sm
+                text-[10px]
+                md:text-sm
                 font-black
                 uppercase
                 leading-tight
@@ -73,24 +74,25 @@ function CategoryCard({ category }) {
           </div>
 
           <div
-            className="
-              flex
-              h-8
-              w-8
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/30
-              bg-black/20
-              text-white
-              sm:h-9
-              sm:w-9
-            "
-          >
-            <ArrowUpRight className="h-4 w-4" />
-          </div>
+  className="
+    hidden
+    shrink-0
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-white/30
+    bg-black/20
+    text-white
+    sm:flex
+    sm:h-9
+    sm:w-9
+    md:h-8
+    md:w-8
+  "
+>
+  <ArrowUpRight className="h-4 w-4" />
+</div>
         </div>
       </div>
 

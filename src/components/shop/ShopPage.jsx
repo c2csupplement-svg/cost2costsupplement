@@ -1703,19 +1703,19 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-5 pb-8 pt-10 sm:px-8 lg:px-10 lg:pb-10 lg:pt-14">
+      <div className="mx-auto max-w-[1440px] px-5 pb-2 md:pb-8 pt-2 md:pt-10 sm:px-8 lg:px-10 lg:pb-10 lg:pt-14">
         <div className="max-w-3xl">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-[#E52323]">
             C2C Supplement Store
           </p>
 
-          <h1 className="text-4xl font-black uppercase tracking-tight text-[#111111] sm:text-5xl lg:text-6xl">
+          <h1 className="text-xl md:text-4xl font-black uppercase tracking-tight text-[#111111] sm:text-5xl lg:text-6xl">
             {searchQuery
               ? searchQuery
               : "Shop Supplements"}
           </h1>
 
-          <h1 className="mt-4 max-w-2xl text-sm leading-7 text-[#525252] sm:text-base">
+          <h1 className="mt-1 md:mt-4 max-w-2xl text-sm leading-7 text-[#525252] sm:text-base">
             {searchQuery
               ? `Showing products for "${searchQuery}".`
               : "Discover premium sports nutrition, supplements, vitamins and wellness products from trusted brands."}
@@ -2029,7 +2029,7 @@ export default function ShopPage() {
           )}
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+      <div className="mx-auto max-w-[1440px] px-5 py-2 md:py-8 sm:px-8 lg:px-10 lg:py-10">
         <div className="mb-7 flex flex-col gap-4 border-b border-[#E5E5E5] pb-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
