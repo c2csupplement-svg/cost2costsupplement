@@ -347,24 +347,23 @@ export default function ProductSlider({
             ref={sliderRef}
             className="
               flex
-              items-stretch
-              gap-3
-              overflow-x-auto
-              px-12
-              py-3
-              sm:gap-4
-              sm:px-16
-              sm:py-4
-              lg:gap-5
-              lg:px-20
-              lg:py-5
-              [scrollbar-width:none]
-              [-ms-overflow-style:none]
-              [&::-webkit-scrollbar]:hidden
-              scroll-smooth
-              snap-x
-              snap-mandatory
-              touch-pan-x
+    items-stretch
+    gap-3
+    overflow-x-auto
+    px-12
+    py-3
+    sm:gap-4
+    sm:px-16
+    sm:py-4
+    lg:gap-5
+    lg:px-20
+    lg:py-5
+    [scrollbar-width:none]
+    [-ms-overflow-style:none]
+    [&::-webkit-scrollbar]:hidden
+    scroll-smooth
+    snap-x
+    snap-mandatory
             "
           >
             {loading
