@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 
 import ProductCard from "@/components/products/ProductCard";
 
-// Data aane tak card jaisa placeholder, taaki section ki height pehle se reserve rahe
 function ProductCardSkeleton() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white/80">

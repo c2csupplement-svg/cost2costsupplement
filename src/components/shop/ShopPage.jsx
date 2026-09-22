@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import ProductCard from "@/components/products/ProductCard";
+import SkeletonProductCard from "../products/SkeletonProductCard";
 
 import {
   getProductSearchApi,
@@ -2285,17 +2286,10 @@ export default function ShopPage() {
 
           <div>
             {isInitialLoading ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3 2xl:grid-cols-4">
-                {Array.from({
-                  length: 8,
-                }).map(
-                  (_, index) => (
-                    <div
-                      key={index}
-                      className="h-[360px] animate-pulse rounded-xl border border-[#E5E5E5] bg-white"
-                    />
-                  )
-                )}
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <SkeletonProductCard key={index} />
+                ))}
               </div>
             ) : isError ? (
               <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-[#E5E5E5] bg-white px-6 text-center">

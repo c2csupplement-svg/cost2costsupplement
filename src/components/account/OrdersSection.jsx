@@ -959,7 +959,7 @@ function MobileItemRow({ item, onBuyNow }) {
 
   const router = useRouter();
 
-  // console.log(item)
+
 
   return (
     <div onClick={() => router.push(`/products/${item?.product?.slug}`)}
