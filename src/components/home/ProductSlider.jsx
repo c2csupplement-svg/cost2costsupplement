@@ -46,8 +46,7 @@ export default function ProductSlider({
   description,
   products = [],
   loading = false,
-  sectionClassName =
-    "pt-8 pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12",
+  sectionClassName = "pt-2 md:pt-8 pb-2 md:pb-8 sm:pt-12 sm:pb-10 lg:pt-14 lg:pb-12 my-2",
   background = "beige",
 }) {
   const sliderRef = useRef(null);
@@ -186,6 +185,7 @@ export default function ProductSlider({
     <section
       className={`
         relative
+        py-2
         overflow-hidden
         ${theme.section}
         ${sectionClassName}
@@ -234,7 +234,8 @@ export default function ProductSlider({
           className="
             relative
             z-10
-            mb-6
+            mb-2
+            md:mb-6
             flex
             items-end
             justify-between
@@ -262,7 +263,8 @@ export default function ProductSlider({
 
               <p
                 className="
-                  text-[10px]
+                text-[7px]
+                  md:text-[10px]
                   font-black
                   uppercase
                   tracking-[0.28em]
@@ -279,7 +281,8 @@ export default function ProductSlider({
 
             <h2
               className={`
-                text-3xl
+                text-[18px]
+                text-lg
                 font-black
                 uppercase
                 leading-[0.95]
@@ -318,7 +321,8 @@ export default function ProductSlider({
               bg-red-600
               px-4
               py-3
-              text-[10px]
+              text-[6px]
+              md:text-[10px]
               font-black
               uppercase
               tracking-wide
@@ -395,24 +399,23 @@ export default function ProductSlider({
             ref={sliderRef}
             className="
               flex
-              items-stretch
-              gap-3
-              overflow-x-auto
-              px-12
-              py-3
-              sm:gap-4
-              sm:px-16
-              sm:py-4
-              lg:gap-5
-              lg:px-20
-              lg:py-5
-              [scrollbar-width:none]
-              [-ms-overflow-style:none]
-              [&::-webkit-scrollbar]:hidden
-              scroll-smooth
-              snap-x
-              snap-mandatory
-              touch-pan-x
+    items-stretch
+    gap-3
+    overflow-x-auto
+    px-12
+    py-3
+    sm:gap-4
+    sm:px-16
+    sm:py-4
+    lg:gap-5
+    lg:px-20
+    lg:py-5
+    [scrollbar-width:none]
+    [-ms-overflow-style:none]
+    [&::-webkit-scrollbar]:hidden
+    scroll-smooth
+    snap-x
+    snap-mandatory
             "
           >
             {loading ? (
@@ -560,7 +563,7 @@ export default function ProductSlider({
           </span>
         </div>
 
-        <div className="mt-3 px-5 sm:hidden">
+        <div className="mt-1 md:mt-3 px-5 sm:hidden">
           <Link
             href={viewAllHref}
             className="

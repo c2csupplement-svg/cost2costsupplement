@@ -120,24 +120,24 @@ export default function BrandsSection() {
           <div className="mb-3 flex items-center justify-center gap-3">
             <span className="h-[2px] w-8 bg-primary" />
 
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
+            <p className="text-[8px] md:text-sm text-primary font-black uppercase tracking-[0.28em] ">
               Trusted by athletes
             </p>
 
             <span className="h-[2px] w-8 bg-primary" />
           </div>
 
-          <h2 className="text-4xl font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-5xl">
+          <h2 className="text-md font-black uppercase leading-none tracking-[-0.03em] text-text-primary sm:text-5xl">
           SHOP BY  Top Brands
           </h2>
 
-          <p className="mt-4 text-sm leading-6 text-text-secondary">
+          <p className="mt-1 md:mt-4 text-[10px] md:text-sm text-black">
             Shop genuine products from some of the biggest names in sports
             nutrition and wellness.
           </p>
         </div>
 
-        <div className="relative mt-10">
+        <div className="relative mt-0 md:mt-10">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-surface-muted to-transparent sm:w-16 lg:w-24" />
 
           <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-surface-muted to-transparent sm:w-16 lg:w-24" />
@@ -174,10 +174,10 @@ export default function BrandsSection() {
           </div>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-2 md:mt-8 flex justify-center">
           <Link
             href="/brands"
-            className="group inline-flex items-center gap-2 rounded-lg border-2 border-text-primary px-6 py-3 text-xs font-black uppercase tracking-wide text-text-primary transition-all duration-300 hover:bg-text-primary hover:text-white"
+            className="group inline-flex items-center gap-2 rounded-lg border-2 border-text-primary px-1 md:px-6 py-1 md:py-3 text-[8px] md:text-xs font-black uppercase tracking-wide text-text-primary transition-all duration-300 hover:bg-text-primary hover:text-white"
           >
             Explore All Brands
 
@@ -196,7 +196,7 @@ function BrandCard({ brand }) {
       style={{
         backgroundColor: brand.bgColor || "#ffffff",
       }}
-      className="group relative flex h-[100px] w-[180px] min-w-[180px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border px-8 shadow-[0_6px_25px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-[0_16px_35px_rgba(229,35,35,0.10)] sm:h-[105px] sm:w-[180px] sm:min-w-[180px]"
+      className="group relative flex h-[50px] md:h-[100px] w-[80px] md:w-[180px] min-w-[150px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border px-8 shadow-[0_6px_25px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-[0_16px_35px_rgba(229,35,35,0.10)] sm:h-[105px] sm:w-[180px] sm:min-w-[180px]"
     >
       <div className="absolute right-0 top-0 h-12 w-12 translate-x-6 -translate-y-6 rotate-45 bg-primary/0 transition-all duration-300 group-hover:bg-primary" />
 {brand.logo ? (

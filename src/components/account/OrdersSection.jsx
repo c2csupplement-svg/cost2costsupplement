@@ -719,22 +719,6 @@ function OrderItem({ order, expanded, onToggle, onCancel, cancelling, }) {
                                 </span>
                               </div>
 
-                              {/* {canBuyNow && (
-                                <div className="mt-2 flex cursor-pointer justify-end">
-                                  <button
-                                    type="button"
-                                    onClick={(event) =>{
-                                      event.stopPropagation();
-                                      handleBuyNow(event, item)
-                                    }
-                                    }
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
-                                  >
-                                    <ShoppingCart className="h-3.5 w-3.5" />
-                                    Buy Now
-                                  </button>
-                                </div>
-                              )} */}
                             </div>
                           </div>
                         );

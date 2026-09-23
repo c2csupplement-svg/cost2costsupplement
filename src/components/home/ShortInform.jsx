@@ -914,7 +914,7 @@ export function ShortInform() {
                 </p>
             </div>
 
-            <section className="w-full bg-gradient-to-b from-white to-slate-50 px-4 py-12 sm:px-6 sm:py-10 lg:px-8">
+            <section className="w-full bg-gradient-to-b from-white to-slate-50 px-1 md:px-4 py-4 md:py-12 sm:px-6 sm:py-10 lg:px-8">
                 <div className="mx-auto flex max-w-6xl flex-col items-center">
 
                     <div className="mx-auto max-w-4xl">
@@ -996,7 +996,7 @@ export function ShortInform() {
                 </div>
             )}
 
-            <div className="flex justify-center bg-slate-50 px-4 pb-12 pt-2 sm:pb-16">
+            <div className="flex justify-center bg-slate-50 px-4 pb-2 md:pb-12 md:pt-2 sm:pb-16">
                 <button
                     type="button"
                     onClick={() => setIsExpanded(!isExpanded)}

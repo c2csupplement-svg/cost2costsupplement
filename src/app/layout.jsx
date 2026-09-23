@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${oxanium.variable} ${bebas.variable} h-full antialiased`}
+      className={`${oxanium.variable} ${bebas.variable} h-full antialiased data-scroll-behavior="smooth`}
     >
       <head>
         {/* Banner images Cloudinary se aati hain, connection pehle se ready rahe */}
