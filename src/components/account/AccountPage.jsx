@@ -184,13 +184,10 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Main */}
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-7">
-          {/* Sidebar */}
           <aside className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
-              {/* Profile */}
               <div className="bg-[#111] p-5 text-white">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e52323]">

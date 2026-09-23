@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Heart, ShoppingBag, ShoppingCart, Star,Plus } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addToCart } from "@/redux/features/cart/cartActions";
+import { addToCart} from "@/redux/features/cart/cartActions";
+import { toggleItem} from "@/redux/features/wish/wishAction";
 
 const pickString = (...values) => {
   for (const value of values) {
@@ -15,26 +16,24 @@ const pickString = (...values) => {
   return "";
 };
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, isWishlisted}) {
   const dispatch = useDispatch();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { toggleWishlist, isInWishlist } = useShop();
 
-  const wishlistActive = isInWishlist(product?.id);
 
-  /* ---------- image ---------- */
+  const wishlistActive = isWishlisted;
+
   const featuredImage = product?.featuredImage || product?.featuredimg;
   const imageSrc =
     typeof featuredImage === "string"
       ? pickString(featuredImage)
       : pickString(
-          featuredImage?.url,
-          featuredImage?.src,
-          featuredImage?.image,
-          featuredImage?.imageUrl,
-        );
+        featuredImage?.url,
+        featuredImage?.src,
+        featuredImage?.image,
+        featuredImage?.imageUrl,
+      );
 
-  /* ---------- pricing ---------- */
   const { price, originalPrice, discount } = (() => {
     const productPrice = Number(product?.price) || 0;
     const productSalePrice = Number(product?.salePrice) || 0;
@@ -91,9 +90,9 @@ export default function ProductCard({ product }) {
     const variantDiscount =
       variantOriginalPrice > 0 && discountedPrice !== null
         ? Math.round(
-            ((variantOriginalPrice - discountedPrice) / variantOriginalPrice) *
-              100,
-          )
+          ((variantOriginalPrice - discountedPrice) / variantOriginalPrice) *
+          100,
+        )
         : Number(variant?.discount) || 0;
 
     return {
@@ -112,10 +111,10 @@ export default function ProductCard({ product }) {
   const inStock =
     Number(
       selectedVariant?.stockQuantity ??
-        selectedVariant?.stock ??
-        product?.stockQuantity ??
-        product?.stock ??
-        0,
+      selectedVariant?.stock ??
+      product?.stockQuantity ??
+      product?.stock ??
+      0,
     ) > 0;
 
   /* ---------- text fields ---------- */
@@ -141,7 +140,6 @@ export default function ProductCard({ product }) {
     ? `/products/${encodeURIComponent(productSlug)}`
     : "/products";
 
-  /* ---------- handlers ---------- */
   const handleAddToCart = async (e) => {
     e?.preventDefault();
     e?.stopPropagation();
@@ -169,10 +167,14 @@ export default function ProductCard({ product }) {
     }
   };
 
-  const handleWishlist = (event) => {
+  const handleWishlist = async (event) => {
+
     event.preventDefault();
     event.stopPropagation();
-    if (product?.id) toggleWishlist(product.id);
+
+
+   await dispatch(toggleItem(product.id, selectedVariant.id, selectedVariant?.attribute?.slug, selectedVariant?.size))
+
   };
 
   return (
@@ -264,11 +266,10 @@ export default function ProductCard({ product }) {
             {Array.from({ length: 5 }).map((_, index) => (
               <Star
                 key={index}
-                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${
-                  index < Math.round(rating)
+                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${index < Math.round(rating)
                     ? "fill-[#F7B84B] text-[#F7B84B]"
                     : "text-border"
-                }`}
+                  }`}
               />
             ))}
           </div>

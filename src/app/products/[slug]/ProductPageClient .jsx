@@ -1260,7 +1260,7 @@ export default function ProductDetailsPage({
       <main className="min-h-screen bg-[#FAFAFA] font-oxanium font-semibold text-[#111111]">
         <div className="border-b border-[#E5E5E5] bg-white">
           <div className="mx-auto max-w-[1440px] px-5 py-4 sm:px-8 lg:px-10">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373]">
+            <div className="flex flex-wrap items-center gap-2 text-[13px] sm:text-xs text-[#737373]">
               <Link
                 href="/"
                 className="transition hover:text-[#E52323]"
@@ -1281,14 +1281,14 @@ export default function ProductDetailsPage({
 
               <Link
                 href={`/product-categories/${categorySlug}`}
-                className="transition hover:text-[#E52323]"
+                className="transition hover:text-[#E52323] text-[13px] sm:text-xs"
               >
                 {product.category}
               </Link>
 
               <span>/</span>
 
-              <span className="max-w-[280px] truncate text-[#525252] sm:max-w-[500px]">
+              <span className="max-w-[280px] truncate text-[13px] sm:text-xs text-[#525252] sm:max-w-[500px]">
                 {product.name}
               </span>
             </div>
@@ -1494,7 +1494,7 @@ export default function ProductDetailsPage({
                   </span>
                 </div>
 
-                <h1 className="mt-4 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+                <h1 className="mt-4 text-xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
                   {product.name}
                 </h1>
 
