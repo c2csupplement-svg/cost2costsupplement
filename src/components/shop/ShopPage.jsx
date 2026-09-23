@@ -208,6 +208,10 @@ export default function ShopPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const { wishItems } = useSelector(
+    (state) => state.wish
+  );
+
   const [openCategoryDropdown, setOpenCategoryDropdown] =
     useState(null);
 
@@ -2326,16 +2330,28 @@ export default function ShopPage() {
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {paginatedProducts.map(
-                    (product) => (
-                      <ProductCard
+                    (product) => {
+
+                      const productId = product?.id
+                      const isWishlisted =
+                        wishItems?.wishlist?.some(
+                          (item) =>
+                            item?.productId ===
+                            productId
+                        ) ?? false;
+
+                      return (<ProductCard
                         key={
-                          product.id
+                          productId
                         }
                         product={
                           product
                         }
-                      />
-                    )
+                        isWishlisted={
+                          isWishlisted
+                        }
+                      />)
+                    }
                   )}
                 </div>
               </div>
