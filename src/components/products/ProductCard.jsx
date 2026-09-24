@@ -207,7 +207,7 @@ export default function ProductCard({ product, isWishlisted}) {
         </Link>
 
         {discount > 0 && (
-          <span className="absolute left-2 top-2 z-10 text-white rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-4 text-black sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-xs">
+          <span className="absolute left-2 top-2 z-10 text-white rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-4 sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-xs">
             {discount}% off
           </span>
         )}
