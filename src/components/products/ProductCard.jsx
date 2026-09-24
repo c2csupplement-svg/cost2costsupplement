@@ -3,11 +3,11 @@
 import { useShop } from "@/context/ShopContext";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, ShoppingCart, Star, Plus } from "lucide-react";
+import { Heart, ShoppingBag, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addToCart } from "@/redux/features/cart/cartActions";
-import { toggleItem } from "@/redux/features/wish/wishAction";
+import { addToCart} from "@/redux/features/cart/cartActions";
+import { toggleItem} from "@/redux/features/wish/wishAction";
 
 const pickString = (...values) => {
   for (const value of values) {
@@ -16,7 +16,7 @@ const pickString = (...values) => {
   return "";
 };
 
-export default function ProductCard({ product, isWishlisted }) {
+export default function ProductCard({ product, isWishlisted}) {
   const dispatch = useDispatch();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -173,7 +173,7 @@ export default function ProductCard({ product, isWishlisted }) {
     event.stopPropagation();
 
 
-    await dispatch(toggleItem(product.id, selectedVariant.id, selectedVariant?.attribute?.slug, selectedVariant?.size))
+   await dispatch(toggleItem(product.id, selectedVariant.id, selectedVariant?.attribute?.slug, selectedVariant?.size))
 
   };
 
@@ -185,20 +185,20 @@ export default function ProductCard({ product, isWishlisted }) {
           aria-label={productName}
           className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <div className="relative h-[140px] overflow-hidden bg-surface sm:h-[250px]">
+          <div className="relative h-[170px] overflow-hidden bg-surface sm:h-[250px]">
             {imageSrc ? (
               <Image
                 src={imageSrc}
                 alt={productName}
                 fill
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 310px"
-                className={`object-contain p-2 transition-transform duration-500 ease-out group-hover:scale-[1.05] sm:p-5 ${!inStock ? "opacity-50 grayscale" : ""
+                className={`object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-[1.05] sm:p-5 ${!inStock ? "opacity-50 grayscale" : ""
                   }`}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <ShoppingBag
-                  className="h-8 w-8 text-text-muted sm:h-14 sm:w-14"
+                  className="h-10 w-10 text-text-muted sm:h-14 sm:w-14"
                   strokeWidth={1.25}
                 />
               </div>
@@ -207,7 +207,7 @@ export default function ProductCard({ product, isWishlisted }) {
         </Link>
 
         {discount > 0 && (
-          <span className="absolute left-1.5 top-1.5 z-10 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-4 sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-xs">
+          <span className="absolute left-2 top-2 z-10 text-white rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-4 sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-xs">
             {discount}% off
           </span>
         )}
@@ -219,10 +219,10 @@ export default function ProductCard({ product, isWishlisted }) {
             wishlistActive ? "Remove from wishlist" : "Add to wishlist"
           }
           aria-pressed={wishlistActive}
-          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card/90 backdrop-blur transition-all duration-200 hover:scale-105 hover:border-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:right-3 sm:top-3 sm:h-9 sm:w-9"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card/90 backdrop-blur transition-all duration-200 hover:scale-105 hover:border-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:right-3 sm:top-3 sm:h-9 sm:w-9"
         >
           <Heart
-            className={`h-3 w-3 transition-colors sm:h-[18px] sm:w-[18px] ${wishlistActive
+            className={`h-4 w-4 transition-colors sm:h-[18px] sm:w-[18px] ${wishlistActive
                 ? "fill-red-500 text-red-500"
                 : "text-text-muted group-hover:text-text-primary"
               }`}
@@ -230,7 +230,7 @@ export default function ProductCard({ product, isWishlisted }) {
         </button>
 
         {!inStock && (
-          <span className="absolute bottom-1.5 left-1.5 z-10 rounded-md bg-black/75 px-1.5 py-0.5 text-[9px] font-semibold text-white sm:bottom-3 sm:left-3 sm:text-xs">
+          <span className="absolute bottom-2 left-2 z-10 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-semibold text-white sm:bottom-3 sm:left-3 sm:text-xs">
             Out of stock
           </span>
         )}
@@ -238,7 +238,7 @@ export default function ProductCard({ product, isWishlisted }) {
 
       <div className="flex flex-1 flex-col px-3 pb-3 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-[5px] md:text-[10px] font-bold uppercase tracking-[0.12em] text-primary sm:text-[11px]">
+          <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-primary sm:text-[11px]">
             {brandName || categoryName || "Supplement"}
           </p>
 
@@ -265,8 +265,8 @@ export default function ProductCard({ product, isWishlisted }) {
               <Star
                 key={index}
                 className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${index < Math.round(rating)
-                  ? "fill-[#F7B84B] text-[#F7B84B]"
-                  : "text-border"
+                    ? "fill-[#F7B84B] text-[#F7B84B]"
+                    : "text-border"
                   }`}
               />
             ))}
@@ -296,19 +296,20 @@ export default function ProductCard({ product, isWishlisted }) {
               ₹{formattedPrice}
             </span>
           </div>
+
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={!inStock || isAddingToCart}
             aria-label={inStock ? `Add ${productName} to cart` : "Out of stock"}
-            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 py-2 text-[11px] font-bold text-black transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
+            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold text-black transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
           >
-            {inStock && !isAddingToCart && (
-              <Plus className="h-3 w-3 text-white sm:hidden" strokeWidth={2.5} />
-            )}
             <ShoppingCart className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
-            <span className="hidden text-white sm:inline">
-              {!inStock ? "Sold out" : isAddingToCart ? "Adding…" : "Add to cart"}
+            <span className="text-white">
+              {!inStock ? "Sold out" : isAddingToCart ? "Adding…" : "Add"}
+              <span className="hidden sm:inline">
+                {inStock && !isAddingToCart ? " to cart" : ""}
+              </span>
             </span>
           </button>
         </div>
