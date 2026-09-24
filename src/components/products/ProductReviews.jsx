@@ -348,71 +348,52 @@ export default function ProductReviews({ product }) {
 
   return (
     <div className="mt-12 max-w-full sm:mt-16 lg:mt-20">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <SectionHeading>
-          Customer Reviews ({totalReviews})
-        </SectionHeading>
+    <div className="flex flex-row items-center justify-between gap-3 sm:items-end sm:gap-5">
+  <SectionHeading>
+    Customer Reviews ({totalReviews})
+  </SectionHeading>
 
-        <button
-          type="button"
-          onClick={() =>
-            setIsReviewFormOpen(true)
-          }
-          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-lg bg-[#E52323] px-5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#ff2b2b] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Write a Review
-        </button>
-      </div>
+  <button
+    type="button"
+    onClick={() => setIsReviewFormOpen(true)}
+    className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-[#E52323] px-4 text-[11px] font-black uppercase tracking-wide text-white transition hover:bg-[#ff2b2b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5 sm:text-xs"
+  >
+    Write a Review
+  </button>
+</div>
 
-      <div className="mt-7 grid gap-6 md:grid-cols-[280px_1fr]">
+<div className="mt-5 flex flex-row gap-3 sm:mt-7 sm:gap-6">
+  <div className="w-[120px] shrink-0 rounded-2xl border border-[#E5E5E5] bg-white p-3 text-center sm:w-[280px] sm:p-7">
+    <p className="text-2xl font-black sm:text-5xl">{averageRating}</p>
 
-        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-7 text-center">
-          <p className="text-5xl font-black">
-            {averageRating}
-          </p>
+    <div className="mt-2 flex flex-wrap justify-center gap-0.5 sm:mt-3 sm:gap-1">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star
+          key={index}
+          className={`h-3 w-3 sm:h-5 sm:w-5 ${
+            index < Math.round(Number(averageRating))
+              ? "fill-[#F7B84B] text-[#F7B84B]"
+              : "text-[#A3A3A3]"
+          }`}
+        />
+      ))}
+    </div>
 
-          <div className="mt-3 flex justify-center gap-1">
-            {Array.from({
-              length: 5,
-            }).map((_, index) => (
-              <Star
-                key={index}
-                className={`h-5 w-5 ${index <
-                    Math.round(
-                      Number(averageRating)
-                    )
-                    ? "fill-[#F7B84B] text-[#F7B84B]"
-                    : "text-[#A3A3A3]"
-                  }`}
-              />
-            ))}
-          </div>
+    <p className="mt-2 text-[10px] text-[#737373] sm:mt-3 sm:text-sm">
+      Based on {totalReviews} reviews
+    </p>
+  </div>
 
-          <p className="mt-3 text-sm text-[#737373]">
-            Based on {totalReviews} reviews
-          </p>
-        </div>
+  <div className="min-w-0 flex-1 rounded-2xl border border-[#E5E5E5] bg-white p-3 sm:p-7">
+    <p className="text-xs font-bold sm:text-sm">Customer reviews</p>
 
-        <div className="rounded-2xl border border-[#E5E5E5] bg-white p-7">
-          <p className="text-sm font-bold">
-            Customer reviews
-          </p>
+    <p className="mt-2 text-[11px] leading-5 text-[#737373] sm:mt-3 sm:text-sm sm:leading-6">
+      This product currently has {totalReviews} customer reviews with an
+      average rating of {averageRating} out of 5.
+    </p>
 
-          <p className="mt-3 text-sm leading-6 text-[#737373]">
-            This product currently has{" "}
-            {totalReviews} customer reviews
-            with an average rating of{" "}
-            {averageRating} out of 5.
-          </p>
-
-          <div className="mt-6 flex items-center gap-2 text-xs text-[#A3A3A3]">
-            <Check className="h-4 w-4 text-[#E52323]" />
-
-            Share your experience with
-            other customers.
-          </div>
-        </div>
-      </div>
+  </div>
+</div>
 
       {normalizedReviews.length > 0 && (
         <>

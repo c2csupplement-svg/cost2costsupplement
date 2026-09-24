@@ -16,6 +16,7 @@ function CategoryCard({ category }) {
         relative
         flex
         h-[165px]
+        w-full
         flex-col
         justify-end
         overflow-hidden
@@ -57,7 +58,8 @@ function CategoryCard({ category }) {
             <h3
               className="
                 line-clamp-2
-                text-sm
+                text-[10px]
+                md:text-sm
                 font-black
                 uppercase
                 leading-tight
@@ -72,24 +74,25 @@ function CategoryCard({ category }) {
           </div>
 
           <div
-            className="
-              flex
-              h-8
-              w-8
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/30
-              bg-black/20
-              text-white
-              sm:h-9
-              sm:w-9
-            "
-          >
-            <ArrowUpRight className="h-4 w-4" />
-          </div>
+  className="
+    hidden
+    shrink-0
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-white/30
+    bg-black/20
+    text-white
+    sm:flex
+    sm:h-9
+    sm:w-9
+    md:h-8
+    md:w-8
+  "
+>
+  <ArrowUpRight className="h-4 w-4" />
+</div>
         </div>
       </div>
 
@@ -151,24 +154,36 @@ export default function ShopByCategory() {
       };
     });
 
+  // Tailwind classes shared by the item wrapper:
+  // - Mobile/tablet: part of a horizontal scroll row, sized so exactly
+  //   4 cards are visible at once (100% - 3 gaps, divided by 4).
+  // - Desktop (lg+): becomes a normal grid cell, 5 per row.
+  const itemWrapperClass = `
+    shrink-0
+    snap-start
+    basis-[calc((100%-2.25rem)/4)]
+    lg:basis-auto
+    lg:shrink
+  `;
+
   return (
-    <section className="relative overflow-hidden bg-surface-muted py-8 sm:py-12 lg:py-14">
+    <section className="relative overflow-hidden bg-surface-muted py-4 md:py-8 sm:py-12 lg:py-14">
       <div className="pointer-events-none absolute -left-40 top-10 h-80 w-80 rounded-full bg-primary/5 blur-[100px]" />
 
       <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-10">
-        <div className="mb-7 flex items-end justify-between gap-5 sm:mb-9">
+        <div className="mb-4 flex items-end justify-between gap-5 sm:mb-9">
           <div className="min-w-0">
             <div className="mb-2 flex items-center gap-3">
               <span className="h-[2px] w-8 bg-primary" />
 
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary sm:text-xs">
+              <p className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.25em] text-primary sm:text-xs">
                 Find what you need
               </p>
             </div>
 
             <h2
               className="
-                text-3xl
+                text-lg
                 font-black
                 uppercase
                 leading-none
@@ -178,7 +193,7 @@ export default function ShopByCategory() {
                 lg:text-5xl
               "
             >
-              Category
+             Explore by Category
             </h2>
           </div>
 
@@ -195,7 +210,8 @@ export default function ShopByCategory() {
               border-text-primary
               px-4
               py-2.5
-              text-[10px]
+              text-[7px]
+              md:text-[10px]
               font-black
               uppercase
               tracking-wide
@@ -211,19 +227,24 @@ export default function ShopByCategory() {
         {loading && (
           <div
             className="
-              grid
-              grid-cols-2
+              flex
               gap-3
-              sm:grid-cols-3
+              overflow-x-auto
+              [-ms-overflow-style:none]
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
               sm:gap-4
-              lg:grid-cols-4
+              lg:grid
+              lg:grid-cols-5
               lg:gap-5
+              lg:overflow-visible
             "
           >
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: 10 }).map((_, index) => (
               <div
                 key={index}
                 className={`
+                  ${itemWrapperClass}
                   h-[165px]
                   animate-pulse
                   rounded-xl
@@ -233,8 +254,7 @@ export default function ShopByCategory() {
                   sm:h-[190px]
                   sm:rounded-2xl
                   lg:h-[210px]
-                  ${index >= 4 ? "hidden sm:block" : ""}
-                  ${index >= 6 ? "sm:hidden lg:block" : ""}
+                  ${index >= 5 ? "hidden lg:block" : ""}
                 `}
               />
             ))}
@@ -257,40 +277,36 @@ export default function ShopByCategory() {
           </div>
         )}
 
-        {!loading && !error && categories.length > 0 && (
-          <div
-            className="
-              grid
-              grid-cols-2
-              gap-3
-              sm:grid-cols-3
-              sm:gap-4
-              lg:grid-cols-4
-              lg:gap-5
-            "
-          >
-            {categories.map((category, index) => {
-              const hiddenOnMobile = index >= 4;
-              const hiddenOnTablet = index >= 6;
-              const hiddenOnDesktop = index >= 8;
+       {!loading && !error && categories.length > 0 && (
+  <div
+    className="
+      flex
+      gap-3
+      overflow-x-auto
+      snap-x
+      snap-mandatory
+      [-ms-overflow-style:none]
+      [scrollbar-width:none]
+      [&::-webkit-scrollbar]:hidden
+      sm:gap-4
+      lg:grid
+      lg:grid-cols-5
+      lg:gap-5
+      lg:overflow-visible
+    "
+  >
+    {categories.map((category, index) => (
+      <div
+        key={category.id}
+        className={`${itemWrapperClass} ${index >= 10 ? "lg:hidden" : ""}`}
+      >
+        <CategoryCard category={category} />
+      </div>
+    ))}
+  </div>
+)}
 
-              return (
-                <div
-                  key={category.id}
-                  className={`
-                    ${hiddenOnMobile ? "hidden sm:block" : ""}
-                    ${hiddenOnTablet ? "sm:hidden lg:block" : ""}
-                    ${hiddenOnDesktop ? "lg:hidden" : ""}
-                  `}
-                >
-                  <CategoryCard category={category} />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-6 sm:hidden">
+        <div className="mt-2 md:mt-6 sm:hidden">
           <Link
             href="/product-categories"
             className="

@@ -103,7 +103,7 @@ export default function FAQSection({ faqs = [] }) {
                 }
                 aria-expanded={isOpen}
                 aria-controls={`faq-answer-${index}`}
-                className="flex w-full items-center justify-between gap-5 px-5 py-5 text-left transition-colors duration-200 hover:bg-[#FAFAFA] sm:px-7 sm:py-6"
+                className="flex w-full items-center justify-between gap-3 md:gap-5 px-2 md:px-5 py-2 md:py-5 text-left transition-colors duration-200 hover:bg-[#FAFAFA] sm:px-7 sm:py-6"
               >
                 <div className="flex min-w-0 items-center gap-4">
                   <div
