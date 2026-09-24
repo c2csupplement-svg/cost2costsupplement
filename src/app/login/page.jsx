@@ -15,12 +15,18 @@ import {
   Headphones,
   AlertCircle,
 } from "lucide-react";
+import {useDispatch} from "react-redux";
+import {getWishItem} from "@/redux/features/wish/wishAction";
+import {fetchCartItems} from "@/redux/features/cart/cartActions";
 
 import { useAuth } from "@/context/AuthContext";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function LoginPage() {
+
+  const dispatch = useDispatch()
+
   const router = useRouter();
   const { loginUser } = useAuth();
 
@@ -75,7 +81,7 @@ export default function LoginPage() {
         localStorage.removeItem("rememberMe");
       }
 
-      router.push("/account");
+      window.location.href = "/account";
     } catch (err) {
       console.error("Login error:", err);
 
