@@ -207,11 +207,11 @@ export default function AccountPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-lg bg-white/10 px-3 py-2">
+                {/* <div className="mt-4 rounded-lg bg-white/10 px-3 py-2">
                   <p className="oxanium text-xs text-white/70">
                     {orders.length} recent orders
                   </p>
-                </div>
+                </div> */}
               </div>
 
               {/* Navigation */}
