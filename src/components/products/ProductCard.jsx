@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Heart, ShoppingBag, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addToCart} from "@/redux/features/cart/cartActions";
-import { toggleItem} from "@/redux/features/wish/wishAction";
+import { addToCart } from "@/redux/features/cart/cartActions";
+import { toggleItem } from "@/redux/features/wish/wishAction";
 
 const pickString = (...values) => {
   for (const value of values) {
@@ -16,7 +16,7 @@ const pickString = (...values) => {
   return "";
 };
 
-export default function ProductCard({ product, isWishlisted}) {
+export default function ProductCard({ product, isWishlisted }) {
   const dispatch = useDispatch();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -173,7 +173,7 @@ export default function ProductCard({ product, isWishlisted}) {
     event.stopPropagation();
 
 
-   await dispatch(toggleItem(product.id, selectedVariant.id, selectedVariant?.attribute?.slug, selectedVariant?.size))
+    await dispatch(toggleItem(product.id, selectedVariant.id, selectedVariant?.attribute?.slug, selectedVariant?.size))
 
   };
 
@@ -223,8 +223,8 @@ export default function ProductCard({ product, isWishlisted}) {
         >
           <Heart
             className={`h-4 w-4 transition-colors sm:h-[18px] sm:w-[18px] ${wishlistActive
-                ? "fill-red-500 text-red-500"
-                : "text-text-muted group-hover:text-text-primary"
+              ? "fill-red-500 text-red-500"
+              : "text-text-muted group-hover:text-text-primary"
               }`}
           />
         </button>
@@ -265,8 +265,8 @@ export default function ProductCard({ product, isWishlisted}) {
               <Star
                 key={index}
                 className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${index < Math.round(rating)
-                    ? "fill-[#F7B84B] text-[#F7B84B]"
-                    : "text-border"
+                  ? "fill-[#F7B84B] text-[#F7B84B]"
+                  : "text-border"
                   }`}
               />
             ))}
@@ -283,16 +283,17 @@ export default function ProductCard({ product, isWishlisted}) {
           )}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:pt-4">
-          <div className="min-w-0">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-3 sm:gap-2 md:gap-3 sm:pt-4">
+          <div className="min-w-0 flex-1">
             {originalPrice > price ? (
-              <span className="block text-[10px] font-medium leading-none text-text-muted line-through sm:text-xs">
+              <span className="block whitespace-nowrap text-[9px] font-medium leading-none text-text-muted line-through sm:text-xs">
                 ₹{formattedOriginalPrice}
               </span>
             ) : (
-              <span className="block h-[10px] sm:h-3" aria-hidden="true" />
+              <span className="block h-[9px] sm:h-3" aria-hidden="true" />
             )}
-            <span className="mt-1 block whitespace-nowrap text-[15px] font-black leading-none tracking-tight text-text-primary sm:text-xl">
+
+            <span className="mt-1 block whitespace-nowrap text-[14px] font-black leading-none tracking-tight text-text-primary sm:text-lg md:text-xl">
               ₹{formattedPrice}
             </span>
           </div>
@@ -302,12 +303,47 @@ export default function ProductCard({ product, isWishlisted}) {
             onClick={handleAddToCart}
             disabled={!inStock || isAddingToCart}
             aria-label={inStock ? `Add ${productName} to cart` : "Out of stock"}
-            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold text-black transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-xs"
+            className="
+      inline-flex shrink-0 cursor-pointer items-center justify-center
+      gap-1 rounded-lg bg-primary
+      px-2.5 py-2
+      text-[10px] font-bold text-black
+      transition-all duration-200
+      hover:opacity-90 hover:shadow-md
+      active:scale-95
+      focus-visible:outline-none
+      focus-visible:ring-2
+      focus-visible:ring-primary
+      focus-visible:ring-offset-2
+      disabled:cursor-not-allowed
+      disabled:opacity-50
+      disabled:hover:shadow-none
+
+      sm:gap-1.5
+      sm:rounded-xl
+      sm:px-3
+      sm:py-2.5
+      sm:text-[11px]
+
+      md:px-3
+      md:text-xs
+
+      lg:px-4
+    "
           >
-            <ShoppingCart className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
-            <span className="text-white">
-              {!inStock ? "Sold out" : isAddingToCart ? "Adding…" : "Add"}
-              <span className="hidden sm:inline">
+            <ShoppingCart
+              className="h-3 w-3 shrink-0 text-white sm:h-3.5 sm:w-3.5"
+              strokeWidth={2.25}
+            />
+
+            <span className="whitespace-nowrap text-white">
+              {!inStock
+                ? "Sold out"
+                : isAddingToCart
+                  ? "Adding…"
+                  : "Add"}
+
+              <span className="hidden lg:inline">
                 {inStock && !isAddingToCart ? " to cart" : ""}
               </span>
             </span>
