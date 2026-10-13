@@ -53,9 +53,13 @@ export default function ProductSlider({
 
   const list = Array.isArray(products) ? products : [];
 
-  const viewAllHref = `/products?search=${encodeURIComponent(
-    eyebrow || ""
-  )}`;
+  const viewAllHref = () => {
+    if (eyebrow === "You May Also Like") {
+      return "/products";
+    }
+
+    return `/products?search=${encodeURIComponent(eyebrow || "")}`;
+  };
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -165,8 +169,8 @@ export default function ProductSlider({
       window.innerWidth >= 1024
         ? 20
         : window.innerWidth >= 640
-        ? 16
-        : 12;
+          ? 16
+          : 12;
 
     slider.scrollBy({
       left:
@@ -310,7 +314,7 @@ export default function ProductSlider({
           </div>
 
           <Link
-            href={viewAllHref}
+            href={viewAllHref()}
             className="
               group
               hidden
@@ -565,7 +569,7 @@ export default function ProductSlider({
 
         <div className="mt-1 md:mt-3 px-5 sm:hidden">
           <Link
-            href={viewAllHref}
+            href={viewAllHref()}
             className="
               group
               inline-flex
