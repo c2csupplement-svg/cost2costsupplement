@@ -1,54 +1,16 @@
 "use client";
 
-import { useState , useEffect} from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
   ChevronRight,
   Mail,
   MapPin,
-  RefreshCw,
   Send,
   Phone,
 } from "lucide-react";
-
-function generateMathProblem() {
-  const operations = ["+", "-", "*"];
-
-  const operation =
-    operations[Math.floor(Math.random() * operations.length)];
-
-  let first;
-  let second;
-
-  if (operation === "+") {
-    first = Math.floor(Math.random() * 20) + 1;
-    second = Math.floor(Math.random() * 20) + 1;
-  } else if (operation === "-") {
-    first = Math.floor(Math.random() * 20) + 10;
-    second = Math.floor(Math.random() * 10) + 1;
-  } else {
-    first = Math.floor(Math.random() * 9) + 2;
-    second = Math.floor(Math.random() * 9) + 2;
-  }
-
-  let answer;
-
-  if (operation === "+") {
-    answer = first + second;
-  } else if (operation === "-") {
-    answer = first - second;
-  } else {
-    answer = first * second;
-  }
-
-  return {
-    question: `${first} ${
-      operation === "*" ? "×" : operation
-    } ${second} = ?`,
-    answer,
-  };
-}
+import { sendContactMessageApi } from "@/redux/features/contact/contactApi";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -57,18 +19,11 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
-    captcha: "",
   });
 
-  const [mathProblem, setMathProblem] = useState({
-  question: "",
-  answer: null,
-  });
-  useEffect(() => {
-  setMathProblem(generateMathProblem());
-}, []);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,30 +34,25 @@ export default function ContactPage() {
     }));
   };
 
-  const refreshMathProblem = () => {
-    setMathProblem(generateMathProblem);
-
-    setFormData((previous) => ({
-      ...previous,
-      captcha: "",
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setStatus("");
 
-    if (Number(formData.captcha) !== mathProblem.answer) {
-      setStatus("captcha-error");
-      refreshMathProblem();
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      await sendContactMessageApi(formData);
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message ||
+          "Something went wrong. Please try again later."
+      );
+      setStatus("error");
+      setIsSubmitting(false);
       return;
     }
-
-    setIsSubmitting(true);
-
-    // Replace this with your API request later.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setIsSubmitting(false);
     setStatus("success");
@@ -113,10 +63,7 @@ export default function ContactPage() {
       phone: "",
       subject: "",
       message: "",
-      captcha: "",
     });
-
-    setMathProblem(generateMathProblem);
   };
 
   const inputClass = `
@@ -470,8 +417,8 @@ export default function ContactPage() {
               </div>
             )}
 
-            {/* CAPTCHA Error */}
-            {status === "captcha-error" && (
+            {/* API Error */}
+            {status === "error" && (
               <div
                 className="
                   mb-6
@@ -483,11 +430,11 @@ export default function ContactPage() {
                 "
               >
                 <p className="font-oxanium text-sm font-semibold text-red-700">
-                  Incorrect answer
+                  Message not sent
                 </p>
 
                 <p className="mt-1 font-oxanium text-xs text-red-600">
-                  Please solve the new math problem and try again.
+                  {errorMessage}
                 </p>
               </div>
             )}
@@ -565,93 +512,9 @@ export default function ContactPage() {
                 />
               </FormField>
 
-              {/* =================================================
-                  MATH VERIFICATION
-              ================================================= */}
+           
 
-              <div
-                className="
-                  rounded-xl
-                  border
-                  border-border
-                  bg-surface
-                  p-5
-                "
-              >
-
-                <div className="flex items-center justify-between gap-4">
-
-                  <div>
-                    <p className="font-oxanium text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                      Quick Verification
-                    </p>
-
-                    <p className="mt-1 font-oxanium text-xs text-text-secondary">
-                      Solve the simple math problem below.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={refreshMathProblem}
-                    aria-label="Generate new math problem"
-                    className="
-                      flex
-                      h-9
-                      w-9
-                      items-center
-                      justify-center
-                      rounded-md
-                      border
-                      border-border
-                      bg-card
-                      text-text-muted
-                      transition
-                      hover:border-primary
-                      hover:text-primary
-                    "
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
-
-                </div>
-
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-
-                  <div
-                    className="
-                      flex
-                      h-12
-                      items-center
-                      justify-center
-                      rounded-md
-                      border
-                      border-border
-                      bg-white
-                      px-6
-                      font-oxanium
-                      text-lg
-                      font-bold
-                      tracking-wider
-                      text-text-primary
-                      sm:min-w-[150px]
-                    "
-                  >
-                    {mathProblem.question}
-                  </div>
-
-                  <input
-                    type="number"
-                    name="captcha"
-                    value={formData.captcha}
-                    onChange={handleChange}
-                    placeholder="Your answer"
-                    required
-                    className={`${inputClass} h-12`}
-                  />
-
-                </div>
-              </div>
+           
 
               {/* =================================================
                   SUBMIT
