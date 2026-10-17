@@ -65,6 +65,7 @@ export default async function ProductPage({ params }) {
 
   const schemaJson = getJSONLD(product?.seo);
 
+
   return (
     <>
       {schemaJson && (

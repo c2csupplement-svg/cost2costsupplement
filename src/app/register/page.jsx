@@ -356,6 +356,7 @@ export default function RegisterPage() {
                         required
                         autoComplete="tel"
                         inputMode="tel"
+                        maxLength={10}
                         className="h-[54px] w-full rounded-xl border border-[#dcdcdc] bg-white pl-12 pr-4 text-sm text-[#111] outline-none transition placeholder:text-[#999] hover:border-[#c8c8c8] focus:border-[#E52323] focus:ring-2 focus:ring-[#E52323]/10 sm:h-[58px] sm:text-[15px]"
                       />
                     </div>

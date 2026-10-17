@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -13,11 +13,10 @@ import {
 } from "lucide-react";
 
 import { getAllProductAds } from "@/redux/features/adProducts/adProductAction";
-import { getProductFilter } from "@/redux/features/product/productAction";
 import { getCategoryBySlug } from "@/apiService/api";
 import ProductCard from "@/components/products/ProductCard";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 const createSlug = (value = "") =>
   String(value)
@@ -27,49 +26,28 @@ const createSlug = (value = "") =>
     .replace(/^-+|-+$/g, "");
 
 const normalizeCategory = (category) => {
-  if (!category || typeof category !== "object") {
-    return null;
-  }
+  if (!category || typeof category !== "object") return null;
 
   const slug =
     category?.slug ||
-    createSlug(
-      category?.name ||
-        category?.title ||
-        category?.categoryName
-    );
+    createSlug(category?.name || category?.title || category?.categoryName);
 
   return {
-    id:
-      category?.id ??
-      category?.categoryId ??
-      category?._id ??
-      null,
-
+    id: category?.id ?? category?.categoryId ?? category?._id ?? null,
     title:
       category?.name ||
       category?.title ||
       category?.categoryName ||
       "Unnamed Category",
-
-    description:
-      category?.description ||
-      category?.shortDescription ||
-      "",
-
+    description: category?.description || category?.shortDescription || "",
     slug,
-
     image:
       category?.image ||
       category?.featuredimg ||
       category?.featuredImage ||
       category?.thumbnail ||
       null,
-
-    children: Array.isArray(category?.children)
-      ? category.children
-      : [],
-
+    children: Array.isArray(category?.children) ? category.children : [],
     productCount:
       category?.productCount ??
       category?.productsCount ??
@@ -78,21 +56,11 @@ const normalizeCategory = (category) => {
   };
 };
 
-const normalizeCategoryResponse = (response) => {
-  if (!response) {
-    return null;
-  }
-
-  const category =
-    response?.category ||
-    response?.data?.category ||
-    null;
-
-  return normalizeCategory(category);
-};
+const normalizeCategoryResponse = (response) =>
+  normalizeCategory(response?.category || response?.data?.category || null);
 
 const normalizeCategories = (source) => {
-  const apiCategories = Array.isArray(source)
+  const list = Array.isArray(source)
     ? source
     : Array.isArray(source?.categories)
       ? source.categories
@@ -102,28 +70,17 @@ const normalizeCategories = (source) => {
           ? source.data.categories
           : [];
 
-  return apiCategories
+  return list
     .filter(Boolean)
     .map(normalizeCategory)
-    .filter(
-      (category) =>
-        category?.slug
-    );
+    .filter((c) => c?.slug);
 };
 
-const getPageNumbers = (
-  currentPage,
-  totalPages
-) => {
-  if (totalPages <= 1) {
-    return [];
-  }
+const getPageNumbers = (currentPage, totalPages) => {
+  if (totalPages <= 1) return [];
 
   if (totalPages <= 7) {
-    return Array.from(
-      { length: totalPages },
-      (_, index) => index + 1
-    );
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
   const pages = new Set([
@@ -146,116 +103,56 @@ const getPageNumbers = (
     pages.add(totalPages - 3);
   }
 
-  const sortedPages = [...pages]
-    .filter(
-      (page) =>
-        page >= 1 &&
-        page <= totalPages
-    )
+  const sorted = [...pages]
+    .filter((p) => p >= 1 && p <= totalPages)
     .sort((a, b) => a - b);
 
   const result = [];
-
-  sortedPages.forEach(
-    (page, index) => {
-      if (index > 0) {
-        const previous =
-          sortedPages[index - 1];
-
-        if (page - previous > 1) {
-          result.push(
-            `ellipsis-${page}`
-          );
-        }
-      }
-
-      result.push(page);
+  sorted.forEach((page, index) => {
+    if (index > 0 && page - sorted[index - 1] > 1) {
+      result.push(`ellipsis-${page}`);
     }
-  );
+    result.push(page);
+  });
 
   return result;
 };
+
+const readPagination = (response) => ({
+  count: Number(response?.count) || 0,
+  total: Number(response?.total) || 0,
+  page: Number(response?.page) || 1,
+  totalPages: Number(response?.totalPages) || 1,
+});
 
 export default function ProductDetailsCategory({
   initialCategory = null,
   initialSlug = "",
 }) {
   const slug = initialSlug;
-
   const dispatch = useDispatch();
 
-  const initialCategoryObject =
-    initialCategory?.category ||
-    null;
+  const cacheRef = useRef(new Map());
 
-  const [categoryData, setCategoryData] =
-    useState(
-      normalizeCategory(
-        initialCategoryObject
-      )
-    );
-
-  const [categoryProducts, setCategoryProducts] =
-    useState(
-      Array.isArray(
-        initialCategory?.products
-      )
-        ? initialCategory.products
-        : []
-    );
-
-  const [pagination, setPagination] =
-    useState({
-      count:
-        Number(
-          initialCategory?.count
-        ) || 0,
-
-      total:
-        Number(
-          initialCategory?.total
-        ) || 0,
-
-      page:
-        Number(
-          initialCategory?.page
-        ) || 1,
-
-      totalPages:
-        Number(
-          initialCategory?.totalPages
-        ) || 1,
-    });
-
-  const [
-    categoryApiLoading,
-    setCategoryApiLoading,
-  ] = useState(
-    !initialCategory
+  const [categoryData, setCategoryData] = useState(
+    normalizeCategory(initialCategory?.category)
   );
-
-  const [
-    categoryApiError,
-    setCategoryApiError,
-  ] = useState(null);
-
-  const [
-    currentPage,
-    setCurrentPage,
-  ] = useState(
-    Number(
-      initialCategory?.page
-    ) || 1
+  const [products, setProducts] = useState(
+    Array.isArray(initialCategory?.products) ? initialCategory.products : []
   );
-
-  const productAdState = useSelector(
-    (state) => state.productAd
+  const [pagination, setPagination] = useState(
+    initialCategory
+      ? readPagination(initialCategory)
+      : { count: 0, total: 0, page: 1, totalPages: 1 }
   );
-
-  const productState = useSelector(
-    (state) => state.products
+  const [currentPage, setCurrentPage] = useState(
+    Number(initialCategory?.page) || 1
   );
+  const [loading, setLoading] = useState(!initialCategory);
+  const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
+  const productAdState = useSelector((state) => state.productAd);
   const {
     productCateogry,
     productCategory,
@@ -263,413 +160,136 @@ export default function ProductDetailsCategory({
     loaded: adsLoaded,
   } = productAdState || {};
 
-  const {
-    productList,
-    loading: productLoading,
-    error: productError,
-  } = productState || {};
-
   useEffect(() => {
     if (!adsLoaded && !adsLoading) {
-      dispatch(
-        getAllProductAds()
-      );
+      dispatch(getAllProductAds());
     }
-  }, [
-    dispatch,
-    adsLoaded,
-    adsLoading,
-  ]);
+  }, [dispatch, adsLoaded, adsLoading]);
+
+  const applyResponse = useCallback((response) => {
+    const category = normalizeCategoryResponse(response);
+    if (category) setCategoryData(category);
+
+    setProducts(Array.isArray(response?.products) ? response.products : []);
+    setPagination(readPagination(response));
+  }, []);
 
   useEffect(() => {
+    cacheRef.current = new Map();
+
     if (initialCategory) {
-      const category =
-        normalizeCategory(
-          initialCategory?.category
-        );
+      const page = Number(initialCategory?.page) || 1;
+      cacheRef.current.set(page, initialCategory);
+      applyResponse(initialCategory);
+      setCurrentPage(page);
+      setLoading(false);
+      setError(null);
+    } else {
+      setCurrentPage(1);
+    }
+  }, [slug, initialCategory, applyResponse]);
 
-      setCategoryData(category);
-
-      setCategoryProducts(
-        Array.isArray(
-          initialCategory?.products
-        )
-          ? initialCategory.products
-          : []
-      );
-
-      setPagination({
-        count:
-          Number(
-            initialCategory?.count
-          ) || 0,
-
-        total:
-          Number(
-            initialCategory?.total
-          ) || 0,
-
-        page:
-          Number(
-            initialCategory?.page
-          ) || 1,
-
-        totalPages:
-          Number(
-            initialCategory?.totalPages
-          ) || 1,
-      });
-
-      setCurrentPage(
-        Number(
-          initialCategory?.page
-        ) || 1
-      );
-
-      setCategoryApiLoading(
-        false
-      );
-
-      setCategoryApiError(null);
-
+  useEffect(() => {
+    if (!slug) {
+      setCategoryData(null);
+      setProducts([]);
+      setLoading(false);
+      setError("Category slug is missing.");
       return;
     }
 
-    if (!slug) {
-      setCategoryData(null);
-      setCategoryProducts([]);
-      setCategoryApiLoading(false);
-      setCategoryApiError(
-        "Category slug is missing."
-      );
-
+    const cached = cacheRef.current.get(currentPage);
+    if (cached) {
+      applyResponse(cached);
+      setLoading(false);
+      setError(null);
       return;
     }
 
     let active = true;
 
-    const loadCategory =
-      async () => {
-        try {
-          setCategoryApiLoading(
-            true
-          );
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-          setCategoryApiError(
-            null
-          );
+        const response = await getCategoryBySlug(slug, currentPage, PAGE_SIZE);
+        if (!active) return;
 
-          const response =
-            await getCategoryBySlug(
-              slug
-            );
-
-          if (!active) {
-            return;
-          }
-
-          const category =
-            normalizeCategoryResponse(
-              response
-            );
-
-          if (!category) {
-            setCategoryData(null);
-            setCategoryProducts([]);
-            setCategoryApiError(
-              "Category not found."
-            );
-
-            return;
-          }
-
-          setCategoryData(
-            category
-          );
-
-          setCategoryProducts(
-            Array.isArray(
-              response?.products
-            )
-              ? response.products
-              : []
-          );
-
-          setPagination({
-            count:
-              Number(
-                response?.count
-              ) || 0,
-
-            total:
-              Number(
-                response?.total
-              ) || 0,
-
-            page:
-              Number(
-                response?.page
-              ) || 1,
-
-            totalPages:
-              Number(
-                response?.totalPages
-              ) || 1,
-          });
-
-          setCurrentPage(
-            Number(
-              response?.page
-            ) || 1
-          );
-        } catch (error) {
-          if (!active) {
-            return;
-          }
-
-          console.error(
-            "getCategoryBySlug:",
-            error
-          );
-
+        if (!normalizeCategoryResponse(response)) {
           setCategoryData(null);
-          setCategoryProducts([]);
-
-          setCategoryApiError(
-            error?.response?.data
-              ?.message ||
-              error?.message ||
-              "Failed to load category"
-          );
-        } finally {
-          if (active) {
-            setCategoryApiLoading(
-              false
-            );
-          }
+          setProducts([]);
+          setError("Category not found.");
+          return;
         }
-      };
 
-    loadCategory();
+        cacheRef.current.set(currentPage, response);
+        applyResponse(response);
+      } catch (err) {
+        if (!active) return;
+        console.error("getCategoryBySlug:", err);
+        setProducts([]);
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Failed to load category"
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    load();
 
     return () => {
       active = false;
     };
-  }, [
-    slug,
-    initialCategory,
-  ]);
+  }, [slug, currentPage, retryKey, applyResponse]);
 
-  const categories =
-    normalizeCategories(
-      productCateogry ??
-        productCategory
-    );
-
-  const normalizedSlug =
-    String(slug || "")
-      .toLowerCase()
-      .trim();
+  const categories = normalizeCategories(productCateogry ?? productCategory);
+  const normalizedSlug = String(slug || "").toLowerCase().trim();
 
   const fallbackCategory =
-    slug &&
-    categories.length > 0
+    slug && categories.length > 0
       ? categories.find(
-          (item) =>
-            String(
-              item.slug
-            ).toLowerCase() ===
-            normalizedSlug
+          (item) => String(item.slug).toLowerCase() === normalizedSlug
         ) || null
       : null;
 
-  const category =
-    categoryData ||
-    fallbackCategory;
+  const category = categoryData || fallbackCategory;
 
-  const categoryId =
-    Number(
-      category?.id ??
-        category?.categoryId ??
-        category?._id
-    ) || null;
+  const totalProducts = pagination.total || products.length;
+  const totalPages = Math.max(1, pagination.totalPages);
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
-  useEffect(() => {
-    if (categoryId) {
-      setCurrentPage(
-        initialCategory
-          ? Number(
-              initialCategory?.page
-            ) || 1
-          : 1
-      );
-    }
-  }, [
-    categoryId,
-    initialCategory,
-  ]);
-
-  useEffect(() => {
-    if (!categoryId) {
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage || loading) {
       return;
     }
-
-    if (
-      initialCategory &&
-      currentPage ===
-        Number(
-          initialCategory?.page
-        )
-    ) {
-      return;
-    }
-
-    dispatch(
-      getProductFilter(
-        {
-          categoryId,
-        },
-        currentPage,
-        PAGE_SIZE
-      )
-    );
-  }, [
-    dispatch,
-    categoryId,
-    currentPage,
-    initialCategory,
-  ]);
-
-  const reduxProducts =
-    Array.isArray(productList)
-      ? productList
-      : Array.isArray(
-          productList?.products
-        )
-        ? productList.products
-        : Array.isArray(
-            productList?.data
-          )
-          ? productList.data
-          : Array.isArray(
-              productList?.data
-                ?.products
-            )
-            ? productList.data
-                .products
-            : [];
-
-  const products =
-    initialCategory &&
-    currentPage ===
-      Number(
-        initialCategory?.page
-      )
-      ? categoryProducts
-      : reduxProducts;
-
-  const totalProducts =
-    initialCategory &&
-    currentPage ===
-      Number(
-        initialCategory?.page
-      )
-      ? pagination.total
-      : Number(
-          productList?.total ??
-            productList?.count ??
-            productList?.totalProducts ??
-            category?.productCount ??
-            products.length
-        ) || 0;
-
-  const totalPages =
-    initialCategory &&
-    currentPage ===
-      Number(
-        initialCategory?.page
-      )
-      ? pagination.totalPages
-      : Number(
-          productList?.totalPages
-        ) ||
-        Math.max(
-          1,
-          Math.ceil(
-            totalProducts /
-              PAGE_SIZE
-          )
-        );
-
-  const serverPage =
-    initialCategory &&
-    currentPage ===
-      Number(
-        initialCategory?.page
-      )
-      ? pagination.page
-      : Number(
-          productList?.page
-        ) || currentPage;
-
-  const pageNumbers =
-    getPageNumbers(
-      serverPage,
-      totalPages
-    );
-
-  const handlePageChange = (
-    page
-  ) => {
-    if (
-      page < 1 ||
-      page > totalPages ||
-      page === currentPage ||
-      productLoading
-    ) {
-      return;
-    }
-
     setCurrentPage(page);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (
-    categoryApiLoading &&
-    !category
-  ) {
+  if (loading && !category) {
     return (
       <main className="min-h-screen bg-surface-muted px-5 py-12 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-[1440px]">
           <div className="h-8 w-48 animate-pulse rounded bg-border" />
-
           <div className="mt-8 h-[260px] animate-pulse rounded-2xl bg-card" />
-
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {Array.from({
-              length: 8,
-            }).map(
-              (_, index) => (
-                <div
-                  key={index}
-                  className="h-[320px] animate-pulse rounded-2xl bg-card"
-                />
-              )
-            )}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[320px] animate-pulse rounded-2xl bg-card"
+              />
+            ))}
           </div>
         </div>
       </main>
     );
   }
 
-  if (
-    !categoryApiLoading &&
-    !category
-  ) {
+  if (!loading && !category) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface-muted px-5">
         <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
@@ -682,8 +302,8 @@ export default function ProductDetailsCategory({
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-text-secondary">
-            The category you are looking for does not
-            exist or is no longer available.
+            The category you are looking for does not exist or is no longer
+            available.
           </p>
 
           <Link
@@ -704,9 +324,7 @@ export default function ProductDetailsCategory({
         {category?.image && (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-40"
-            style={{
-              backgroundImage: `url(${category.image})`,
-            }}
+            style={{ backgroundImage: `url(${category.image})` }}
           />
         )}
 
@@ -724,7 +342,6 @@ export default function ProductDetailsCategory({
           <div className="max-w-3xl">
             <div className="mb-4 flex items-center gap-3">
               <span className="h-[2px] w-10 bg-primary" />
-
               <span className="text-xs font-black uppercase tracking-[0.25em] text-primary">
                 Product Category
               </span>
@@ -754,7 +371,6 @@ export default function ProductDetailsCategory({
           <div>
             <div className="mb-3 flex items-center gap-3">
               <span className="h-[2px] w-8 bg-primary" />
-
               <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">
                 Explore Products
               </p>
@@ -770,191 +386,137 @@ export default function ProductDetailsCategory({
             className="group inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-text-primary"
           >
             View All Products
-
-            <ArrowUpRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-4 w-4 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
 
-        {productLoading &&
-          !(
-            initialCategory &&
-            currentPage ===
-              Number(
-                initialCategory?.page
-              )
-          ) && (
+        {loading && (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[330px] animate-pulse rounded-2xl border border-border bg-card"
+              />
+            ))}
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+            <Package className="mx-auto h-10 w-10 text-primary" />
+
+            <h3 className="mt-4 text-lg font-black uppercase text-text-primary">
+              Unable to Load Products
+            </h3>
+
+            <p className="mt-2 text-sm text-text-secondary">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-xs font-black uppercase tracking-wide text-white"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && products.length === 0 && (
+          <div className="rounded-2xl border border-border bg-card p-10 text-center">
+            <Search className="mx-auto h-10 w-10 text-text-secondary" />
+
+            <h3 className="mt-4 text-lg font-black uppercase text-text-primary">
+              No Products Found
+            </h3>
+
+            <p className="mt-2 text-sm text-text-secondary">
+              There are currently no products available in this category.
+            </p>
+
+            <Link
+              href="/products"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-xs font-black uppercase tracking-wide text-white"
+            >
+              Browse Products
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+
+        {!loading && !error && products.length > 0 && (
+          <>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-              {Array.from({
-                length: PAGE_SIZE,
-              }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="h-[330px] animate-pulse rounded-2xl border border-border bg-card"
-                  />
-                )
-              )}
+              {products.map((product, index) => (
+                <ProductCard
+                  key={product?.id ?? product?._id ?? product?.slug ?? index}
+                  product={product}
+                />
+              ))}
             </div>
-          )}
 
-        {!productLoading &&
-          productError &&
-          !(
-            initialCategory &&
-            currentPage ===
-              Number(
-                initialCategory?.page
-              )
-          ) && (
-            <div className="rounded-2xl border border-border bg-card p-8 text-center">
-              <Package className="mx-auto h-10 w-10 text-primary" />
+            {totalPages > 1 && (
+              <>
+                <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
 
-              <h3 className="mt-4 text-lg font-black uppercase text-text-primary">
-                Unable to Load Products
-              </h3>
+                  {pageNumbers.map((page) => {
+                    if (typeof page !== "number") {
+                      return (
+                        <span
+                          key={page}
+                          className="flex h-10 w-10 items-center justify-center text-sm font-bold text-text-secondary"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
 
-              <p className="mt-2 text-sm text-text-secondary">
-                Please try again later.
-              </p>
-            </div>
-          )}
+                    const active = page === currentPage;
 
-        {!productLoading &&
-          !productError &&
-          products.length === 0 && (
-            <div className="rounded-2xl border border-border bg-card p-10 text-center">
-              <Search className="mx-auto h-10 w-10 text-text-secondary" />
+                    return (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => handlePageChange(page)}
+                        disabled={loading}
+                        aria-current={active ? "page" : undefined}
+                        className={`flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-black transition ${
+                          active
+                            ? "bg-primary text-white"
+                            : "border border-border bg-card text-text-primary hover:border-primary hover:text-primary"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
 
-              <h3 className="mt-4 text-lg font-black uppercase text-text-primary">
-                No Products Found
-              </h3>
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
 
-              <p className="mt-2 text-sm text-text-secondary">
-                There are currently no products available in this category.
-              </p>
-
-              <Link
-                href="/products"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-xs font-black uppercase tracking-wide text-white"
-              >
-                Browse Products
-
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-          )}
-
-        {!productLoading &&
-          !productError &&
-          products.length > 0 && (
-            <>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-                {products.map(
-                  (product, index) => (
-                    <ProductCard
-                      key={
-                        product?.id ??
-                        product?._id ??
-                        product?.slug ??
-                        index
-                      }
-                      product={product}
-                    />
-                  )
-                )}
-              </div>
-
-              {totalPages > 1 && (
-                <>
-                  <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePageChange(
-                          currentPage - 1
-                        )
-                      }
-                      disabled={
-                        currentPage <= 1 ||
-                        productLoading
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Previous page"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-
-                    {pageNumbers.map(
-                      (page) => {
-                        if (
-                          typeof page !==
-                          "number"
-                        ) {
-                          return (
-                            <span
-                              key={page}
-                              className="flex h-10 w-10 items-center justify-center text-sm font-bold text-text-secondary"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-
-                        const active =
-                          page ===
-                          currentPage;
-
-                        return (
-                          <button
-                            key={page}
-                            type="button"
-                            onClick={() =>
-                              handlePageChange(
-                                page
-                              )
-                            }
-                            disabled={
-                              productLoading
-                            }
-                            className={`flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-black transition ${
-                              active
-                                ? "bg-primary text-white"
-                                : "border border-border bg-card text-text-primary hover:border-primary hover:text-primary"
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      }
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePageChange(
-                          currentPage + 1
-                        )
-                      }
-                      disabled={
-                        currentPage >=
-                          totalPages ||
-                        productLoading
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-text-primary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Next page"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="mt-4 text-center text-xs font-bold uppercase tracking-wide text-text-secondary">
-                    Page {currentPage} of{" "}
-                    {totalPages}
-                  </div>
-                </>
-              )}
-            </>
-          )}
+                <div className="mt-4 text-center text-xs font-bold uppercase tracking-wide text-text-secondary">
+                  Page {currentPage} of {totalPages}
+                </div>
+              </>
+            )}
+          </>
+        )}
       </section>
     </main>
   );

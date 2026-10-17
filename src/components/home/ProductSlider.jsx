@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { useSelector } from "react-redux";
 
 import ProductCard from "@/components/products/ProductCard";
 
@@ -52,15 +53,28 @@ export default function ProductSlider({
 
   const list = Array.isArray(products) ? products : [];
 
-  const viewAllHref = `/products?search=${encodeURIComponent(eyebrow || "")}`;
+  const viewAllHref = () => {
+    if (eyebrow === "You May Also Like") {
+      return "/products";
+    }
+
+    return `/products?search=${encodeURIComponent(eyebrow || "")}`;
+  };
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  const { wishItems } = useSelector(
+    (state) => state.wish
+  );
+
+
+
   const backgrounds = {
     beige: {
-      section: "bg-gradient-to-b from-white via-[#F3EFE7] to-[#E4DDCD]",
+      section:
+        "bg-gradient-to-b from-white via-[#F3EFE7] to-[#E4DDCD]",
       edge: "#E4DDCD",
       accent: "#DC2626",
       accentDark: "#B91C1C",
@@ -73,20 +87,34 @@ export default function ProductSlider({
     },
   };
 
-  const theme = backgrounds[background] || backgrounds.beige;
+  const theme =
+    backgrounds[background] || backgrounds.beige;
 
   const updateScrollState = () => {
     const slider = sliderRef.current;
 
     if (!slider) return;
 
-    const { scrollLeft, scrollWidth, clientWidth } = slider;
+    const {
+      scrollLeft,
+      scrollWidth,
+      clientWidth,
+    } = slider;
 
-    const maxScroll = scrollWidth - clientWidth;
+    const maxScroll =
+      scrollWidth - clientWidth;
 
     setCanScrollLeft(scrollLeft > 4);
-    setCanScrollRight(scrollLeft < maxScroll - 4);
-    setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
+
+    setCanScrollRight(
+      scrollLeft < maxScroll - 4
+    );
+
+    setScrollProgress(
+      maxScroll > 0
+        ? scrollLeft / maxScroll
+        : 0
+    );
   };
 
   useEffect(() => {
@@ -96,15 +124,29 @@ export default function ProductSlider({
 
     if (!slider) return;
 
-    slider.addEventListener("scroll", updateScrollState, {
-      passive: true,
-    });
+    slider.addEventListener(
+      "scroll",
+      updateScrollState,
+      {
+        passive: true,
+      }
+    );
 
-    window.addEventListener("resize", updateScrollState);
+    window.addEventListener(
+      "resize",
+      updateScrollState
+    );
 
     return () => {
-      slider.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
+      slider.removeEventListener(
+        "scroll",
+        updateScrollState
+      );
+
+      window.removeEventListener(
+        "resize",
+        updateScrollState
+      );
     };
   }, [list.length, loading]);
 
@@ -113,22 +155,32 @@ export default function ProductSlider({
 
     if (!slider) return;
 
-    const firstCard = slider.querySelector("[data-product-card]");
+    const firstCard =
+      slider.querySelector(
+        "[data-product-card]"
+      );
 
     if (!firstCard) return;
 
-    const cardWidth = firstCard.getBoundingClientRect().width;
+    const cardWidth =
+      firstCard.getBoundingClientRect().width;
 
     const gap =
-      window.innerWidth >= 1024 ? 20 : window.innerWidth >= 640 ? 16 : 12;
+      window.innerWidth >= 1024
+        ? 20
+        : window.innerWidth >= 640
+          ? 16
+          : 12;
 
     slider.scrollBy({
-      left: direction === "left" ? -(cardWidth + gap) : cardWidth + gap,
+      left:
+        direction === "left"
+          ? -(cardWidth + gap)
+          : cardWidth + gap,
       behavior: "smooth",
     });
   };
 
-  // Loading khatam ho chuki hai aur koi product nahi hai, tabhi section hatao
   if (!loading && list.length === 0) {
     return null;
   }
@@ -208,7 +260,8 @@ export default function ProductSlider({
                   sm:w-11
                 "
                 style={{
-                  backgroundColor: theme.accent,
+                  backgroundColor:
+                    theme.accent,
                 }}
               />
 
@@ -222,7 +275,8 @@ export default function ProductSlider({
                   sm:text-xs
                 "
                 style={{
-                  color: theme.accentDark,
+                  color:
+                    theme.accentDark,
                 }}
               >
                 {eyebrow}
@@ -260,7 +314,7 @@ export default function ProductSlider({
           </div>
 
           <Link
-            href={viewAllHref}
+            href={viewAllHref()}
             className="
               group
               hidden
@@ -305,7 +359,9 @@ export default function ProductSlider({
           {!loading && (
             <button
               type="button"
-              onClick={() => scrollSlider("left")}
+              onClick={() =>
+                scrollSlider("left")
+              }
               aria-label="Previous products"
               disabled={!canScrollLeft}
               className="
@@ -366,26 +422,44 @@ export default function ProductSlider({
     snap-mandatory
             "
           >
-            {loading
-              ? Array.from({ length: SKELETON_COUNT }).map((_, index) => (
-                  <div
-                    key={`skeleton-${index}`}
-                    aria-hidden="true"
-                    className={CARD_WRAPPER_CLASS}
-                  >
-                    <ProductCardSkeleton />
-                  </div>
-                ))
-              : list.map((product, index) => (
+            {loading ? (
+              Array.from({
+                length: SKELETON_COUNT,
+              }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  aria-hidden="true"
+                  className={
+                    CARD_WRAPPER_CLASS
+                  }
+                >
+                  <ProductCardSkeleton />
+                </div>
+              ))
+            ) : (
+              list.map((product, index) => {
+                const productId =
+                  product?.id ??
+                  product?.productId;
+
+                const isWishlisted =
+                  wishItems?.wishlist?.some(
+                    (item) =>
+                      item?.productId ===
+                      productId
+                  ) ?? false;
+
+                return (
                   <div
                     key={
-                      product?.id ||
-                      product?.productId ||
+                      productId ||
                       product?.slug ||
                       index
                     }
                     data-product-card
-                    className={CARD_WRAPPER_CLASS}
+                    className={
+                      CARD_WRAPPER_CLASS
+                    }
                   >
                     <div
                       className="
@@ -397,16 +471,25 @@ export default function ProductSlider({
                         [&>*]:w-full
                       "
                     >
-                      <ProductCard product={product} />
+                      <ProductCard
+                        product={product}
+                        isWishlisted={
+                          isWishlisted
+                        }
+                      />
                     </div>
                   </div>
-                ))}
+                );
+              })
+            )}
           </div>
 
           {!loading && (
             <button
               type="button"
-              onClick={() => scrollSlider("right")}
+              onClick={() =>
+                scrollSlider("right")
+              }
               aria-label="Next products"
               disabled={!canScrollRight}
               className="
@@ -457,7 +540,9 @@ export default function ProductSlider({
           "
         >
           <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, index) => (
+            {Array.from({
+              length: 5,
+            }).map((_, index) => (
               <Star
                 key={index}
                 className="
@@ -484,7 +569,7 @@ export default function ProductSlider({
 
         <div className="mt-1 md:mt-3 px-5 sm:hidden">
           <Link
-            href={viewAllHref}
+            href={viewAllHref()}
             className="
               group
               inline-flex

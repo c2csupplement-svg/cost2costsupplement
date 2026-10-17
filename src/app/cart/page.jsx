@@ -18,8 +18,8 @@ import {
   Trash2,
   Truck,
   X,
-   Heart,
-   MoreVertical,
+  Heart,
+  MoreVertical,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ import {
   appplyCouponApi,
 } from "@/apiService/api";
 
-import {toggleItem} from "@/redux/features/wish/wishAction"
+import { toggleItem } from "@/redux/features/wish/wishAction"
 
 
 function formatPrice(value) {
@@ -207,7 +207,7 @@ function getVariantDetails(item) {
     });
   });
 
-  details.push({variantId: variantId})
+  details.push({ variantId: variantId })
 
   if (
     size &&
@@ -265,7 +265,7 @@ function calculateCouponDiscount(
   ) {
     return Math.min(
       subtotal *
-        (discountValue / 100),
+      (discountValue / 100),
       subtotal
     );
   }
@@ -300,7 +300,7 @@ function getCouponDescription(coupon) {
 
   if (
     coupon?.discountAmount !==
-      undefined &&
+    undefined &&
     coupon?.discountAmount !== null
   ) {
     return `${formatPrice(
@@ -451,9 +451,9 @@ export default function CartPage() {
       (total, item) =>
         total +
         getItemPrice(item) *
-          Number(
-            item?.quantity || 0
-          ),
+        Number(
+          item?.quantity || 0
+        ),
       0
     );
 
@@ -487,7 +487,7 @@ export default function CartPage() {
       return (
         total +
         effectiveOriginal *
-          quantity
+        quantity
       );
     },
     0
@@ -497,16 +497,16 @@ export default function CartPage() {
   const mrpSavings = Math.max(
     0,
     mrpTotal -
-      calculatedCartTotal
+    calculatedCartTotal
   );
   const finalTotal =
     apiFinalAmount > 0
       ? apiFinalAmount
       : Math.max(
-          0,
-          cartTotal -
-            finalCouponDiscount
-        );
+        0,
+        cartTotal -
+        finalCouponDiscount
+      );
 
   const totalSavings =
     mrpSavings +
@@ -541,7 +541,7 @@ export default function CartPage() {
           "Coupon API error:",
           error?.response
             ?.data ||
-            error?.message
+          error?.message
         );
 
         setCoupons([]);
@@ -555,7 +555,8 @@ export default function CartPage() {
 
   const handleUpdateQuantity = async (
     item,
-    quantity
+    quantity,
+    oldQuantity
   ) => {
     const itemId =
       item?.id ??
@@ -563,35 +564,49 @@ export default function CartPage() {
       item?._id;
 
     if (!itemId) {
-      toast.error(
-        "Cart item ID is missing."
-      );
-
-      return;
+      toast.error("Cart item ID is missing.");
+      throw new Error("Cart item ID is missing.");
     }
 
     try {
-
       if (quantity <= 0) {
-        await dispatch(
+        const response = await dispatch(
           deleteCartItem(itemId)
         );
 
-        // toast.success(
-        //   "Item removed from cart."
-        // );
+        if (
+          response?.error ||
+          response?.meta?.requestStatus === "rejected"
+        ) {
+          throw new Error(
+            response?.payload ||
+            response?.error?.message ||
+            "Unable to remove item."
+          );
+        }
       } else {
-        await dispatch(
+        const response = await dispatch(
           updateItemQuantity(
             itemId,
             quantity
           )
         );
+
+        if (
+          response?.error ||
+          response?.meta?.requestStatus === "rejected" ||
+          response?.success === false
+        ) {
+          throw new Error(
+            response?.payload ||
+            response?.error?.message ||
+            "Unable to update quantity."
+          );
+        }
       }
 
-      await dispatch(
-        fetchCartItems()
-      );
+      await dispatch(fetchCartItems());
+
     } catch (error) {
       console.error(
         "Cart quantity error:",
@@ -599,10 +614,12 @@ export default function CartPage() {
       );
 
       toast.error(
-        error?.response
-          ?.data?.message ||
-          "Unable to update cart."
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to update cart."
       );
+
+      throw error;
     }
   };
 
@@ -638,7 +655,7 @@ export default function CartPage() {
       toast.error(
         error?.response
           ?.data?.message ||
-          "Unable to remove item."
+        "Unable to remove item."
       );
     }
   };
@@ -684,126 +701,126 @@ export default function CartPage() {
         toast.error(
           error?.response
             ?.data?.message ||
-            "Unable to clear cart."
+          "Unable to clear cart."
         );
       }
     };
 
-  const handleApplyCoupon =async (coupon) => {
+  const handleApplyCoupon = async (coupon) => {
 
 
-      if (!coupon) {
-        setCouponError(
-          "Invalid coupon code."
+    if (!coupon) {
+      setCouponError(
+        "Invalid coupon code."
+      );
+
+      return;
+    }
+
+    if (couponLoading) {
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      setCouponError("");
+
+      const code = coupon?.code
+
+      if (!code) {
+        throw new Error(
+          "Coupon code is missing."
         );
-
-        return;
       }
 
-      if (couponLoading) {
-        return;
+
+      const response = await appplyCouponApi(code);
+
+      const data =
+        response?.data
+
+      if (!data?.success) {
+        throw new Error(
+          data?.message ||
+          "Unable to apply coupon."
+        );
       }
 
-      try {
-        setCouponLoading(true);
-        setCouponError("");
+      const serverCouponCode = data?.couponCode;
 
-        const code =coupon?.code
 
-        if (!code) {
-          throw new Error(
-            "Coupon code is missing."
-          );
+      const serverDiscount = Number(data?.discountAmount);
+
+      const nextCoupon = {
+        ...coupon,
+        ...(data?.coupon ||
+          {}),
+        code:
+          serverCouponCode,
+        discountAmount:
+          serverDiscount,
+      };
+
+      setAppliedCoupon(
+        nextCoupon
+      );
+
+      setCouponCode(
+        serverCouponCode
+      );
+
+      setCouponDiscount(
+        serverDiscount
+      );
+
+      setCouponError("");
+
+
+      //test
+      await dispatch(
+        fetchCartItemsCheckOut()
+      );
+
+      toast.success(
+        `Coupon ${serverCouponCode} applied successfully.`,
+        {
+          description:
+            serverDiscount > 0
+              ? `You saved ${formatPrice(
+                serverDiscount
+              )}.`
+              : "Coupon applied successfully.",
         }
+      );
 
+      setShowCouponModal(
+        false
+      );
+    } catch (error) {
+      console.error(
+        "Apply coupon API error:",
+        error?.response
+          ?.data ||
+        error?.message
+      );
 
-        const response =await appplyCouponApi( code);
+      const message =
+        error?.response
+          ?.data?.message ||
+        error?.message ||
+        "Unable to apply coupon.";
 
-        const data =
-          response?.data
+      setCouponError(
+        message
+      );
 
-        if (!data?.success) {
-          throw new Error(
-            data?.message ||
-              "Unable to apply coupon."
-          );
-        }
-
-        const serverCouponCode = data?.couponCode;
-
-
-        const serverDiscount =Number(data?.discountAmount);
-
-        const nextCoupon = {
-          ...coupon,
-          ...(data?.coupon ||
-            {}),
-          code:
-            serverCouponCode,
-          discountAmount:
-            serverDiscount,
-        };
-
-        setAppliedCoupon(
-          nextCoupon
-        );
-
-        setCouponCode(
-          serverCouponCode
-        );
-
-        setCouponDiscount(
-          serverDiscount
-        );
-
-        setCouponError("");
-
-
-        //test
-        await dispatch(
-          fetchCartItemsCheckOut()
-        );
-
-        toast.success(
-          `Coupon ${serverCouponCode} applied successfully.`,
-          {
-            description:
-              serverDiscount > 0
-                ? `You saved ${formatPrice(
-                    serverDiscount
-                  )}.`
-                : "Coupon applied successfully.",
-          }
-        );
-
-        setShowCouponModal(
-          false
-        );
-      } catch (error) {
-        console.error(
-          "Apply coupon API error:",
-          error?.response
-            ?.data ||
-            error?.message
-        );
-
-        const message =
-          error?.response
-            ?.data?.message ||
-          error?.message ||
-          "Unable to apply coupon.";
-
-        setCouponError(
-          message
-        );
-
-        toast.error(message);
-      } finally {
-        setCouponLoading(
-          false
-        );
-      }
-    };
+      toast.error(message);
+    } finally {
+      setCouponLoading(
+        false
+      );
+    }
+  };
 
   const handleCouponSubmit =
     async (event) => {
@@ -875,7 +892,7 @@ export default function CartPage() {
         ) {
           throw new Error(
             data?.message ||
-              "Unable to remove coupon."
+            "Unable to remove coupon."
           );
         }
 
@@ -897,14 +914,14 @@ export default function CartPage() {
           "Remove coupon API error:",
           error?.response
             ?.data ||
-            error?.message
+          error?.message
         );
 
         toast.error(
           error?.response
             ?.data?.message ||
-            error?.message ||
-            "Unable to remove coupon."
+          error?.message ||
+          "Unable to remove coupon."
         );
       } finally {
         setCouponLoading(
@@ -955,7 +972,7 @@ export default function CartPage() {
           {error && (
             <p className="oxanium mt-4 text-sm text-primary">
               {typeof error ===
-              "string"
+                "string"
                 ? error
                 : "Unable to load your cart."}
             </p>
@@ -988,7 +1005,7 @@ export default function CartPage() {
               </p>
             </div>
 
-            <h1 className="bebas mt-2 text-4xl uppercase tracking-wide sm:text-6xl lg:text-7xl">
+            <h1 className="bebas mt-2 text-3xl uppercase tracking-wide sm:text-5xl lg:text-7xl">
               Your cart
             </h1>
 
@@ -1021,11 +1038,8 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* ---------------------------------------------------------------
-            CART ACTION BAR
-        ---------------------------------------------------------------- */}
 
-        <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-2.5 shadow-sm sm:p-3">
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-2.5 py-1  shadow-sm sm:p-3">
           <Link
             href="/products"
             className="oxanium group inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[11px] font-bold uppercase tracking-wide text-text-primary transition hover:bg-surface hover:text-primary sm:px-5 sm:text-xs"
@@ -1094,31 +1108,10 @@ export default function CartPage() {
                         index
                       }
                       item={item}
-                      formatPrice={
-                        formatPrice
-                      }
-                      onDecrease={() =>
-                        handleUpdateQuantity(
-                          item,
-                          Number(
-                            item?.quantity ||
-                              0
-                          ) - 1
-                        )
-                      }
-                      onIncrease={() =>
-                        handleUpdateQuantity(
-                          item,
-                          Number(
-                            item?.quantity ||
-                              0
-                          ) + 1
-                        )
-                      }
+                      formatPrice={formatPrice}
+                      onQuantityChange={handleUpdateQuantity}
                       onRemove={() =>
-                        handleRemoveItem(
-                          item
-                        )
+                        handleRemoveItem(item)
                       }
                     />
                   )
@@ -1156,7 +1149,7 @@ export default function CartPage() {
                     </div>
 
                     <div>
-                      <h2 className="bebas text-xl uppercase tracking-wide sm:text-3xl">
+                      <h2 className="bebas text-[18px] uppercase tracking-wide sm:text-3xl">
                         Save more on your order
                       </h2>
 
@@ -1251,7 +1244,7 @@ export default function CartPage() {
                     </div>
                   </div>
                 ) : (
-                  <>  
+                  <>
                     <form
                       onSubmit={
                         handleCouponSubmit
@@ -1323,13 +1316,12 @@ export default function CartPage() {
                         <span>
                           <span className="oxanium block text-xs font-bold text-primary">
                             {coupons.length >
-                            0
-                              ? `View ${coupons.length} available offer${
-                                  coupons.length ===
-                                  1
-                                    ? ""
-                                    : "s"
-                                }`
+                              0
+                              ? `View ${coupons.length} available offer${coupons.length ===
+                                1
+                                ? ""
+                                : "s"
+                              }`
                               : "View available offers"}
                           </span>
 
@@ -1379,42 +1371,42 @@ export default function CartPage() {
       </div>
 
       <div
-  className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-2xl backdrop-blur-xl sm:px-4 lg:hidden"
-  style={{
-    paddingBottom:
-      "calc(0.75rem + env(safe-area-inset-bottom))",
-  }}
->
-  <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 sm:gap-4">
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-3 shadow-2xl backdrop-blur-xl sm:px-4 lg:hidden"
+        style={{
+          paddingBottom:
+            "calc(0.75rem + env(safe-area-inset-bottom))",
+        }}
+      >
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 sm:gap-4">
 
-    <div className="min-w-0">
-      <p className="oxanium text-[9px] font-bold uppercase tracking-[0.18em] text-text-muted">
-        Total
-      </p>
+          <div className="min-w-0">
+            <p className="oxanium text-[9px] font-bold uppercase tracking-[0.18em] text-text-muted">
+              Total
+            </p>
 
-      <p className="oxanium mt-0.5 truncate text-base font-bold text-text-primary sm:text-lg">
-        {formatPrice(
-          finalTotal
-        )}
-      </p>
-    </div>
+            <p className="oxanium mt-0.5 truncate text-base font-bold text-text-primary sm:text-lg">
+              {formatPrice(
+                finalTotal
+              )}
+            </p>
+          </div>
 
-    <Link
-      href="/checkout"
-      className="oxanium group flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover sm:px-5"
-    >
-      Checkout
+          <Link
+            href="/checkout"
+            className="oxanium group flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover sm:px-5"
+          >
+            Checkout
 
-      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-    </Link>
-  </div>
-</div>
+            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      </div>
 
 
 
       <CouponModal
         open={showCouponModal}
-        onClose={() =>setShowCouponModal(false)}
+        onClose={() => setShowCouponModal(false)}
         coupons={coupons}
         couponLoading={couponLoading}
         cartTotal={cartTotal}
@@ -1463,20 +1455,20 @@ function OrderSummary({
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
       <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5 sm:p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
 
-          <div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
+            <ShoppingBag className="h-5 w-5" />
+          </div>
+
+          <div className="flex-1">
             <p className="oxanium text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               Checkout
             </p>
 
-            <h2 className="bebas mt-1 text-3xl uppercase tracking-wide">
+            <h2 className="bebas mt-1 text-xl sm:text-3xl uppercase tracking-wide">
               Order summary
             </h2>
-          </div>
-
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-            <ShoppingBag className="h-5 w-5" />
           </div>
         </div>
       </div>
@@ -1486,13 +1478,13 @@ function OrderSummary({
         {/* Savings message */}
 
         {totalSavings > 0 && (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-blue-600/20 bg-blue-600/5 px-4 py-3">
 
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/10">
+              <Sparkles className="h-4 w-4 text-blue-600" />
             </div>
 
-            <p className="oxanium text-[11px] font-semibold leading-5 text-primary">
+            <p className="oxanium text-[11px] font-semibold leading-5  text-blue-500">
               You're saving{" "}
               <strong>
                 {formatPrice(
@@ -1539,7 +1531,7 @@ function OrderSummary({
 
           {appliedCoupon &&
             couponDiscount >
-              0 && (
+            0 && (
               <div className="flex items-center justify-between gap-4">
 
                 <span className="oxanium text-xs text-green-600">
@@ -1737,7 +1729,7 @@ function CouponModal({
 
           {couponLoading &&
             coupons.length ===
-              0 && (
+            0 && (
               <div className="space-y-3">
                 {[1, 2, 3].map(
                   (item) => (
@@ -1758,7 +1750,7 @@ function CouponModal({
 
           {!couponLoading &&
             coupons.length ===
-              0 && (
+            0 && (
               <div className="rounded-2xl border border-dashed border-border px-5 py-10 text-center">
 
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface">
@@ -1793,11 +1785,10 @@ function CouponModal({
                     key={
                       coupon?.id
                     }
-                    className={`group relative overflow-hidden rounded-2xl border p-4 transition ${
-                      eligible
-                        ? "border-border bg-background hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
-                        : "border-border bg-surface/40 opacity-60"
-                    }`}
+                    className={`group relative overflow-hidden rounded-2xl border p-4 transition ${eligible
+                      ? "border-border bg-background hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
+                      : "border-border bg-surface/40 opacity-60"
+                      }`}
                   >
 
                     <div className="flex items-start justify-between gap-4">
@@ -1826,7 +1817,7 @@ function CouponModal({
                         </p>
 
                         {minimumCartValue >
-                        0 ? (
+                          0 ? (
                           <p className="mt-1 text-[10px] text-text-muted">
                             Minimum order{" "}
                             {formatPrice(
@@ -1861,13 +1852,13 @@ function CouponModal({
 
                     {!eligible &&
                       minimumCartValue >
-                        cartTotal && (
+                      cartTotal && (
                         <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/5 px-3 py-2">
                           <span className="text-[10px] text-red-500">
                             Add{" "}
                             {formatPrice(
                               minimumCartValue -
-                                cartTotal
+                              cartTotal
                             )}{" "}
                             more to unlock
                           </span>
@@ -1888,16 +1879,43 @@ function CouponModal({
 function CartItem({
   item,
   formatPrice,
-  onDecrease,
-  onIncrease,
+  onQuantityChange,
   onRemove,
 }) {
   const dispatch = useDispatch();
 
- const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [movingToWishlist, setMovingToWishlist] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [localQuantity, setLocalQuantity] = useState(Number(item?.quantity) || 0);
   const [updatingQuantity, setUpdatingQuantity] = useState(false);
+
+  useEffect(() => {
+    setLocalQuantity(Number(item?.quantity) || 0);
+  }, [item?.quantity]);
+
+  const handleQuantityChange = async (newQuantity) => {
+    const oldQuantity = localQuantity;
+
+    if (newQuantity < 0) {
+      return;
+    }
+
+    setLocalQuantity(newQuantity);
+    setUpdatingQuantity(true);
+
+    try {
+      await onQuantityChange(
+        item,
+        newQuantity,
+        oldQuantity
+      );
+    } catch (error) {
+      setLocalQuantity(oldQuantity);
+    } finally {
+      setUpdatingQuantity(false);
+    }
+  };
 
   const product =
     item?.product ??
@@ -1931,14 +1949,13 @@ function CartItem({
   const discountPercent =
     originalPrice > price
       ? Math.round(
-          ((originalPrice - price) /
-            originalPrice) *
-            100
-        )
+        ((originalPrice - price) /
+          originalPrice) *
+        100
+      )
       : 0;
 
-  const quantity =
-    Number(item?.quantity) || 0;
+  const quantity = localQuantity;
 
   const subtotal =
     price * quantity;
@@ -1953,8 +1970,8 @@ function CartItem({
   const stockQuantity =
     Number(
       variant?.stockQuantity ??
-        item?.stockQuantity ??
-        0
+      item?.stockQuantity ??
+      0
     );
 
   const stockStatus =
@@ -1985,56 +2002,56 @@ function CartItem({
 
   const handleMoveToWishlist = async (productId, variantId) => {
 
+    if (
+      !productId ||
+      movingToWishlist ||
+      deleting
+    ) {
+      return;
+    }
+
+    try {
+      setMovingToWishlist(true);
+
+      const result =
+        await dispatch(
+          toggleItem(productId, variantId)
+        );
+
       if (
-        !productId ||
-        movingToWishlist ||
-        deleting
+        result?.error ||
+        result?.meta?.requestStatus ===
+        "rejected"
       ) {
-        return;
+        throw new Error(
+          result?.payload ||
+          result?.error?.message ||
+          "Unable to move item to wishlist."
+        );
       }
 
-      try {
-        setMovingToWishlist(true);
+      await onRemove();
 
-        const result =
-          await dispatch(
-            toggleItem(productId, variantId)
-          );
+      setShowRemoveModal(false);
 
-        if (
-          result?.error ||
-          result?.meta?.requestStatus ===
-            "rejected"
-        ) {
-          throw new Error(
-            result?.payload ||
-              result?.error?.message ||
-              "Unable to move item to wishlist."
-          );
-        }
+      // toast.success(
+      //   "Item moved to wishlist."
+      // );
+    } catch (error) {
+      console.error(
+        "Move to wishlist:",
+        error
+      );
 
-        await onRemove();
-
-        setShowRemoveModal(false);
-
-        // toast.success(
-        //   "Item moved to wishlist."
-        // );
-      } catch (error) {
-        console.error(
-          "Move to wishlist:",
-          error
-        );
-
-        toast.error(
-          error?.response?.data?.message ||
-            error?.message ||
-            "Unable to move item to wishlist."
-        );
-      } finally {
-        setMovingToWishlist(false);
-      }
-    };
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to move item to wishlist."
+      );
+    } finally {
+      setMovingToWishlist(false);
+    }
+  };
 
   const handleDelete =
     async () => {
@@ -2065,10 +2082,6 @@ function CartItem({
     <>
       <div className="group p-3 transition-colors hover:bg-surface/20 sm:p-4 lg:p-6">
 
-        {/* Desktop / large tablet: table-style row.
-            Switched from md: to lg: and from fixed px columns to fr
-            units so the row doesn't get cramped on ~768-1023px
-            tablets and scales proportionally on very wide screens. */}
         <div className="hidden items-center gap-4 lg:grid lg:grid-cols-[3fr_1fr_1.1fr_1fr_0.4fr]">
 
           <div className="flex min-w-0 items-center gap-4">
@@ -2082,7 +2095,7 @@ function CartItem({
                   src={image}
                   alt={name}
                   fill
-                 sizes="(max-width: 640px) 35vw, 300px"
+                  sizes="(max-width: 640px) 35vw, 300px"
                   className="object-contain p-2 transition duration-300 group-hover:scale-105"
                 />
               ) : (
@@ -2131,19 +2144,18 @@ function CartItem({
 
               {stockStatus && (
                 <span
-                  className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${
-                    !inStock
-                      ? "bg-red-500/10 text-red-600"
-                      : lowStock
+                  className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[9px] font-bold ${!inStock
+                    ? "bg-red-500/10 text-red-600"
+                    : lowStock
                       ? "bg-amber-500/10 text-amber-600"
                       : "bg-green-500/10 text-green-600"
-                  }`}
+                    }`}
                 >
                   {!inStock
                     ? "Out of stock"
                     : lowStock
-                    ? `Only ${stockQuantity} left`
-                    : "In stock"}
+                      ? `Only ${stockQuantity} left`
+                      : "In stock"}
                 </span>
               )}
             </div>
@@ -2166,12 +2178,14 @@ function CartItem({
 
           <QuantityControl
             quantity={quantity}
-            onDecrease={onDecrease}
-            onIncrease={onIncrease}
-            max={
-              stockQuantity ||
-              undefined
+            onDecrease={() =>
+              handleQuantityChange(quantity - 1)
             }
+            onIncrease={() =>
+              handleQuantityChange(quantity + 1)
+            }
+            max={stockQuantity || undefined}
+            disabled={updatingQuantity}
           />
 
           <span className="oxanium text-right text-sm font-black text-text-primary">
@@ -2198,9 +2212,7 @@ function CartItem({
           </div>
         </div>
 
-        {/* Mobile / tablet: stacked card. Now covers up to lg
-            (previously only below md), and the thumbnail shrinks
-            a bit on the narrowest phones so text has room. */}
+        {/* Mobile / tablet */}
         <div className="flex gap-3 lg:hidden">
 
           <Link
@@ -2275,51 +2287,56 @@ function CartItem({
               </div>
             )}
 
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
 
-              <span className="oxanium text-sm font-black text-text-primary">
-                {formatPrice(price)}
-              </span>
+                  <span className="oxanium text-sm font-black text-text-primary">
+                    {formatPrice(price)}
+                  </span>
 
-              {originalPrice > price && (
-                <span className="oxanium text-[9px] text-text-muted line-through">
-                  {formatPrice(
-                    originalPrice
+                  {originalPrice > price && (
+                    <span className="oxanium text-[9px] text-text-muted line-through">
+                      {formatPrice(
+                        originalPrice
+                      )}
+                    </span>
                   )}
-                </span>
-              )}
 
-            </div>
+                </div>
 
-            {stockStatus && (
-              <span
-                className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[8px] font-bold ${
-                  !inStock
-                    ? "bg-red-500/10 text-red-600"
-                    : lowStock
-                    ? "bg-amber-500/10 text-amber-600"
-                    : "bg-green-500/10 text-green-600"
-                }`}
-              >
-                {!inStock
-                  ? "Out of stock"
-                  : lowStock
-                  ? `Only ${stockQuantity} left`
-                  : "In stock"}
-              </span>
-            )}
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                {stockStatus && (
+                  <span
+                    className={`oxanium mt-2 inline-flex rounded-md px-2 py-1 text-[8px] font-bold ${!inStock
+                      ? "bg-red-500/10 text-red-600"
+                      : lowStock
+                        ? "bg-amber-500/10 text-amber-600"
+                        : "bg-green-500/10 text-green-600"
+                      }`}
+                  >
+                    {!inStock
+                      ? "Out of stock"
+                      : lowStock
+                        ? `Only ${stockQuantity} left`
+                        : "In stock"}
+                  </span>
+                )}
+              </div>
 
               <QuantityControl
                 quantity={quantity}
-                onDecrease={onDecrease}
-                onIncrease={onIncrease}
-                max={
-                  stockQuantity ||
-                  undefined
+                onDecrease={() =>
+                  handleQuantityChange(quantity - 1)
                 }
+                onIncrease={() =>
+                  handleQuantityChange(quantity + 1)
+                }
+                max={stockQuantity || undefined}
+                disabled={updatingQuantity}
               />
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
 
               <span className="oxanium text-sm font-black text-text-primary">
                 {formatPrice(subtotal)}
@@ -2338,7 +2355,7 @@ function CartItem({
           onClick={(event) => {
             if (
               event.target ===
-                event.currentTarget &&
+              event.currentTarget &&
               !movingToWishlist &&
               !deleting
             ) {
@@ -2548,58 +2565,43 @@ function QuantityControl({
   onDecrease,
   onIncrease,
   max,
+  disabled = false,
 }) {
-  /*
-   * Disable + button when stock limit is reached.
-   */
-
   const atMax =
-    typeof max ===
-      "number" &&
+    typeof max === "number" &&
     max > 0 &&
     quantity >= max;
 
   return (
     <div className="flex h-9 w-fit items-center overflow-hidden rounded-lg border border-border bg-background shadow-sm">
 
-      {/* Decrease */}
-
       <button
         type="button"
-        onClick={
-          onDecrease
-        }
-        className="flex h-full w-9 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary"
+        onClick={onDecrease}
+        disabled={disabled || quantity <= 1}
+        className="flex h-full w-9 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Decrease quantity"
       >
         <Minus className="h-3.5 w-3.5" />
       </button>
 
-      {/* Current quantity */}
-
       <span className="oxanium flex h-full min-w-9 items-center justify-center border-x border-border px-2 text-xs font-bold tabular-nums">
         {quantity}
       </span>
 
-      {/* Increase */}
-
       <button
         type="button"
-        onClick={
-          onIncrease
-        }
-        disabled={
-          atMax
-        }
+        onClick={onIncrease}
+        disabled={disabled || atMax}
         className="flex h-full w-9 items-center justify-center text-text-muted transition hover:bg-surface hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Increase quantity"
       >
         <Plus className="h-3.5 w-3.5" />
       </button>
+
     </div>
   );
 }
-
 function CartSkeleton() {
   return (
     <main className="min-h-screen bg-background text-text-primary">
